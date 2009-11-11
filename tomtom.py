@@ -39,8 +39,15 @@ Play pool with the queen of england"""
 class Tomtom(object):
     """Application class for Tomtom. Lists, prints or searches for notes in Tomboy via dbus."""
     def list_all_notes(self):
-        #return self.listing(self.get_all_notes())
+        return self.listing(self.get_all_notes())
+
+    def listing(self, notes):
+        """Receives a list of notes and prints them out to stdout"""
         return formatted_list + appendix
+
+    def get_all_notes(self):
+        """return all notes according to current filters"""
+        pass
 
 def main():
     parser = optparse.OptionParser()
