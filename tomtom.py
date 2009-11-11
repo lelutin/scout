@@ -3,8 +3,7 @@
 import sys
 import optparse
 
-def main():
-    formatted_list = \
+formatted_list = \
 """2009-10-20 | addressbook  (pim)
 2009-10-20 | TODO-list  (reminders)
 2009-10-14 | Bash  (reminders)
@@ -16,27 +15,34 @@ def main():
 2009-10-03 | japanese  (reminders)
 2009-10-02 | Webpidgin  (projects)"""
 
-    appendix = \
+appendix = \
 """2009-09-27 | conquer the world  (projects)
 2009-09-21 | recipies  (pim)
 2009-09-20 | R&D  (reminders)"""
 
-    search_results = \
+search_results = \
 """addressbook : 35 : John Doe (cell) - 555-5512
 business cards : 21 : John Doe Sr. (office) - 555-5534"""
 
-    specific_search_results = \
+specific_search_results = \
 """dell 750 : 12 : Install python 2.5
 python-work : 2 : to use a python buildbot for automatic bundling
 OpenSource Conference X : 120 : Presentation: Python by all means"""
 
-    note_content = \
+note_content = \
 """TODO
 
 Build unit tests for tomtom
 Chew up some gum
 Play pool with the queen of england"""
 
+class Tomtom(object):
+    """Application class for Tomtom. Lists, prints or searches for notes in Tomboy via dbus."""
+    def list_all_notes(self):
+        #return self.listing(self.get_all_notes())
+        return formatted_list + appendix
+
+def main():
     parser = optparse.OptionParser()
     parser.add_option("-l", "--list-all",
         dest="full_list", default=False, action="store_true",
@@ -46,8 +52,11 @@ Play pool with the queen of england"""
 
     (options, file_names) = parser.parse_args()
 
+    #TODO function to get notes
+    tomboy_interface = Tomtom()
+
     if options.full_list:
-        print formatted_list + appendix
+        print tomboy_interface.list_all_notes()
         return
     if options.search_pattern:
         if file_names:

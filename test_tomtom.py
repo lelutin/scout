@@ -89,6 +89,13 @@ class AcceptanceTests(unittest.TestCase):
         tomtom.main()
         self.assertEquals(specific_search_results + "\n", sys.stdout.getvalue())
 
+class TestListing(unittest.TestCase):
+    """
+    Tests in relation to code that handles the notes and lists them.
+    """
+    def test_list_notes(self):
+        self.assertTrue(False)
+
 if __name__ == "__main__":
     unittest.main()
 
