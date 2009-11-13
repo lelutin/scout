@@ -1,10 +1,8 @@
-#!/bin/env python
 # -*- coding: utf-8 -*-
+"""Acceptance tests for Tomtom. This defines the use cases and expected results"""
 import unittest
 import sys
 import StringIO
-from tomtom import Tomtom
-import mox
 
 import tomtom
 import test_data
@@ -58,31 +56,4 @@ class AcceptanceTests(unittest.TestCase):
         sys.argv = ["unused_prog_name", "-s", "python", "dell 750", "python-work", "OpenSource Conference X"]
         tomtom.main()
         self.assertEquals(test_data.specific_search_results + "\n", sys.stdout.getvalue())
-
-class TestListing(unittest.TestCase):
-    """
-    Tests in relation to code that handles the notes and lists them.
-    """
-    def setUp(self):
-        """setup a mox factory"""
-        self.m = mox.Mox()
-
-    def test_list_notes(self):
-        """Listing receives a list of notes"""
-        tt = Tomtom()
-        fake_list = self.m.CreateMock(list)
-
-        self.m.StubOutWithMock(tt, "listing")
-        self.m.StubOutWithMock(tt, "get_all_notes")
-        tt.get_all_notes().AndReturn(fake_list)
-        tt.listing(fake_list)
-        
-        self.m.ReplayAll()
-
-        tt.list_all_notes()
-
-        self.m.VerifyAll()
-
-if __name__ == "__main__":
-    unittest.main()
 
