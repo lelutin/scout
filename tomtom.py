@@ -36,10 +36,19 @@ Build unit tests for tomtom
 Chew up some gum
 Play pool with the queen of england"""
 
+class TomboyCommunicator(object):
+    """Interface between the application and Tomboy's dbus link"""
+    def get_notes(self):
+        """Get a list of notes from Tomboy"""
+        pass
+
 class Tomtom(object):
     """Application class for Tomtom. Lists, prints or searches for notes in Tomboy via dbus."""
+    def __init__(self):
+        self.tomboy_communicator = TomboyCommunicator()
+
     def list_all_notes(self):
-        return self.listing(self.get_all_notes())
+        return self.listing(self.tomboy_communicator.get_notes())
 
     def listing(self, notes):
         """Receives a list of notes and prints them out to stdout"""
