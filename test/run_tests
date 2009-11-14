@@ -3,7 +3,7 @@
 import unittest
 
 if __name__ == "__main__":
-    from acceptance import *
-    from application import *
+    from test_acceptance import *
+    from test_application import *
     unittest.main()
 
