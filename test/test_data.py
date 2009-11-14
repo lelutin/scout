@@ -54,3 +54,7 @@ URL_list =  [
     "note://tomboy/fd6fa06f-836c-48de-961b-86e31ebc0fb0",
 ]
 
+#TODO change elements into note objects
+full_list_of_notes = [
+    "meuh",
+]
