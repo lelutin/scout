@@ -8,13 +8,28 @@ import test_data
 
 class TestListing(unittest.TestCase):
     """Tests in relation to code that handles the notes and lists them"""
+    def stub_constructor(self):
+        pass
+
+    def without_constructor(self, cls):
+        """Stub out the constructor of a class to remove external dependancy to its __init__ function"""
+        old_constructor = cls.__init__
+        cls.__init__ = self.stub_constructor
+        instance = cls()
+        cls.__init__ = old_constructor
+        return instance
+
     def setUp(self):
         """setup a mox factory"""
         self.m = mox.Mox()
 
+    def tearDown(self):
+        """Remove stubs"""
+        self.m.UnsetStubs()
+
     def test_list_notes(self):
         """Listing receives a list of notes"""
-        tt = Tomtom()
+        tt = self.without_constructor(Tomtom)
         tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
         fake_list = self.m.CreateMock(list)
         self.m.StubOutWithMock(tt, "listing")
@@ -31,7 +46,11 @@ class TestListing(unittest.TestCase):
 
     def test_tomboy_communicator_is_initialized(self):
         """A fresh Tommtom instance should have its Tomboy communicator initiated"""
+        # Avoid calling the Communicator's constructor as it creates a dbus connection
+        old_constructor = TomboyCommunicator.__init__
+        TomboyCommunicator.__init__ = self.stub_constructor
         self.assertTrue( isinstance(Tomtom().tomboy_communicator, TomboyCommunicator) )
+        TomboyCommunicator.__init__ = old_constructor
 
     def test_TomboyCommunicator_constructor(self):
         """Communicator must be initialized upon instatiation"""
