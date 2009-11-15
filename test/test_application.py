@@ -68,8 +68,37 @@ class TestListing(unittest.TestCase):
         #self.assertEquals( test_data.full_list_of_notes, tomboy_communicator.get_notes() )
 
         self.m.VerifyAll()
-    
-    def test_note_listing(self):
+
+    def test_TomboyNote_constructor(self):
+        """A new note initialized with data should initialize its instance variables"""
+        uri1 = "note://something-like-this"
+        title = "Name"
+        date_int64 = dbus.Int64()
+        tags = ["tag1", "tag2"]
+        # Construct with all data and a dbus.Int64 date
+        tn = TomboyNote(uri=uri1, title=title, date=date_int64, tags=tags)
+
+        self.assertEqual(uri1, tn.uri)
+        self.assertEqual(title, tn.title)
+        self.assertEqual(date_int64, tn.date)
+        # Order is not important
+        self.assertEqual( set(tags), set(tn.tags) )
+
+        # Construct with only uri, rest is default
+        uri2 = "note://another-false-uri"
+        tn = TomboyNote(uri=uri2)
+        self.assertEqual(tn.uri, uri2)
+        self.assertEqual(tn.title, "")
+        self.assertEqual(tn.date, dbus.Int64() )
+        self.assertEqual(tn.tags, [])
+
+        # One more thing: the date can be entered with a datetime.datetime
+        datetime_date = datetime.datetime(2009, 11, 13, 18, 42, 23)
+        tn = TomboyNote(uri="not important", date=datetime_date)
+
+        self.assertEqual(dbus.Int64(time.mktime(datetime_date.timetuple())), tn.date )
+
+    def pending_test_note_listing(self):
         """Listing of a list of notes"""
         #TODO test Tomtom.listing
         pass

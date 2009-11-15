@@ -29,7 +29,7 @@ class AcceptanceTests(unittest.TestCase):
 
     def test_only_note_name(self):
         """ Acceptance: Only note name is passed as argument : display the note """
-        sys.argv = ["unused_prog_name", "TODO"]
+        sys.argv = ["unused_prog_name", "TODO-list"]
         tomtom.main()
         self.assertEquals(test_data.expected_note_content + "\n", sys.stdout.getvalue())
 
