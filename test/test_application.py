@@ -3,7 +3,10 @@
 import unittest
 import mox
 
-from tomtom import Tomtom, TomboyCommunicator
+from tomtom import *
+import datetime
+import time
+import dbus
 import test_data
 
 class TestListing(unittest.TestCase):
@@ -54,18 +57,50 @@ class TestListing(unittest.TestCase):
 
     def test_TomboyCommunicator_constructor(self):
         """Communicator must be initialized upon instatiation"""
-        #TODO test TomboyCommunicator.__init__
-        pass
+        old_SessionBus = dbus.SessionBus
+        dbus.SessionBus = self.m.CreateMockAnything()
+        old_Interface = dbus.Interface
+        dbus.Interface = self.m.CreateMockAnything()
+        session_bus = self.m.CreateMockAnything()
+        dbus_object = self.m.CreateMockAnything()
+        dbus_interface = self.m.CreateMockAnything()
 
-    def test_get_notes(self):
-        """Get a list of all the notes"""
-        tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
-        #What does it need to use?
+        dbus.SessionBus().AndReturn(session_bus)
+        session_bus.get_object("org.gnome.Tomboy", "/org/gnome/Tomboy/RemoteControl").AndReturn(dbus_object)
+        dbus.Interface(dbus_object, "org.gnome.Tomboy.RemoteControl").AndReturn(dbus_interface)
 
         self.m.ReplayAll()
 
-        #TODO this needs to be done
-        #self.assertEquals( test_data.full_list_of_notes, tomboy_communicator.get_notes() )
+        self.assertEqual( dbus_interface, TomboyCommunicator().comm )
+
+        self.m.VerifyAll()
+        dbus.SessionBus = old_SessionBus
+        dbus.Interface = old_Interface
+
+    def test_get_notes(self):
+        """Construct a list of all the notes"""
+        tomboy_communicator = self.without_constructor(TomboyCommunicator)
+
+        tomboy_communicator.comm = self.m.CreateMockAnything()
+        self.m.StubOutWithMock(tomboy_communicator.comm, "ListAllNotes")
+        self.m.StubOutWithMock(tomboy_communicator.comm, "GetNoteTitle")
+        self.m.StubOutWithMock(tomboy_communicator.comm, "GetNoteChangeDate")
+        self.m.StubOutWithMock(tomboy_communicator.comm, "GetTagsForNote")
+        list_of_uris = dbus.Array([note.uri for note in test_data.full_list_of_notes])
+        tomboy_communicator.comm.ListAllNotes().AndReturn( list_of_uris )
+        for note in [n for n in test_data.full_list_of_notes if "Template" not in n.title]:
+            tomboy_communicator.comm.GetNoteTitle(note.uri).AndReturn(note.title)
+            tomboy_communicator.comm.GetNoteChangeDate(note.uri).AndReturn(note.date)
+            tomboy_communicator.comm.GetTagsForNote(note.uri).AndReturn(note.tags)
+
+        self.m.ReplayAll()
+
+        # TomboyNotes are unhashable so convert to dictionaries and check for list membership
+        expectation = [{"uri":n.uri, "title":n.title, "date":n.date, "tags":n.tags} for n in test_data.full_list_of_notes]
+        # Order is not important
+        for note in tomboy_communicator.get_notes():
+            if not {"uri":note.uri, "title":note.title, "date":note.date, "tags":note.tags} in expectation:
+                self.fail("Note named %(title)s dated %(date)s with uri %(uri)s and tags [%(tags)s] not found in expectation: [%(expectation)s]" % {"title": note.title, "date": note.date, "uri": note.uri, "tags": ",".join(note.tags), "expectation": ",".join(expectation)})
 
         self.m.VerifyAll()
 

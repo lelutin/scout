@@ -2,19 +2,17 @@
 # -*- coding: utf-8 -*-
 import sys
 import optparse
+import dbus
+
+from tomboy_utils import *
 
 #FIXME once the app is done, flush this import
 from test import test_data
 
-class TomboyCommunicator(object):
-    """Interface between the application and Tomboy's dbus link"""
-    def get_notes(self):
-        """Get a list of notes from Tomboy"""
-        return test_data.full_list_of_notes
-
 class Tomtom(object):
     """Application class for Tomtom. Lists, prints or searches for notes in Tomboy via dbus."""
     def __init__(self):
+        super(Tomtom, self).__init__()
         self.tomboy_communicator = TomboyCommunicator()
 
     def list_all_notes(self):
