@@ -3,6 +3,7 @@
 import unittest
 import mox
 
+import os
 from tomtom import *
 import datetime
 import time
@@ -88,7 +89,7 @@ class TestListing(unittest.TestCase):
         self.m.StubOutWithMock(tomboy_communicator.comm, "GetTagsForNote")
         list_of_uris = dbus.Array([note.uri for note in test_data.full_list_of_notes])
         tomboy_communicator.comm.ListAllNotes().AndReturn( list_of_uris )
-        for note in [n for n in test_data.full_list_of_notes if "Template" not in n.title]:
+        for note in test_data.full_list_of_notes:
             tomboy_communicator.comm.GetNoteTitle(note.uri).AndReturn(note.title)
             tomboy_communicator.comm.GetNoteChangeDate(note.uri).AndReturn(note.date)
             tomboy_communicator.comm.GetTagsForNote(note.uri).AndReturn(note.tags)
@@ -133,8 +134,57 @@ class TestListing(unittest.TestCase):
 
         self.assertEqual(dbus.Int64(time.mktime(datetime_date.timetuple())), tn.date )
 
-    def pending_test_note_listing(self):
+    def test_note_listing(self):
         """Listing of a list of notes"""
-        #TODO test Tomtom.listing
-        pass
+        tt = self.without_constructor(Tomtom)
+        for note in test_data.full_list_of_notes:
+            self.m.StubOutWithMock(note, "listing")
+            tag_text = ""
+            if len(note.tags):
+                tag_text = "  (" + ", ".join(note.tags) + ")"
+
+            note.listing().AndReturn("%(date)s | %(title)s%(tags)s" %
+                {
+                    "date": datetime.datetime.fromtimestamp(note.date).isoformat()[:10],
+                    "title": note.title,
+                    "tags": tag_text
+                }
+            )
+
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            test_data.expected_list + os.linesep + test_data.list_appendix,
+            tt.listing(test_data.full_list_of_notes)
+        )
+
+        self.m.VerifyAll()
+
+    def test_TomboyNote_listing(self):
+        """Listing for one note"""
+        date_64 = dbus.Int64(1254553804L)
+        note = TomboyNote(
+            uri="note://tomboy/fake-uri",
+            title="Test",
+            date=date_64,
+            tags=["tag1", "tag2"]
+        )
+        #self.m.StubOutWithMock(datetime.datetime, "fromtimestamp")
+        #fake_date = self.m.CreateMockAnything()
+        #datetime.datetime.fromtimestamp(date_64).AndReturn( fake_date )
+        #fake_date.isoformat().AndReturn("2009-10-03T03:10:04")
+
+        #self.m.ReplayAll()
+
+        expected_listing = "2009-10-03 | Test  (tag1, tag2)"
+        self.assertEqual( expected_listing, note.listing() )
+
+        #self.m.VerifyAll()
+
+        # Now try other cases:
+        note.tags = []
+        note.title = ""
+        special_listing = "2009-10-03 | _note doesn't have a name_"
+        self.assertEqual( special_listing, note.listing() )
 

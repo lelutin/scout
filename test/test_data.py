@@ -7,21 +7,21 @@ from tomboy_utils import TomboyNote
 # With tomboy being a dbus interface to the Tomboy application:
 # >>> [(datetime.fromtimestamp(tomboy.GetNoteChangeDate(url)),tomboy.GetNoteChangeDate(url)) for url in l]
 expected_list = \
-"""2009-11-9 | addressbook  (pim)
-2009-11-2 | TODO-list  (reminders)
-2009-11-2 | Bash  (reminders)
+"""2009-11-09 | addressbook  (pim)
+2009-11-02 | TODO-list  (reminders)
+2009-11-02 | Bash  (reminders)
 2009-10-22 | dell 750  (projects)
 2009-10-22 | python-work
 2009-10-18 | TDD
 2009-10-18 | OpenSource Conference X
-2009-10-3 | business contacts  (pim)
-2009-10-1 | japanese  (reminders)
-2009-9-19 | Webpidgin  (projects)"""
+2009-10-03 | business contacts  (pim)
+2009-10-01 | japanese  (reminders)
+2009-09-19 | Webpidgin  (projects)"""
 
 list_appendix = \
-"""2009-9-19 | conquer the world  (projects)
-2009-9-19 | recipies
-2009-9-19 | R&D  (reminders)"""
+"""2009-09-19 | conquer the world  (projects)
+2009-09-19 | recipies
+2009-09-19 | R&D  (reminders)"""
 
 search_results = \
 """addressbook : 35 : John Doe (cell) - 555-5512

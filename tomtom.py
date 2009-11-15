@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
+import os
 import optparse
 import dbus
 
@@ -20,7 +21,7 @@ class Tomtom(object):
 
     def listing(self, notes):
         """Receives a list of notes and prints them out to stdout"""
-        return test_data.expected_list + test_data.list_appendix
+        return os.linesep.join( [note.listing() for note in notes] )
 
     def get_all_notes(self):
         """return all notes according to current filters"""

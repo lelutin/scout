@@ -53,3 +53,20 @@ class TomboyNote(object):
         else:
             self.date = date
 
+    def listing(self):
+        """Return a listing for this note"""
+        printable_title = self.title
+        if not self.title:
+            printable_title = "_note doesn't have a name_"
+
+        printable_tags = ""
+        if len(self.tags):
+            printable_tags = "  (" + ", ".join(self.tags) + ")"
+
+        return "%(date)s | %(title)s%(tags)s" % \
+            {
+                "date": datetime.datetime.fromtimestamp(self.date).isoformat()[:10],
+                "title": printable_title,
+                "tags": printable_tags,
+            }
+
