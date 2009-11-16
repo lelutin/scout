@@ -23,10 +23,6 @@ class Tomtom(object):
         """Receives a list of notes and prints them out to stdout"""
         return os.linesep.join( [note.listing() for note in notes] )
 
-    def get_all_notes(self):
-        """return all notes according to current filters"""
-        pass
-
 def main():
     parser = optparse.OptionParser()
     parser.add_option("-l", "--list-all",

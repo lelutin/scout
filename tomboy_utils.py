@@ -3,6 +3,7 @@
 import dbus
 import datetime
 import time
+import sys
 
 class ConnectionError(Exception):
     """Simple exception representing an error contacting Tomboy via dbus"""
