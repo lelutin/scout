@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """test data for tomtom"""
+import os
 import dbus
 from tomboy_utils import TomboyNote
 
@@ -32,12 +33,16 @@ specific_search_results = \
 python-work : 2 : to use a python buildbot for automatic bundling
 OpenSource Conference X : 120 : Presentation: Python by all means"""
 
+search_no_argument_error = "Error: You must specify a pattern to perform a search"
+
 expected_note_content = \
 """TODO-list
 
 Build unit tests for tomtom
 Chew up some gum
 Play pool with the queen of england"""
+
+display_no_note_name_error = "Error: You need to specify a note name to display it"
 
 full_list_of_notes = [
     TomboyNote(
@@ -119,3 +124,36 @@ full_list_of_notes = [
         tags=["reminders", ]
     ),
 ]
+
+help_usage = """Usage: app_name (-h|--help) [action]
+       app_name <action> [-h|--help] [options]"""
+
+help_more_details = """For more details, use option -h"""
+
+help_action_list = os.linesep.join([
+    help_usage,
+    "",
+    """Options depend on what action you are taking. To obtain details on options for a particular action, combine -h or --help and the action name.
+
+Here is a list of all the available actions:
+  list
+  display
+  search""",
+])
+
+help_details_list = """Usage: app_name list [-h|-a]
+
+Options:
+  -h, --help  show this help message and exit
+  -a, --all   List all the notes"""
+
+help_details_display = """Usage: app_name display [-h] [note_name ...]
+
+Options:
+  -h, --help  show this help message and exit"""
+
+help_details_search = """Usage: app_name search [-h] <search_pattern> [note_name ...]
+
+Options:
+  -h, --help  show this help message and exit"""
+

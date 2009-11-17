@@ -18,6 +18,8 @@ class AcceptanceTests(unittest.TestCase):
     def setUp(self):
         self.old_stdout = sys.stdout
         sys.stdout = StringIO.StringIO()
+        self.old_stderr = sys.stderr
+        sys.stderr = StringIO.StringIO()
         self.old_argv = sys.argv
         self.m = mox.Mox()
 
@@ -36,6 +38,7 @@ class AcceptanceTests(unittest.TestCase):
         dbus.Interface(dbus_object, "org.gnome.Tomboy.RemoteControl").AndReturn(self.dbus_interface)
 
     def tearDown(self):
+        sys.stderr = self.old_stderr
         sys.stdout = self.old_stdout
         sys.argv = self.old_argv
         dbus.SessionBus = self.old_SessionBus
@@ -43,37 +46,39 @@ class AcceptanceTests(unittest.TestCase):
         self.m.UnsetStubs()
 
     def test_no_argument(self):
-        """ Acceptance: Application called without arguments should print a list of the last 10 notes """
+        """Acceptance: Application called without arguments must print usage"""
+        sys.argv = ["app_name", ]
+        tomtom.main()
+        self.assertEqual(
+            os.linesep.join([
+                test_data.help_usage,
+                "",
+                test_data.help_more_details,
+            ]) + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+    def test_unknown_action(self):
+        """Acceptance: Giving an unknown action name must print an error"""
+        sys.argv = ["app_name", "unexistant_action"]
+        tomtom.main()
+        self.assertEqual(
+            "app_name: unexistant_action is not a valid action. Use option -h for a list of available actions." + os.linesep,
+            sys.stderr.getvalue()
+        )
+
+    def test_action_list(self):
+        """ Acceptance: Action "list" should print a list of the last 10 notes """
         # Mock out dbus interaction for note listing
         #TODO really mock things out
         self.m.ReplayAll()
 
-        sys.argv = ["unused_prog_name", ]
+        sys.argv = ["unused_prog_name", "list"]
         tomtom.main()
-        self.assertEquals(test_data.expected_list + "\n", sys.stdout.getvalue())
-
-    def test_only_note_name(self):
-        """ Acceptance: Only note name is passed as argument : display the note """
-        # Mock out dbus interaction for note fetching
-        #TODO really mock things out
-        self.m.ReplayAll()
-
-        sys.argv = ["unused_prog_name", "TODO-list"]
-        tomtom.main()
-        self.assertEquals(test_data.expected_note_content + "\n", sys.stdout.getvalue())
-
-    def test_note_does_not_exist(self):
-        """ Acceptance: Specified note non-existant should display an error message """
-        # Mock out dbus interaction for note fetching
-        #TODO really mock things out
-        self.m.ReplayAll()
-
-        sys.argv = ["unused_prog_name", "unexistant"]
-        tomtom.main()
-        self.assertEquals("Note named \"unexistant\" not found.\n", sys.stdout.getvalue())
+        self.assertEquals(test_data.expected_list + os.linesep, sys.stdout.getvalue())
 
     def test_full_list(self):
-        """ Acceptance: -l argument should produce a list of all articles """
+        """ Acceptance: Action "list" with -a argument should produce a list of all notes """
         # Mock out dbus note list fetching:
         self.dbus_interface.ListAllNotes().AndReturn([n.uri for n in test_data.full_list_of_notes])
         for note in test_data.full_list_of_notes:
@@ -84,27 +89,104 @@ class AcceptanceTests(unittest.TestCase):
         self.m.ReplayAll()
 
         # Now test the application
-        sys.argv = ["unused_prog_name", "-l"]
+        sys.argv = ["unused_prog_name", "list", "-a"]
         tomtom.main()
         self.assertEquals( os.linesep.join([test_data.expected_list, test_data.list_appendix]) + os.linesep, sys.stdout.getvalue() )
 
+    def test_display_note(self):
+        """ Acceptance: Action "display" should print the content of the note with the given name """
+        # Mock out dbus interaction for note fetching
+        #TODO really mock things out
+        self.m.ReplayAll()
+
+        sys.argv = ["unused_prog_name", "display", "TODO-list"]
+        tomtom.main()
+        self.assertEquals(test_data.expected_note_content + os.linesep, sys.stdout.getvalue())
+
+    def test_note_does_not_exist(self):
+        """ Acceptance: Specified note non-existant should display an error message """
+        # Mock out dbus interaction for note fetching
+        #TODO really mock things out
+        self.m.ReplayAll()
+
+        sys.argv = ["unused_prog_name", "display", "unexistant"]
+        tomtom.main()
+        self.assertEquals("""Note named "unexistant" not found.""" + os.linesep, sys.stderr.getvalue())
+
+    def test_display_zero_argument(self):
+        """ Acceptance: Action "display" with no argument should print an error """
+        sys.argv = ["app_name", "display"]
+        tomtom.main()
+        self.assertEquals(
+            test_data.display_no_note_name_error + os.linesep,
+            sys.stderr.getvalue()
+        )
+
     def test_search(self):
-        """ Acceptance: -s argument should execute a case independant search within all notes """
+        """ Acceptance: Action "search" should execute a case independant search within all notes """
         # Mock out dbus interaction for searching in notes
         #TODO really mock things out
         self.m.ReplayAll()
 
-        sys.argv = ["unused_prog_name", "-s", "john doe"]
+        sys.argv = ["unused_prog_name", "search", "john doe"]
         tomtom.main()
-        self.assertEquals(test_data.search_results + "\n", sys.stdout.getvalue())
+        self.assertEquals(test_data.search_results + os.linesep, sys.stdout.getvalue())
 
     def test_search_specific_notes(self):
-        """ Acceptance: Giving a space separated list of note names should restrict search within those notes """
+        """ Acceptance: Giving a list of note names to action "search" should restrict the search within those notes """
         # Mock out dbus interaction for searching in notes
         #TODO really mock things out
         self.m.ReplayAll()
 
-        sys.argv = ["unused_prog_name", "-s", "python", "dell 750", "python-work", "OpenSource Conference X"]
+        sys.argv = ["unused_prog_name", "search", "python", "dell 750", "python-work", "OpenSource Conference X"]
         tomtom.main()
-        self.assertEquals(test_data.specific_search_results + "\n", sys.stdout.getvalue())
+        self.assertEquals(test_data.specific_search_results + os.linesep, sys.stdout.getvalue())
+
+    def test_search_zero_arguments(self):
+        """ Acceptance: Action "search" with no argument must print an error """
+        sys.argv = ["unused_prog_name", "search"]
+        tomtom.main()
+        self.assertEquals(
+            test_data.search_no_argument_error + os.linesep,
+            sys.stderr.getvalue()
+        )
+
+    def test_help_on_base_level(self):
+        """ Acceptance: Using -h or --help alone should print a complete help text """
+        sys.argv = ["app_name", "-h"]
+        tomtom.main()
+        self.assertEquals(
+            test_data.help_action_list + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+    def verify_help_text(self, args, text):
+        sys.argv = args
+        # Mock out sys.exit : optparse calls this when help is displayed
+        self.m.StubOutWithMock(sys, "exit")
+        sys.exit(0).AndRaise(SystemExit)
+
+        self.m.ReplayAll()
+
+        self.assertRaises(SystemExit, tomtom.main)
+        self.assertEquals(
+            text + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+    def test_help_before_action_name(self):
+        """Acceptance: Using -h or --help before an action name should display help for this action """
+        self.verify_help_text(["app_name", "-h", "list"], test_data.help_details_list)
+
+    def test_help_display_specific(self):
+        """Acceptance: Detailed help using -h or --help after "display" action """
+        self.verify_help_text(["app_name", "display", "--help"], test_data.help_details_display)
+
+    def test_help_list_specific(self):
+        """Acceptance: Detailed help using -h or --help after "list" action """
+        self.verify_help_text(["app_name", "list", "--help"], test_data.help_details_list)
+
+    def test_help_search_specific(self):
+        """Acceptance: Detailed help using -h or --help after "search" action """
+        self.verify_help_text(["app_name", "search", "--help"], test_data.help_details_search)
 
