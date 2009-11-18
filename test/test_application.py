@@ -31,20 +31,20 @@ class TestListing(unittest.TestCase):
         """Remove stubs"""
         self.m.UnsetStubs()
 
-    def test_list_notes(self):
-        """Listing receives a list of notes"""
+    def test_list_all_notes(self):
+        """Listing: Retrieve a list of all notes"""
         tt = self.without_constructor(Tomtom)
         tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
         fake_list = self.m.CreateMock(list)
         self.m.StubOutWithMock(tt, "listing")
         self.m.StubOutWithMock(tt.tomboy_communicator, "get_notes")
 
-        tt.tomboy_communicator.get_notes().AndReturn(fake_list)
+        tt.tomboy_communicator.get_notes(None).AndReturn(fake_list)
         tt.listing(fake_list)
         
         self.m.ReplayAll()
 
-        tt.list_all_notes()
+        tt.list_notes()
 
         self.m.VerifyAll()
 

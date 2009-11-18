@@ -45,6 +45,14 @@ class AcceptanceTests(unittest.TestCase):
         dbus.Interface = self.old_Interface
         self.m.UnsetStubs()
 
+    def mock_out_listing(self, notes):
+        """ Create mocks for note listing via dbus """
+        self.dbus_interface.ListAllNotes().AndReturn([n.uri for n in notes])
+        for note in notes:
+            self.dbus_interface.GetNoteTitle(note.uri).AndReturn(note.title)
+            self.dbus_interface.GetNoteChangeDate(note.uri).AndReturn(note.date)
+            self.dbus_interface.GetTagsForNote(note.uri).AndReturn(note.tags)
+
     def test_no_argument(self):
         """Acceptance: Application called without arguments must print usage"""
         sys.argv = ["app_name", ]
@@ -69,22 +77,19 @@ class AcceptanceTests(unittest.TestCase):
 
     def test_action_list(self):
         """ Acceptance: Action "list" should print a list of the last 10 notes """
-        # Mock out dbus interaction for note listing
-        #TODO really mock things out
+        self.mock_out_listing(test_data.full_list_of_notes[:10])
+
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "list"]
         tomtom.main()
         self.assertEquals(test_data.expected_list + os.linesep, sys.stdout.getvalue())
 
+        self.m.VerifyAll()
+
     def test_full_list(self):
         """ Acceptance: Action "list" with -a argument should produce a list of all notes """
-        # Mock out dbus note list fetching:
-        self.dbus_interface.ListAllNotes().AndReturn([n.uri for n in test_data.full_list_of_notes])
-        for note in test_data.full_list_of_notes:
-            self.dbus_interface.GetNoteTitle(note.uri).AndReturn(note.title)
-            self.dbus_interface.GetNoteChangeDate(note.uri).AndReturn(note.date)
-            self.dbus_interface.GetTagsForNote(note.uri).AndReturn(note.tags)
+        self.mock_out_listing(test_data.full_list_of_notes)
 
         self.m.ReplayAll()
 
@@ -92,6 +97,8 @@ class AcceptanceTests(unittest.TestCase):
         sys.argv = ["unused_prog_name", "list", "-a"]
         tomtom.main()
         self.assertEquals( os.linesep.join([test_data.expected_list, test_data.list_appendix]) + os.linesep, sys.stdout.getvalue() )
+
+        self.m.VerifyAll()
 
     def test_display_note(self):
         """ Acceptance: Action "display" should print the content of the note with the given name """

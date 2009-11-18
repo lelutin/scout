@@ -16,8 +16,8 @@ class Tomtom(object):
         super(Tomtom, self).__init__()
         self.tomboy_communicator = TomboyCommunicator()
 
-    def list_all_notes(self):
-        return self.listing(self.tomboy_communicator.get_notes())
+    def list_notes(self, count_limit=None):
+        return self.listing(self.tomboy_communicator.get_notes(count_limit))
 
     def listing(self, notes):
         """Receives a list of notes and prints them out to stdout"""
@@ -35,9 +35,9 @@ def action_list_notes(interface_class, args):
     tomboy_interface = interface_class()
 
     if options.full_list:
-        print tomboy_interface.list_all_notes()
+        print tomboy_interface.list_notes()
     else:
-        print test_data.expected_list
+        print tomboy_interface.list_notes(count_limit=10)
 
 def action_print_notes(interface_class, args):
     """ Use the tomtom object to print the content of one or more notes """

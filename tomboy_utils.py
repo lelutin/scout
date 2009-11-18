@@ -26,10 +26,15 @@ class TomboyCommunicator(object):
             (dummy1, error, dummy2) = sys.exc_info()
             raise ConnectionError("Could not establish connection with Tomboy. Is it running?: %s" % (error, ) )
 
-    def get_notes(self):
-        """Get a list of notes from Tomboy"""
+    def get_notes(self, count_limit=None):
+        """Get a list of `count_limit` notes from Tomboy. If count_limit is null, get all notes"""
         list_of_notes = []
-        for uri in self.comm.ListAllNotes():
+        uris = self.comm.ListAllNotes()
+
+        if count_limit != None:
+            uris = uris[:count_limit]
+
+        for uri in uris:
             list_of_notes.append(
                 TomboyNote(
                     uri=uri,
