@@ -8,6 +8,10 @@ import sys
 class ConnectionError(Exception):
     """Simple exception representing an error contacting Tomboy via dbus"""
     pass
+
+class NoteNotFound(Exception):
+    """Simple exception raised when searching for a specific note that does not exist"""
+    pass
         
 class TomboyCommunicator(object):
     """Interface between the application and Tomboy's dbus link"""
@@ -26,25 +30,59 @@ class TomboyCommunicator(object):
             (dummy1, error, dummy2) = sys.exc_info()
             raise ConnectionError("Could not establish connection with Tomboy. Is it running?: %s" % (error, ) )
 
-    def get_notes(self, count_limit=None):
-        """Get a list of `count_limit` notes from Tomboy. If count_limit is null, get all notes"""
-        list_of_notes = []
+    def get_uris_for_n_notes(self, count_max):
+        """Get a list of notes and limit it to the `count_max` latest ones"""
         uris = self.comm.ListAllNotes()
 
-        if count_limit != None:
-            uris = uris[:count_limit]
+        if count_max != None:
+            uris = uris[:count_max]
 
-        for uri in uris:
+        return [(u, None) for u in uris]
+
+    def get_uris_by_name(self, names):
+        """Search for all the notes with the given names"""
+        uris = []
+
+        for name in names:
+            uri = self.comm.FindNote(name)
+            if uri == dbus.String(""):
+                raise NoteNotFound(name)
+
+            uris.append( (uri, name) )
+
+        return uris
+
+    def get_notes(self, count_limit=None, names=[]):
+        """
+        Get a list of notes from Tomboy.
+        `count_limit` can limit the number of notes returned. Set it to None (default value) to get all notes
+        If `names` is given a list of note names, it will restrict the search to only those notes
+        """
+        if names:
+            pairs = self.get_uris_by_name(names)
+        else:   
+            pairs = self.get_uris_for_n_notes(count_limit)
+
+        list_of_notes = []
+        for pair in pairs:
+            uri = pair[0]
+            note_title = pair[1]
+            if note_title is None:
+                note_title = self.comm.GetNoteTitle(uri)
             list_of_notes.append(
                 TomboyNote(
                     uri=uri,
-                    title=self.comm.GetNoteTitle(uri),
+                    title=note_title,
                     date=self.comm.GetNoteChangeDate(uri),
                     tags=self.comm.GetTagsForNote(uri)
                 )
             )
 
         return list_of_notes
+
+    def get_note_content(self, note):
+        """Takes a TomboyNote object and returns its contents"""
+        return self.comm.GetNoteContents(note.uri)
 
 class TomboyNote(object):
     """Object corresponding to a Tomboy note coming from dbus"""

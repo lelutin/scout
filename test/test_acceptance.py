@@ -100,25 +100,41 @@ class AcceptanceTests(unittest.TestCase):
 
         self.m.VerifyAll()
 
-    def test_display_note(self):
-        """ Acceptance: Action "display" should print the content of the note with the given name """
-        # Mock out dbus interaction for note fetching
-        #TODO really mock things out
+    def test_notes_displaying(self):
+        """ Acceptance: Action "display" should print the content of the notes with the given names """
+        todo = test_data.full_list_of_notes[1]
+        python_work = test_data.full_list_of_notes[4]
+        separator = os.linesep + "==========================" + os.linesep
+
+        self.dbus_interface.FindNote("TODO-list").AndReturn(todo.uri)
+        self.dbus_interface.FindNote("python-work").AndReturn(python_work.uri)
+        self.dbus_interface.GetNoteChangeDate(todo.uri).AndReturn(todo.date)
+        self.dbus_interface.GetTagsForNote(todo.uri).AndReturn(todo.tags)
+        self.dbus_interface.GetNoteChangeDate(python_work.uri).AndReturn(python_work.date)
+        self.dbus_interface.GetTagsForNote(python_work.uri).AndReturn(python_work.tags)
+
+        self.dbus_interface.GetNoteContents(todo.uri).AndReturn(test_data.expected_note_contents[0])
+        self.dbus_interface.GetNoteContents(python_work.uri).AndReturn(test_data.expected_note_contents[1])
+
         self.m.ReplayAll()
 
-        sys.argv = ["unused_prog_name", "display", "TODO-list"]
+        sys.argv = ["unused_prog_name", "display", "TODO-list", "python-work"]
         tomtom.main()
-        self.assertEquals(test_data.expected_note_content + os.linesep, sys.stdout.getvalue())
+        self.assertEquals(separator.join(test_data.expected_note_contents) + os.linesep, sys.stdout.getvalue())
+
+        self.m.VerifyAll()
 
     def test_note_does_not_exist(self):
         """ Acceptance: Specified note non-existant should display an error message """
-        # Mock out dbus interaction for note fetching
-        #TODO really mock things out
+        self.dbus_interface.FindNote("unexistant").AndReturn(dbus.String(""))
+
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "display", "unexistant"]
         tomtom.main()
         self.assertEquals("""Note named "unexistant" not found.""" + os.linesep, sys.stderr.getvalue())
+
+        self.m.VerifyAll()
 
     def test_display_zero_argument(self):
         """ Acceptance: Action "display" with no argument should print an error """

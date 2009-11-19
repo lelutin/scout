@@ -9,7 +9,7 @@ from tomboy_utils import TomboyNote
 # >>> [(datetime.fromtimestamp(tomboy.GetNoteChangeDate(url)),tomboy.GetNoteChangeDate(url)) for url in l]
 expected_list = \
 """2009-11-09 | addressbook  (pim)
-2009-11-02 | TODO-list  (reminders)
+2009-11-02 | TODO-list  (reminders, pim)
 2009-11-02 | Bash  (reminders)
 2009-10-22 | dell 750  (projects)
 2009-10-22 | python-work
@@ -21,7 +21,7 @@ expected_list = \
 
 list_appendix = \
 """2009-09-19 | conquer the world  (projects)
-2009-09-19 | recipies
+2009-09-19 | recipes
 2009-09-19 | R&D  (reminders)"""
 
 search_results = \
@@ -35,12 +35,18 @@ OpenSource Conference X : 120 : Presentation: Python by all means"""
 
 search_no_argument_error = "Error: You must specify a pattern to perform a search"
 
-expected_note_content = \
-"""TODO-list
+expected_note_contents = [
+    """TODO-list  (reminders, pim)
 
 Build unit tests for tomtom
 Chew up some gum
-Play pool with the queen of england"""
+Play pool with the queen of england""",
+    """python-work
+
+I need to ask Shintarou to prepare things
+to use a python buildbot for automatic bundling
+for the project.""",
+]
 
 display_no_note_name_error = "Error: You need to specify a note name to display it"
 
@@ -55,7 +61,7 @@ full_list_of_notes = [
         uri="note://tomboy/30ae533a-2789-4789-a409-16a6f65edf54",
         title="TODO-list",
         date=dbus.Int64(1257140572L),
-        tags=["reminders", ]
+        tags=["reminders", "pim"]
     ),
     TomboyNote(
         uri="note://tomboy/4652f914-85dd-487d-b614-188242f52241",
@@ -113,7 +119,7 @@ full_list_of_notes = [
     ),
     TomboyNote(
         uri="note://tomboy/461fb1a2-1e02-4447-8891-c3c6fcbb26eb",
-        title="recipies",
+        title="recipes",
         date=dbus.Int64(1253340981L),
         tags=[]
     ),

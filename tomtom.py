@@ -20,11 +20,19 @@ class Tomtom(object):
         self.tomboy_communicator = TomboyCommunicator()
 
     def list_notes(self, count_limit=None):
+        """Entry point to listing notes. If specified, can limit the number of displayed notes"""
         return self.listing(self.tomboy_communicator.get_notes(count_limit))
 
     def listing(self, notes):
-        """Receives a list of notes and prints them out to stdout"""
+        """Receives a list of notes and returns information about them"""
         return os.linesep.join( [note.listing() for note in notes] )
+
+    def get_display_for_notes(self, names):
+        """Receives a list of note names and returns their contents"""
+        notes = self.tomboy_communicator.get_notes(names=names)
+
+        separator = os.linesep + "==========================" + os.linesep
+        return separator.join( [self.tomboy_communicator.get_note_content(note) for note in notes] )
 
 def action_list_notes(interface_class, args):
     """ Use the tomtom object to list notes """
@@ -57,11 +65,10 @@ def action_print_notes(interface_class, args):
 
     tomboy_interface = interface_class()
 
-    if file_names[0] == "unexistant":
-        print >> sys.stderr, """Note named "unexistant" not found."""
-        return
-
-    print test_data.expected_note_content
+    try:
+        print tomboy_interface.get_display_for_notes(file_names)
+    except NoteNotFound, e:
+        print >> sys.stderr, """Note named "%s" not found.""" % e
 
 def action_search_in_notes(interface_class, args):
     """ Use the tomtom object to search some text within notes """
