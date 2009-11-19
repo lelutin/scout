@@ -321,14 +321,23 @@ tetest"""
         """Display: Using the communicator, get the contents of one note"""
         tc = without_constructor(TomboyCommunicator)
         tc.comm = self.m.CreateMockAnything()
-
         note = self.m.CreateMockAnything()
+        note_content_lines = [
+            "note_name",
+            "",
+            "first line of text",
+            "second line",
+            "and stiiiiirrrrrike!",
+        ]
+        expected_result = list(note_content_lines)
+        expected_result[0] = "%s%s" % (note_content_lines[0], "  (tag1, tag2)")
 
-        tc.comm.GetNoteContents(note.uri)
+        tc.comm.GetNoteContents(note.uri).AndReturn( os.linesep.join(note_content_lines) )
+        note.tags = ["tag1", "tag2"]
 
         self.m.ReplayAll()
 
-        tc.get_note_content(note)
+        self.assertEqual( os.linesep.join(expected_result), tc.get_note_content(note) )
 
         self.m.VerifyAll()
 

@@ -4,6 +4,7 @@ import dbus
 import datetime
 import time
 import sys
+import os
 
 class ConnectionError(Exception):
     """Simple exception representing an error contacting Tomboy via dbus"""
@@ -82,7 +83,12 @@ class TomboyCommunicator(object):
 
     def get_note_content(self, note):
         """Takes a TomboyNote object and returns its contents"""
-        return self.comm.GetNoteContents(note.uri)
+        lines = self.comm.GetNoteContents(note.uri).split(os.linesep)
+        #TODO Oddly (but it is good), splitting the lines makes the indentation bullets appear.. come up with a test for this to stay
+        if note.tags:
+            lines[0] = "%s  (%s)" % ( lines[0], ", ".join(note.tags) )
+
+        return os.linesep.join(lines)
 
 class TomboyNote(object):
     """Object corresponding to a Tomboy note coming from dbus"""

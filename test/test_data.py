@@ -35,8 +35,8 @@ OpenSource Conference X : 120 : Presentation: Python by all means"""
 
 search_no_argument_error = "Error: You must specify a pattern to perform a search"
 
-expected_note_contents = [
-    """TODO-list  (reminders, pim)
+note_contents_from_dbus = [
+    """TODO-list
 
 Build unit tests for tomtom
 Chew up some gum
