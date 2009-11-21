@@ -29,9 +29,9 @@ search_results = \
 business contacts : 7 : John Doe Sr. (office) - 555-5534"""
 
 specific_search_results = \
-"""dell 750 : 12 : Install python 2.5
+"""dell 750 : 9 : python-libvirt - libvirt Python bindings
 python-work : 2 : to use a python buildbot for automatic bundling
-OpenSource Conference X : 120 : Presentation: Python by all means"""
+OpenSource Conference X : 15 : oops, and don't forget to talk about python"""
 
 search_no_argument_error = "Error: You must specify a pattern to perform a search"
 
@@ -53,7 +53,16 @@ Play pool with the queen of england""",
 something""",
     "dell 750": """dell 750
 
-something""",
+$ apt-cache search lxc
+libclxclient-dev - Development file for libclxclient
+libclxclient3 - X Window System C++ access library
+lxc - Linux containers userspace tools
+libvirt-bin - the programs for the libvirt library
+libvirt-dev - development files for the libvirt library
+libvirt-doc - documentation for the libvirt library
+libvirt0-dbg - library for interfacing with different virtualization systems
+python-libvirt - libvirt Python bindings
+libopencascade-ocaf-6.3.0 - OpenCASCADE CAE platform shared library""",
     "python-work": """python-work
 
 I need to ask Shintarou to prepare things
@@ -64,7 +73,21 @@ for the project.""",
 something""",
     "OpenSource Conference X": """OpenSource Conference X
 
-something""",
+Lorem ipsum vix ei inermis epicurei mnesarchum, quod graeci facete vis cu, sumo libris pro no. Quod vocibus rationibus ex mea, nam dicta tantas cetero et. Nulla aperiam nostrud ad est, id qui exerci feugiat rationibus, in sed affert facete eripuit. Ei nam oratio aperiri epicurei. His te kasd adipisci dissentiunt, laudem putant fabellas nam in. Homero causae scaevola sit cu.
+
+Mea ea puto malis mediocrem, ad dolorem expetenda iracundia vis. Cibo graece tamquam an mel, ne qui omnes aliquid tibique, has at tale sale vidit. Solum porro at per, usu denique officiis perfecto te. Has puto rebum impedit ex, duo modus diceret fastidii cu.
+
+Nibh impedit posidonium pro ea, sint quidam aperiam per ea, est laudem accommodare eu. Eos brute deserunt eu, no sit novum ignota detraxit, duo facer doctus ei. Qui in impedit ocurreret quaerendum, mei ad noluisse legendos torquatos, facete discere neglegentur ius ex. Nam ei legere vulputate constituto, ut pri virtute ancillae iracundia, vis et sanctus perfecto imperdiet. Te erant aeque dignissim sed, nibh ubique instructior ex vel. Ne docendi democritum scripserit has, vis ut elitr equidem, agam invidunt prodesset id vis.
+
+At vix facete scaevola. Ad erat explicari persequeris mei, et mei nullam fierent vulputate. Et oratio rationibus complectitur duo, an sit nominati consequuntur. Ea cum nulla scaevola dignissim, aeterno utroque interpretaris in sit. Altera vivendum lobortis quo an, vitae dolore iisque per et.
+
+Eum novum mucius propriae in, brute repudiare at quo. Mel elitr vidisse epicuri te, vim sonet accusam ancillae ut, his no movet maiorum instructior. Hinc eligendi corrumpit usu et, nam ne dolor aperiri, vix novum virtute ut. Nam et modus nihil exerci, te minim omittantur theophrastus eum.
+
+Te paulo vivendum accusamus cum, autem feugait salutatus an sit. Ex pro dicam virtute periculis, at sit odio solum interpretaris. Rebum nostrud legendos ad ius, ad feugait consetetur dissentias pri. Te iudico timeam percipit eum, has ex postea democritum theophrastus, ad ipsum ancillae pri. Te vis harum simul liberavisse, nihil fuisset dissentiunt eos no, in illud legimus percipit sed. Nam agam debitis placerat id, adversarium liberavisse his an.
+
+Mea elit munere nonummy at, ei sed sint nonummy consetetur, iudicabit efficiendi no sit. Sea ne appareat tractatos voluptatum, posse dicat hendrerit cum at, duo fabellas rationibus reprehendunt an. Sit an homero laudem labores, et oblique blandit aliquyam vel. No per officiis quaestio expetendis, vero omnium offendit mel in, sit no consulatu adolescens adipiscing. Quo id saepe elaboraret delicatissimi, eripuit ornatus utroque per ut, putant quodsi definitiones et nam.
+
+oops, and don't forget to talk about python""",
     "business contacts": """business contacts
 
 Elvis Presley - 111-1111
@@ -74,7 +97,8 @@ Mother Theresa - 000-0000
 Pidgeon in a Box - 918-3874
 Donald E. Knuth - 101-2020
 John Doe Sr. (office) - 555-5534
-Mister Anderson (secretary) - 123-4567""",
+Mister Anderson (secretary) - 123-4567
+Python McClean - 777-7777""",
     "japanese": """japanese
 
 something""",

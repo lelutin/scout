@@ -104,11 +104,8 @@ def action_search_in_notes(args):
     search_pattern = file_names[0]
     note_names = file_names[1:]
 
-    if not note_names:
-        for result in tomboy_interface.search_for_text(search_pattern=search_pattern, note_names=note_names):
-            print "%s : %s : %s" % (result["title"], result["line"], result["text"])
-    else:
-        print test_data.specific_search_results
+    for result in tomboy_interface.search_for_text(search_pattern=search_pattern, note_names=note_names):
+        print "%s : %s : %s" % (result["title"], result["line"], result["text"])
 
 # This dictionary is used to dispatch the actions and to list them for the -h option
 available_actions = {

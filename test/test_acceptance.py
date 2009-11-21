@@ -99,6 +99,14 @@ class AcceptanceTests(unittest.TestCase):
 
         self.m.VerifyAll()
 
+    def mock_out_get_notes_by_names(self, notes):
+        for note in notes:
+            self.dbus_interface.FindNote(note.title).AndReturn(note.uri)
+
+        for note in notes:
+            self.dbus_interface.GetNoteChangeDate(note.uri).AndReturn(note.date)
+            self.dbus_interface.GetTagsForNote(note.uri).AndReturn(note.tags)
+
     def test_notes_displaying(self):
         """ Acceptance: Action "display" should print the content of the notes with the given names """
         todo = test_data.full_list_of_notes[1]
@@ -108,12 +116,7 @@ class AcceptanceTests(unittest.TestCase):
         note_lines[0] = "%s  (reminders, pim)" % note_lines[0]
         expected_result_list = [ os.linesep.join(note_lines), test_data.note_contents_from_dbus["python-work"] ]
 
-        self.dbus_interface.FindNote("TODO-list").AndReturn(todo.uri)
-        self.dbus_interface.FindNote("python-work").AndReturn(python_work.uri)
-        self.dbus_interface.GetNoteChangeDate(todo.uri).AndReturn(todo.date)
-        self.dbus_interface.GetTagsForNote(todo.uri).AndReturn(todo.tags)
-        self.dbus_interface.GetNoteChangeDate(python_work.uri).AndReturn(python_work.date)
-        self.dbus_interface.GetTagsForNote(python_work.uri).AndReturn(python_work.tags)
+        self.mock_out_get_notes_by_names([todo, python_work])
 
         self.dbus_interface.GetNoteContents(todo.uri).AndReturn(test_data.note_contents_from_dbus["TODO-list"])
         self.dbus_interface.GetNoteContents(python_work.uri).AndReturn(test_data.note_contents_from_dbus["python-work"])
@@ -163,11 +166,19 @@ class AcceptanceTests(unittest.TestCase):
 
     def test_search_specific_notes(self):
         """ Acceptance: Giving a list of note names to action "search" should restrict the search within those notes """
-        # Mock out dbus interaction for searching in notes
-        #TODO really mock things out
+        requested_notes = [
+            test_data.full_list_of_notes[3],
+            test_data.full_list_of_notes[4],
+            test_data.full_list_of_notes[6],
+        ]
+
+        self.mock_out_get_notes_by_names(requested_notes)
+        for note in requested_notes:
+            self.dbus_interface.GetNoteContents(note.uri).AndReturn(test_data.note_contents_from_dbus[note.title])
+
         self.m.ReplayAll()
 
-        sys.argv = ["unused_prog_name", "search", "python", "dell 750", "python-work", "OpenSource Conference X"]
+        sys.argv = ["unused_prog_name", "search", "python"] + [n.title for n in requested_notes]
         tomtom.main()
         self.assertEquals(test_data.specific_search_results + os.linesep, sys.stdout.getvalue())
 
