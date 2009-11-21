@@ -25,8 +25,8 @@ list_appendix = \
 2009-09-19 | R&D  (reminders)"""
 
 search_results = \
-"""addressbook : 35 : John Doe (cell) - 555-5512
-business contacts : 21 : John Doe Sr. (office) - 555-5534"""
+"""addressbook : 5 : John Doe (cell) - 555-5512
+business contacts : 7 : John Doe Sr. (office) - 555-5534"""
 
 specific_search_results = \
 """dell 750 : 12 : Install python 2.5
@@ -35,18 +35,62 @@ OpenSource Conference X : 120 : Presentation: Python by all means"""
 
 search_no_argument_error = "Error: You must specify a pattern to perform a search"
 
-note_contents_from_dbus = [
-    """TODO-list
+note_contents_from_dbus = {
+    "addressbook": """addressbook
+
+Momma Chicken - 444-1919
+Père Noël - 464-6464
+Nakamura Takeshi - 01-20-39-48-57
+G.I. Jane (pager) - 555-1234
+John Doe (cell) - 555-5512""",
+    "TODO-list": """TODO-list
 
 Build unit tests for tomtom
 Chew up some gum
 Play pool with the queen of england""",
-    """python-work
+    "Bash": """Bash
+
+something""",
+    "dell 750": """dell 750
+
+something""",
+    "python-work": """python-work
 
 I need to ask Shintarou to prepare things
 to use a python buildbot for automatic bundling
 for the project.""",
-]
+    "TDD": """TDD
+
+something""",
+    "OpenSource Conference X": """OpenSource Conference X
+
+something""",
+    "business contacts": """business contacts
+
+Elvis Presley - 111-1111
+Kurosaki Ichigo - 444-5555
+God Himself (cell) - 999-9999
+Mother Theresa - 000-0000
+Pidgeon in a Box - 918-3874
+Donald E. Knuth - 101-2020
+John Doe Sr. (office) - 555-5534
+Mister Anderson (secretary) - 123-4567""",
+    "japanese": """japanese
+
+something""",
+    "Webpidgin": """Webpidgin
+
+something""",
+    "conquer the world": """conquer the world
+
+something""",
+    "recipes": """recipes
+
+something""",
+    "R&D": """R&D
+
+something""",
+}
 
 display_no_note_name_error = "Error: You need to specify a note name to display it"
 

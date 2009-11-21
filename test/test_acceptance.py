@@ -93,7 +93,6 @@ class AcceptanceTests(unittest.TestCase):
 
         self.m.ReplayAll()
 
-        # Now test the application
         sys.argv = ["unused_prog_name", "list", "-a"]
         tomtom.main()
         self.assertEquals( os.linesep.join([test_data.expected_list, test_data.list_appendix]) + os.linesep, sys.stdout.getvalue() )
@@ -105,9 +104,9 @@ class AcceptanceTests(unittest.TestCase):
         todo = test_data.full_list_of_notes[1]
         python_work = test_data.full_list_of_notes[4]
         separator = os.linesep + "==========================" + os.linesep
-        note_lines = test_data.note_contents_from_dbus[0].split(os.linesep)
+        note_lines = test_data.note_contents_from_dbus["TODO-list"].split(os.linesep)
         note_lines[0] = "%s  (reminders, pim)" % note_lines[0]
-        expected_result_list = [ os.linesep.join(note_lines), test_data.note_contents_from_dbus[1] ]
+        expected_result_list = [ os.linesep.join(note_lines), test_data.note_contents_from_dbus["python-work"] ]
 
         self.dbus_interface.FindNote("TODO-list").AndReturn(todo.uri)
         self.dbus_interface.FindNote("python-work").AndReturn(python_work.uri)
@@ -116,8 +115,8 @@ class AcceptanceTests(unittest.TestCase):
         self.dbus_interface.GetNoteChangeDate(python_work.uri).AndReturn(python_work.date)
         self.dbus_interface.GetTagsForNote(python_work.uri).AndReturn(python_work.tags)
 
-        self.dbus_interface.GetNoteContents(todo.uri).AndReturn(test_data.note_contents_from_dbus[0])
-        self.dbus_interface.GetNoteContents(python_work.uri).AndReturn(test_data.note_contents_from_dbus[1])
+        self.dbus_interface.GetNoteContents(todo.uri).AndReturn(test_data.note_contents_from_dbus["TODO-list"])
+        self.dbus_interface.GetNoteContents(python_work.uri).AndReturn(test_data.note_contents_from_dbus["python-work"])
 
         self.m.ReplayAll()
 
