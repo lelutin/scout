@@ -14,6 +14,47 @@ class NoteNotFound(Exception):
     """Simple exception raised when searching for a specific note that does not exist"""
     pass
         
+class Tomtom(object):
+    """Application class for Tomtom. Lists, prints or searches for notes in Tomboy via dbus."""
+    def __init__(self):
+        super(Tomtom, self).__init__()
+        self.tomboy_communicator = TomboyCommunicator()
+
+    def list_notes(self, count_limit=None):
+        """Entry point to listing notes. If specified, can limit the number of displayed notes"""
+        return self.listing(self.tomboy_communicator.get_notes(count_limit))
+
+    def listing(self, notes):
+        """Receives a list of notes and returns information about them"""
+        return os.linesep.join( [note.listing() for note in notes] )
+
+    def get_display_for_notes(self, names):
+        """Receives a list of note names and returns their contents"""
+        notes = self.tomboy_communicator.get_notes(names=names)
+
+        separator = os.linesep + "==========================" + os.linesep
+        return separator.join( [self.tomboy_communicator.get_note_content(note) for note in notes] )
+
+    def search_for_text(self, search_pattern, note_names=[]):
+        """Get concerned noted and search for the pattern in them"""
+        notes = self.tomboy_communicator.get_notes(names=note_names)
+        search_results = []
+
+        import re
+        for note in notes:
+            content = self.tomboy_communicator.get_note_content(note)
+            lines = content.split(os.linesep)[1:]
+            for index, line in enumerate(lines):
+                # Perform case-independant search of each word on each line
+                if re.search("(?i)%s" % (search_pattern, ), line):
+                    search_results.append({
+                        "title": note.title,
+                        "line": index,
+                        "text": line,
+                    })
+
+        return search_results
+
 class TomboyCommunicator(object):
     """Interface between the application and Tomboy's dbus link"""
     def __init__(self):
