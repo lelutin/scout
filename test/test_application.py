@@ -32,8 +32,8 @@ def without_constructor(cls):
     cls.__init__ = old_constructor
     return instance
 
-class TestApplication(unittest.TestCase):
-    """Tests for code that is not directly linked with one particular feature."""
+class BasicMocking(unittest.TestCase):
+    """Base class for including mox initialization and destruction for unit tests."""
     def setUp(self):
         """Setup a mox factory to be able to use mocks in tests."""
         self.m = mox.Mox()
@@ -42,6 +42,8 @@ class TestApplication(unittest.TestCase):
         """Remove stubs so that they don't interfere with other tests."""
         self.m.UnsetStubs()
 
+class TestApplication(BasicMocking):
+    """Tests for code that is not directly linked with one particular feature."""
     def test_tomboy_communicator_is_initialized(self):
         """Application: A fresh Tommtom instance should have its TomboyCommunicator instatiated."""
 
@@ -166,16 +168,8 @@ class TestApplication(unittest.TestCase):
 
         self.m.VerifyAll()
 
-class TestListing(unittest.TestCase):
+class TestListing(BasicMocking):
     """Tests for code that handles the notes and lists them."""
-    def setUp(self):
-        """Setup a mox factory to be able to use mocks in tests."""
-        self.m = mox.Mox()
-
-    def tearDown(self):
-        """Remove stubs so that they don't interfere with other tests."""
-        self.m.UnsetStubs()
-
     def test_list_all_notes(self):
         """Listing: Retrieve a list of all notes."""
         tt = without_constructor(Tomtom)
@@ -296,16 +290,8 @@ class TestListing(unittest.TestCase):
         """Listing: Print one note's information and verify format with no title and no tags."""
         self.verify_note_listing("", [], "_note doesn't have a name_", "")
 
-class TestDisplay(unittest.TestCase):
+class TestDisplay(BasicMocking):
     """Tests for code in relation to displaying notes"""
-    def setUp(self):
-        """Setup a mox factory to be able to use mocks in tests."""
-        self.m = mox.Mox()
-
-    def tearDown(self):
-        """Remove stubs so that they don't interfere with other tests."""
-        self.m.UnsetStubs()
-
     def test_get_display_for_notes(self):
         """Display: Tomtom.get_display_for_notes should return the contents of a list of notes separated by break lines."""
         tt = without_constructor(Tomtom)
@@ -359,16 +345,8 @@ tetest"""
 
         self.m.VerifyAll()
 
-class TestSearch(unittest.TestCase):
+class TestSearch(BasicMocking):
     """Tests for code that perform a textual search within notes."""
-    def setUp(self):
-        """Setup a mox factory to be able to use mocks in tests."""
-        self.m = mox.Mox()
-
-    def tearDown(self):
-        """Remove stubs so that they don't interfere with other tests."""
-        self.m.UnsetStubs()
-
     def test_search_for_text(self):
         """Search: Tomtom.search_for_text should trigger a research through requested notes."""
         tt = without_constructor(Tomtom)
