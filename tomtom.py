@@ -33,6 +33,26 @@ class Tomtom(object):
         separator = os.linesep + "==========================" + os.linesep
         return separator.join( [self.tomboy_communicator.get_note_content(note) for note in notes] )
 
+    def search_for_text(self, search_pattern, note_names=[]):
+        """Get concerned noted and search for the pattern in them"""
+        notes = self.tomboy_communicator.get_notes(names=note_names)
+        search_results = []
+
+        import re
+        for note in notes:
+            content = self.tomboy_communicator.get_note_content(note)
+            lines = content.split(os.linesep)[1:]
+            for index, line in enumerate(lines):
+                # Perform case-independant search of each word on each line
+                if re.search("(?i)%s" % (search_pattern, ), line):
+                    search_results.append({
+                        "title": note.title,
+                        "line": index,
+                        "text": line,
+                    })
+
+        return search_results
+
 def action_list_notes(args):
     """ Use the tomtom object to list notes """
     parser = optparse.OptionParser(usage="%prog list [-h|-a]")
@@ -84,10 +104,11 @@ def action_search_in_notes(args):
     search_pattern = file_names[0]
     note_names = file_names[1:]
 
-    if note_names:
-        print test_data.specific_search_results
+    if not note_names:
+        for result in tomboy_interface.search_for_text(search_pattern=search_pattern, note_names=note_names):
+            print "%s : %s : %s" % (result["title"], result["line"], result["text"])
     else:
-        print test_data.search_results
+        print test_data.specific_search_results
 
 # This dictionary is used to dispatch the actions and to list them for the -h option
 available_actions = {

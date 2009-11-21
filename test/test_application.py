@@ -341,3 +341,52 @@ tetest"""
 
         self.m.VerifyAll()
 
+class TestSearch(unittest.TestCase):
+    """Tests in relation textual search within notes"""
+    def setUp(self):
+        """setup a mox factory"""
+        self.m = mox.Mox()
+
+    def tearDown(self):
+        """Remove stubs"""
+        self.m.UnsetStubs()
+
+    def test_search_for_text(self):
+        """Search: Tomtom.search_for_text should trigger a research through requested notes"""
+        tt = without_constructor(Tomtom)
+        tt.tomboy_communicator = self.m.CreateMockAnything()
+
+        note_contents = {}
+        for note in test_data.full_list_of_notes:
+            content = test_data.note_contents_from_dbus[note.title]
+
+            if note.tags:
+                lines = content.split(os.linesep)
+                lines[0] =  "%s  (%s)" % (lines[0], ", ".join(note.tags) )
+                content = os.linesep.join(lines)
+
+            note_contents[note.title] = content
+
+        expected_result = [
+            {
+                "title": "addressbook",
+                "line": 5,
+                "text": "John Doe (cell) - 555-5512",
+            },
+            {
+                "title": "business contacts",
+                "line": 7,
+                "text": "John Doe Sr. (office) - 555-5534",
+            },
+        ]
+
+        tt.tomboy_communicator.get_notes(names=[]).AndReturn(test_data.full_list_of_notes)
+        for note in test_data.full_list_of_notes:
+            tt.tomboy_communicator.get_note_content(note).AndReturn(note_contents[note.title])
+
+        self.m.ReplayAll()
+
+        self.assertEqual( expected_result, tt.search_for_text(search_pattern="john doe") )
+
+        self.m.VerifyAll()
+

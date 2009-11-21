@@ -149,13 +149,17 @@ class AcceptanceTests(unittest.TestCase):
 
     def test_search(self):
         """ Acceptance: Action "search" should execute a case independant search within all notes """
-        # Mock out dbus interaction for searching in notes
-        #TODO really mock things out
+        self.mock_out_listing(test_data.full_list_of_notes)
+        for note in test_data.full_list_of_notes:
+            self.dbus_interface.GetNoteContents(note.uri).AndReturn(test_data.note_contents_from_dbus[note.title])
+
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "search", "john doe"]
         tomtom.main()
         self.assertEquals(test_data.search_results + os.linesep, sys.stdout.getvalue())
+
+        self.m.VerifyAll()
 
     def test_search_specific_notes(self):
         """ Acceptance: Giving a list of note names to action "search" should restrict the search within those notes """
@@ -166,6 +170,8 @@ class AcceptanceTests(unittest.TestCase):
         sys.argv = ["unused_prog_name", "search", "python", "dell 750", "python-work", "OpenSource Conference X"]
         tomtom.main()
         self.assertEquals(test_data.specific_search_results + os.linesep, sys.stdout.getvalue())
+
+        self.m.VerifyAll()
 
     def test_search_zero_arguments(self):
         """ Acceptance: Action "search" with no argument must print an error """
