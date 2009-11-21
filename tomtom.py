@@ -6,7 +6,6 @@
 import sys
 import os
 import optparse
-import dbus
 
 from tomboy_utils import *
 
@@ -34,7 +33,7 @@ class Tomtom(object):
         separator = os.linesep + "==========================" + os.linesep
         return separator.join( [self.tomboy_communicator.get_note_content(note) for note in notes] )
 
-def action_list_notes(interface_class, args):
+def action_list_notes(args):
     """ Use the tomtom object to list notes """
     parser = optparse.OptionParser(usage="%prog list [-h|-a]")
     parser.add_option("-a", "--all",
@@ -43,14 +42,14 @@ def action_list_notes(interface_class, args):
 
     (options, file_names) = parser.parse_args(args)
 
-    tomboy_interface = interface_class()
+    tomboy_interface = Tomtom()
 
     if options.full_list:
         print tomboy_interface.list_notes()
     else:
         print tomboy_interface.list_notes(count_limit=10)
 
-def action_print_notes(interface_class, args):
+def action_print_notes(args):
     """ Use the tomtom object to print the content of one or more notes """
     parser = optparse.OptionParser(usage="%prog display [-h] [note_name ...]")
     #parser.add_option("-a", "--all",
@@ -63,14 +62,14 @@ def action_print_notes(interface_class, args):
         print >> sys.stderr, "Error: You need to specify a note name to display it"
         return
 
-    tomboy_interface = interface_class()
+    tomboy_interface = Tomtom()
 
     try:
         print tomboy_interface.get_display_for_notes(file_names)
     except NoteNotFound, e:
         print >> sys.stderr, """Note named "%s" not found.""" % e
 
-def action_search_in_notes(interface_class, args):
+def action_search_in_notes(args):
     """ Use the tomtom object to search some text within notes """
     parser = optparse.OptionParser(usage="%prog search [-h] <search_pattern> [note_name ...]")
 
@@ -80,7 +79,7 @@ def action_search_in_notes(interface_class, args):
         print >> sys.stderr, "Error: You must specify a pattern to perform a search"
         return
 
-    tomboy_interface = interface_class()
+    tomboy_interface = Tomtom()
 
     search_pattern = file_names[0]
     note_names = file_names[1:]
@@ -134,8 +133,8 @@ Here is a list of all the available actions:
         print >> sys.stderr, "%s: %s is not a valid action. Use option -h for a list of available actions." % (sys.argv[0], action)
         return
 
-    perform = available_actions[action]
-    perform(Tomtom, arguments)
+    perform_with = available_actions[action]
+    perform_with(arguments)
 
 if __name__ == "__main__":
     main()
