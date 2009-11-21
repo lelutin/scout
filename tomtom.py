@@ -3,6 +3,21 @@
 #
 # Inspired by : http://arstechnica.com/open-source/news/2007/09/using-the-tomboy-d-bus-interface.ars
 #
+"""
+Tomtom is a command line interface to the Tomboy note taking application.
+
+It is currently possible to perform three kinds of actions :
+    listing all or the 10 latest notes
+    displaying one or more notes at a time
+    searching for text in all notes or a specific list of notes
+
+To obtain help, simply call:
+    tomtom.py -h
+
+It will list currently accessible actions. For details on how to use each option, call one of:
+    tomtom <action> -h
+    tomtom -h <action>
+"""
 import sys
 import os
 import optparse
@@ -10,7 +25,7 @@ import optparse
 from tomboy_utils import *
 
 def action_list_notes(args):
-    """ Use the tomtom object to list notes """
+    """Use the tomtom object to list notes."""
     parser = optparse.OptionParser(usage="%prog list [-h|-a]")
     parser.add_option("-a", "--all",
         dest="full_list", default=False, action="store_true",
@@ -26,7 +41,7 @@ def action_list_notes(args):
         print tomboy_interface.list_notes(count_limit=10)
 
 def action_print_notes(args):
-    """ Use the tomtom object to print the content of one or more notes """
+    """Use the tomtom object to print the content of one or more notes."""
     parser = optparse.OptionParser(usage="%prog display [-h] [note_name ...]")
     #parser.add_option("-a", "--all",
     #    dest="full_list", default=False, action="store_true",
@@ -46,7 +61,7 @@ def action_print_notes(args):
         print >> sys.stderr, """Note named "%s" not found.""" % e
 
 def action_search_in_notes(args):
-    """ Use the tomtom object to search some text within notes """
+    """Use the tomtom object to search for some text within notes."""
     parser = optparse.OptionParser(usage="%prog search [-h] <search_pattern> [note_name ...]")
 
     (options, file_names) = parser.parse_args(args)
@@ -71,6 +86,7 @@ available_actions = {
 }
 
 def main():
+    """Checks the first parameters for general help argument and dispatches the actions."""
     usage = """Usage: %(app_name)s (-h|--help) [action]
        %(app_name)s <action> [-h|--help] [options]""" % {"app_name": os.path.basename(sys.argv[0])}
 

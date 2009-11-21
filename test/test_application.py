@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Application tests"""
+"""
+Application tests.
+
+These are unit tests for the applications classes and methods.
+
+The docstrings on the test methods are displayed by the unittest.main()
+routine, so it should be a short but precise description of what is being
+tested. There should also be the test case's second word followed by a colon
+to classify tests. Having this classification makes looking for failing
+tests a lot easier.
+"""
 import unittest
 import mox
 
@@ -11,11 +21,11 @@ import dbus
 import test_data
 
 def stub_constructor(self):
-    """Dummy function used to stub out constructors"""
+    """Dummy function used to stub out constructors."""
     pass
 
 def without_constructor(cls):
-    """Stub out the constructor of a class to remove external dependancy to its __init__ function"""
+    """Stub out the constructor of a class to remove external dependencies wihin its __init__ function."""
     old_constructor = cls.__init__
     cls.__init__ = stub_constructor
     instance = cls()
@@ -23,25 +33,33 @@ def without_constructor(cls):
     return instance
 
 class TestApplication(unittest.TestCase):
-    """Tests for code not directly related to one particular feature"""
+    """Tests for code that is not directly linked with one particular feature."""
     def setUp(self):
-        """setup a mox factory"""
+        """Setup a mox factory to be able to use mocks in tests."""
         self.m = mox.Mox()
 
     def tearDown(self):
-        """Remove stubs"""
+        """Remove stubs so that they don't interfere with other tests."""
         self.m.UnsetStubs()
 
     def test_tomboy_communicator_is_initialized(self):
-        """Tomtom: A fresh Tommtom instance should have its Tomboy communicator initiated"""
-        # Avoid calling the Communicator's constructor as it creates a dbus connection
+        """Application: A fresh Tommtom instance should have its TomboyCommunicator instatiated."""
+
+        """
+        Avoid calling TomboyCommunicator's constructor as it creates a dbus connection.
+
+        "without_constructor" cannot be used here to replace the constructor
+        because we are testing whether Tomtom's constructor instantiates a
+        TomboyCommunicator
+        """
+
         old_constructor = TomboyCommunicator.__init__
         TomboyCommunicator.__init__ = stub_constructor
         self.assertTrue( isinstance(Tomtom().tomboy_communicator, TomboyCommunicator) )
         TomboyCommunicator.__init__ = old_constructor
 
     def test_TomboyCommunicator_constructor(self):
-        """TomboyCommunicator: Communicator must be initialized upon instatiation"""
+        """Application: TomboyCommunicator's dbus interface must be initialized upon instatiation."""
         old_SessionBus = dbus.SessionBus
         dbus.SessionBus = self.m.CreateMockAnything()
         old_Interface = dbus.Interface
@@ -63,7 +81,7 @@ class TestApplication(unittest.TestCase):
         dbus.Interface = old_Interface
 
     def test_TomboyNote_constructor(self):
-        """TomboyNote: A new note should initialize its instance variables"""
+        """Application: A new TomboyNote should initialize its instance variables."""
         uri1 = "note://something-like-this"
         title = "Name"
         date_int64 = dbus.Int64()
@@ -92,7 +110,7 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(dbus.Int64(time.mktime(datetime_date.timetuple())), tn.date )
 
     def test_get_notes_by_name(self):
-        """TomboyCommunicator: Get a list of notes specified by names"""
+        """Application: With TomboyCommunicator, get a list of notes specified by names."""
         tc = without_constructor(TomboyCommunicator)
         todo = test_data.full_list_of_notes[1]
         recipes = test_data.full_list_of_notes[11]
@@ -119,7 +137,7 @@ class TestApplication(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_get_uris_by_name(self):
-        """TomboyCommunicator: Get a list of uris by note names"""
+        """Application: With TomboyCommunicator, determine the uris for a list of note names."""
         tc = without_constructor(TomboyCommunicator)
         r_n_d = test_data.full_list_of_notes[12]
         webpidgin = test_data.full_list_of_notes[9]
@@ -136,7 +154,7 @@ class TestApplication(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_get_uris_by_name_unexistant(self):
-        """TomboyCommunicator: If no URI is returned from dbus while searching for a note name, raise an exception"""
+        """Application: TomboyCommunicator must raise an exception if dbus returns an empty uri."""
         tc = without_constructor(TomboyCommunicator)
         tc.comm = self.m.CreateMockAnything()
 
@@ -149,17 +167,17 @@ class TestApplication(unittest.TestCase):
         self.m.VerifyAll()
 
 class TestListing(unittest.TestCase):
-    """Tests in relation to code that handles the notes and lists them"""
+    """Tests for code that handles the notes and lists them."""
     def setUp(self):
-        """setup a mox factory"""
+        """Setup a mox factory to be able to use mocks in tests."""
         self.m = mox.Mox()
 
     def tearDown(self):
-        """Remove stubs"""
+        """Remove stubs so that they don't interfere with other tests."""
         self.m.UnsetStubs()
 
     def test_list_all_notes(self):
-        """Listing: Retrieve a list of all notes"""
+        """Listing: Retrieve a list of all notes."""
         tt = without_constructor(Tomtom)
         tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
         fake_list = self.m.CreateMock(list)
@@ -168,7 +186,7 @@ class TestListing(unittest.TestCase):
 
         tt.tomboy_communicator.get_notes(None).AndReturn(fake_list)
         tt.listing(fake_list)
-        
+
         self.m.ReplayAll()
 
         tt.list_notes()
@@ -176,7 +194,7 @@ class TestListing(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_get_uris_for_n_notes_no_limit(self):
-        """Listing: Given no limit, get all the notes' uris"""
+        """Listing: Given no limit, get all the notes' uris."""
         tc = without_constructor(TomboyCommunicator)
 
         list_of_uris = dbus.Array([note.uri for note in test_data.full_list_of_notes])
@@ -190,7 +208,7 @@ class TestListing(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_get_uris_for_n_notes(self):
-        """Listing: Given a numerical limit, get the n latest notes' uris"""
+        """Listing: Given a numerical limit, get the n latest notes' uris."""
         tc = without_constructor(TomboyCommunicator)
 
         list_of_uris = dbus.Array([note.uri for note in test_data.full_list_of_notes])
@@ -204,7 +222,7 @@ class TestListing(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_get_notes(self):
-        """Listing: Get listing information for all the notes from Tomboy"""
+        """Listing: Get listing information for all the notes from Tomboy."""
         tomboy_communicator = without_constructor(TomboyCommunicator)
 
         tomboy_communicator.comm = self.m.CreateMockAnything()
@@ -233,7 +251,7 @@ class TestListing(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_note_listing(self):
-        """Listing: Printing information on a list of notes"""
+        """Listing: Get the information on a list of notes."""
         tt = without_constructor(Tomtom)
         for note in test_data.full_list_of_notes:
             self.m.StubOutWithMock(note, "listing")
@@ -259,7 +277,7 @@ class TestListing(unittest.TestCase):
         self.m.VerifyAll()
 
     def verify_note_listing(self, title, tags, expected_title, expected_tag_text):
-        """Test note listing with a given set of title and tags"""
+        """Test note listing with a given set of title and tags."""
         date_64 = dbus.Int64(1254553804L)
         note = TomboyNote(uri="note://tomboy/fake-uri", title=title, date=date_64, tags=tags)
 
@@ -271,25 +289,25 @@ class TestListing(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_TomboyNote_listing(self):
-        """Listing: Print one note's information"""
+        """Listing: Print one note's information."""
         self.verify_note_listing("Test", ["tag1", "tag2"], "Test", "  (tag1, tag2)")
 
     def test_TomboyNote_listing_no_title_no_tags(self):
-        """Listing: Print one note's information for special cases: no title, no tags"""
+        """Listing: Print one note's information and verify format with no title and no tags."""
         self.verify_note_listing("", [], "_note doesn't have a name_", "")
 
 class TestDisplay(unittest.TestCase):
     """Tests for code in relation to displaying notes"""
     def setUp(self):
-        """Setup a mox factory"""
+        """Setup a mox factory to be able to use mocks in tests."""
         self.m = mox.Mox()
 
     def tearDown(self):
-        """Remove stubs"""
+        """Remove stubs so that they don't interfere with other tests."""
         self.m.UnsetStubs()
 
     def test_get_display_for_notes(self):
-        """Display: Tomtom.get_display_for_notes should return the contents of a list of notes separated by break lines"""
+        """Display: Tomtom.get_display_for_notes should return the contents of a list of notes separated by break lines."""
         tt = without_constructor(Tomtom)
         tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
         note1 = self.m.CreateMock(TomboyNote)
@@ -318,7 +336,7 @@ tetest"""
         self.m.VerifyAll()
 
     def test_TomboyCommunicator_get_note_content(self):
-        """Display: Using the communicator, get the contents of one note"""
+        """Display: Using the communicator, get one note's content."""
         tc = without_constructor(TomboyCommunicator)
         tc.comm = self.m.CreateMockAnything()
         note = self.m.CreateMockAnything()
@@ -342,17 +360,17 @@ tetest"""
         self.m.VerifyAll()
 
 class TestSearch(unittest.TestCase):
-    """Tests in relation textual search within notes"""
+    """Tests for code that perform a textual search within notes."""
     def setUp(self):
-        """setup a mox factory"""
+        """Setup a mox factory to be able to use mocks in tests."""
         self.m = mox.Mox()
 
     def tearDown(self):
-        """Remove stubs"""
+        """Remove stubs so that they don't interfere with other tests."""
         self.m.UnsetStubs()
 
     def test_search_for_text(self):
-        """Search: Tomtom.search_for_text should trigger a research through requested notes"""
+        """Search: Tomtom.search_for_text should trigger a research through requested notes."""
         tt = without_constructor(Tomtom)
         tt.tomboy_communicator = self.m.CreateMockAnything()
 

@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
-"""test data for tomtom"""
+"""
+Test data for tomtom.
+
+All the uglyness of testing data should be here.
+Although it is ugly by definition, it should be well organized in order to
+simplify and clarify testing code, and also to make this file less painful
+to look at.
+"""
 import os
 import dbus
 from tomboy_utils import TomboyNote
 
 # To obtain modification dates for notes and corresponding real dates:
-# With tomboy being a dbus interface to the Tomboy application:
+# With "tomboy" being a dbus interface to the Tomboy application:
 # >>> [(datetime.fromtimestamp(tomboy.GetNoteChangeDate(url)),tomboy.GetNoteChangeDate(url)) for url in l]
 expected_list = \
 """2009-11-09 | addressbook  (pim)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Acceptance tests for Tomtom. This defines the use cases and expected results"""
+"""Acceptance tests for Tomtom. This defines the use cases and expected results."""
 import unittest
 import sys
 import os
@@ -12,8 +12,9 @@ import test_data
 
 class AcceptanceTests(unittest.TestCase):
     """
-    Acceptance tests: what is the expected behaviour from the
-    user point of view.
+    Acceptance tests.
+
+    What is the expected behaviour from the user point of view.
     """
     def setUp(self):
         self.old_stdout = sys.stdout
@@ -46,15 +47,24 @@ class AcceptanceTests(unittest.TestCase):
         self.m.UnsetStubs()
 
     def mock_out_listing(self, notes):
-        """ Create mocks for note listing via dbus """
+        """Create mocks for note listing via dbus."""
         self.dbus_interface.ListAllNotes().AndReturn([n.uri for n in notes])
         for note in notes:
             self.dbus_interface.GetNoteTitle(note.uri).AndReturn(note.title)
             self.dbus_interface.GetNoteChangeDate(note.uri).AndReturn(note.date)
             self.dbus_interface.GetTagsForNote(note.uri).AndReturn(note.tags)
 
+    def mock_out_get_notes_by_names(self, notes):
+        """Create mocks for searching for notes by their names."""
+        for note in notes:
+            self.dbus_interface.FindNote(note.title).AndReturn(note.uri)
+
+        for note in notes:
+            self.dbus_interface.GetNoteChangeDate(note.uri).AndReturn(note.date)
+            self.dbus_interface.GetTagsForNote(note.uri).AndReturn(note.tags)
+
     def test_no_argument(self):
-        """Acceptance: Application called without arguments must print usage"""
+        """Acceptance: Application called without arguments must print usage."""
         sys.argv = ["app_name", ]
         tomtom.main()
         self.assertEqual(
@@ -67,7 +77,7 @@ class AcceptanceTests(unittest.TestCase):
         )
 
     def test_unknown_action(self):
-        """Acceptance: Giving an unknown action name must print an error"""
+        """Acceptance: Giving an unknown action name must print an error."""
         sys.argv = ["app_name", "unexistant_action"]
         tomtom.main()
         self.assertEqual(
@@ -76,7 +86,7 @@ class AcceptanceTests(unittest.TestCase):
         )
 
     def test_action_list(self):
-        """ Acceptance: Action "list" should print a list of the last 10 notes """
+        """Acceptance: Action "list" should print a list of the last 10 notes."""
         self.mock_out_listing(test_data.full_list_of_notes[:10])
 
         self.m.ReplayAll()
@@ -88,7 +98,7 @@ class AcceptanceTests(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_full_list(self):
-        """ Acceptance: Action "list" with -a argument should produce a list of all notes """
+        """Acceptance: Action "list" with "-a" argument should produce a list of all notes."""
         self.mock_out_listing(test_data.full_list_of_notes)
 
         self.m.ReplayAll()
@@ -99,16 +109,8 @@ class AcceptanceTests(unittest.TestCase):
 
         self.m.VerifyAll()
 
-    def mock_out_get_notes_by_names(self, notes):
-        for note in notes:
-            self.dbus_interface.FindNote(note.title).AndReturn(note.uri)
-
-        for note in notes:
-            self.dbus_interface.GetNoteChangeDate(note.uri).AndReturn(note.date)
-            self.dbus_interface.GetTagsForNote(note.uri).AndReturn(note.tags)
-
     def test_notes_displaying(self):
-        """ Acceptance: Action "display" should print the content of the notes with the given names """
+        """Acceptance: Action "display" should print the content of the notes which names are given as arguments."""
         todo = test_data.full_list_of_notes[1]
         python_work = test_data.full_list_of_notes[4]
         separator = os.linesep + "==========================" + os.linesep
@@ -130,7 +132,7 @@ class AcceptanceTests(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_note_does_not_exist(self):
-        """ Acceptance: Specified note non-existant should display an error message """
+        """Acceptance: Specified note non-existant should display an error message."""
         self.dbus_interface.FindNote("unexistant").AndReturn(dbus.String(""))
 
         self.m.ReplayAll()
@@ -142,7 +144,7 @@ class AcceptanceTests(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_display_zero_argument(self):
-        """ Acceptance: Action "display" with no argument should print an error """
+        """Acceptance: Action "display" with no argument should print an error."""
         sys.argv = ["app_name", "display"]
         tomtom.main()
         self.assertEquals(
@@ -151,7 +153,7 @@ class AcceptanceTests(unittest.TestCase):
         )
 
     def test_search(self):
-        """ Acceptance: Action "search" should execute a case independant search within all notes """
+        """Acceptance: Action "search" should execute a case independant search within all notes."""
         self.mock_out_listing(test_data.full_list_of_notes)
         for note in test_data.full_list_of_notes:
             self.dbus_interface.GetNoteContents(note.uri).AndReturn(test_data.note_contents_from_dbus[note.title])
@@ -165,7 +167,7 @@ class AcceptanceTests(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_search_specific_notes(self):
-        """ Acceptance: Giving a list of note names to action "search" should restrict the search within those notes """
+        """Acceptance: Giving a list of note names to action "search" should restrict the search within those notes."""
         requested_notes = [
             test_data.full_list_of_notes[3],
             test_data.full_list_of_notes[4],
@@ -185,7 +187,7 @@ class AcceptanceTests(unittest.TestCase):
         self.m.VerifyAll()
 
     def test_search_zero_arguments(self):
-        """ Acceptance: Action "search" with no argument must print an error """
+        """Acceptance: Action "search" with no argument must print an error."""
         sys.argv = ["unused_prog_name", "search"]
         tomtom.main()
         self.assertEquals(
@@ -194,7 +196,7 @@ class AcceptanceTests(unittest.TestCase):
         )
 
     def test_help_on_base_level(self):
-        """ Acceptance: Using -h or --help alone should print a complete help text """
+        """Acceptance: Using "-h" or "--help" alone should print basic help and list actions."""
         sys.argv = ["app_name", "-h"]
         tomtom.main()
         self.assertEquals(
@@ -203,6 +205,7 @@ class AcceptanceTests(unittest.TestCase):
         )
 
     def verify_help_text(self, args, text):
+        """Mock out things to expect the application to exit while printing a specified text."""
         sys.argv = args
         # Mock out sys.exit : optparse calls this when help is displayed
         self.m.StubOutWithMock(sys, "exit")
@@ -217,18 +220,18 @@ class AcceptanceTests(unittest.TestCase):
         )
 
     def test_help_before_action_name(self):
-        """Acceptance: Using -h or --help before an action name should display help for this action """
+        """Acceptance: Using "-h" or "--help" before an action name should display detailed help for this action."""
         self.verify_help_text(["app_name", "-h", "list"], test_data.help_details_list)
 
     def test_help_display_specific(self):
-        """Acceptance: Detailed help using -h or --help after "display" action """
+        """Acceptance: Detailed help using "-h" or "--help" after "display" action."""
         self.verify_help_text(["app_name", "display", "--help"], test_data.help_details_display)
 
     def test_help_list_specific(self):
-        """Acceptance: Detailed help using -h or --help after "list" action """
+        """Acceptance: Detailed help using "-h" or "--help" after "list" action."""
         self.verify_help_text(["app_name", "list", "--help"], test_data.help_details_list)
 
     def test_help_search_specific(self):
-        """Acceptance: Detailed help using -h or --help after "search" action """
+        """Acceptance: Detailed help using "-h" or "--help" after "search" action."""
         self.verify_help_text(["app_name", "search", "--help"], test_data.help_details_search)
 

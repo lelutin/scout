@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Utility classes for communicating with Tomboy over dbus"""
+"""Utility classes for communicating with Tomboy over dbus."""
 import dbus
 import datetime
 import time
@@ -7,13 +7,13 @@ import sys
 import os
 
 class ConnectionError(Exception):
-    """Simple exception representing an error contacting Tomboy via dbus"""
+    """Simple exception raised when contacting Tomboy via dbus fails."""
     pass
 
 class NoteNotFound(Exception):
-    """Simple exception raised when searching for a specific note that does not exist"""
+    """Simple exception raised when searching for a specific note that does not exist."""
     pass
-        
+
 class Tomtom(object):
     """Application class for Tomtom. Lists, prints or searches for notes in Tomboy via dbus."""
     def __init__(self):
@@ -102,7 +102,7 @@ class TomboyCommunicator(object):
         """
         if names:
             pairs = self.get_uris_by_name(names)
-        else:   
+        else:
             pairs = self.get_uris_for_n_notes(count_limit)
 
         list_of_notes = []
