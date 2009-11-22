@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-Test data for tomtom.
+"""Test data for tomtom.
 
 All the uglyness of testing data should be here.
 Although it is ugly by definition, it should be well organized in order to
 simplify and clarify testing code, and also to make this file less painful
 to look at.
+
 """
 import os
 import dbus
@@ -15,7 +15,8 @@ from tomboy_utils import TomboyNote
 #
 # To obtain modification dates for notes and corresponding real dates:
 # With "tomboy" being a dbus interface to the Tomboy application:
-# >>> [(datetime.fromtimestamp(tomboy.GetNoteChangeDate(url)),tomboy.GetNoteChangeDate(url)) for url in l]
+# >>> [(datetime.fromtimestamp(tomboy.GetNoteChangeDate(url)),
+# >>>     tomboy.GetNoteChangeDate(url)) for url in l]
 expected_list = \
 """2009-11-09 | addressbook  (pim)
 2009-11-02 | TODO-list  (reminders, pim)
@@ -43,7 +44,8 @@ specific_search_results = \
 python-work : 2 : to use a python buildbot for automatic bundling
 OpenSource Conference X : 15 : oops, and don't forget to talk about python"""
 
-search_no_argument_error = "Error: You must specify a pattern to perform a search"
+search_no_argument_error = \
+    "Error: You must specify a pattern to perform a search"
 
 # Those are values to test the "display" feature.
 note_contents_from_dbus = {
@@ -84,19 +86,19 @@ for the project.""",
 something""",
     "OpenSource Conference X": """OpenSource Conference X
 
-Lorem ipsum vix ei inermis epicurei mnesarchum, quod graeci facete vis cu, sumo libris pro no. Quod vocibus rationibus ex mea, nam dicta tantas cetero et. Nulla aperiam nostrud ad est, id qui exerci feugiat rationibus, in sed affert facete eripuit. Ei nam oratio aperiri epicurei. His te kasd adipisci dissentiunt, laudem putant fabellas nam in. Homero causae scaevola sit cu.
+Lorem ipsum vix ei inermis epicurei mnesarchum, quod graeci facete vis cu, sumo
+libris pro no. Quod vocibus rationibus ex mea, nam dicta tantas cetero et.
+Nulla aperiam nostrud ad est, id qui exerci feugiat rationibus, in sed affert
+facete eripuit. Ei nam oratio aperiri epicurei. His te kasd adipisci
+dissentiunt, laudem putant fabellas nam in. Homero causae scaevola sit cu.
 
-Mea ea puto malis mediocrem, ad dolorem expetenda iracundia vis. Cibo graece tamquam an mel, ne qui omnes aliquid tibique, has at tale sale vidit. Solum porro at per, usu denique officiis perfecto te. Has puto rebum impedit ex, duo modus diceret fastidii cu.
+Mea ea puto malis mediocrem, ad dolorem expetenda iracundia vis. Cibo graece
+tamquam an mel, ne qui omnes aliquid tibique, has at tale sale vidit. Solum
+porro at per, usu denique officiis perfecto te. Has puto rebum impedit ex, duo
+modus diceret fastidii cu.
 
-Nibh impedit posidonium pro ea, sint quidam aperiam per ea, est laudem accommodare eu. Eos brute deserunt eu, no sit novum ignota detraxit, duo facer doctus ei. Qui in impedit ocurreret quaerendum, mei ad noluisse legendos torquatos, facete discere neglegentur ius ex. Nam ei legere vulputate constituto, ut pri virtute ancillae iracundia, vis et sanctus perfecto imperdiet. Te erant aeque dignissim sed, nibh ubique instructior ex vel. Ne docendi democritum scripserit has, vis ut elitr equidem, agam invidunt prodesset id vis.
-
-At vix facete scaevola. Ad erat explicari persequeris mei, et mei nullam fierent vulputate. Et oratio rationibus complectitur duo, an sit nominati consequuntur. Ea cum nulla scaevola dignissim, aeterno utroque interpretaris in sit. Altera vivendum lobortis quo an, vitae dolore iisque per et.
-
-Eum novum mucius propriae in, brute repudiare at quo. Mel elitr vidisse epicuri te, vim sonet accusam ancillae ut, his no movet maiorum instructior. Hinc eligendi corrumpit usu et, nam ne dolor aperiri, vix novum virtute ut. Nam et modus nihil exerci, te minim omittantur theophrastus eum.
-
-Te paulo vivendum accusamus cum, autem feugait salutatus an sit. Ex pro dicam virtute periculis, at sit odio solum interpretaris. Rebum nostrud legendos ad ius, ad feugait consetetur dissentias pri. Te iudico timeam percipit eum, has ex postea democritum theophrastus, ad ipsum ancillae pri. Te vis harum simul liberavisse, nihil fuisset dissentiunt eos no, in illud legimus percipit sed. Nam agam debitis placerat id, adversarium liberavisse his an.
-
-Mea elit munere nonummy at, ei sed sint nonummy consetetur, iudicabit efficiendi no sit. Sea ne appareat tractatos voluptatum, posse dicat hendrerit cum at, duo fabellas rationibus reprehendunt an. Sit an homero laudem labores, et oblique blandit aliquyam vel. No per officiis quaestio expetendis, vero omnium offendit mel in, sit no consulatu adolescens adipiscing. Quo id saepe elaboraret delicatissimi, eripuit ornatus utroque per ut, putant quodsi definitiones et nam.
+Nibh impedit posidonium pro ea, sint quidam aperiam per ea, est laudem
+accommodare eu. Eos brute deserunt eu, no sit novum ignota detraxit, duo ...
 
 oops, and don't forget to talk about python""",
     "business contacts": """business contacts
@@ -148,7 +150,8 @@ gone fishing
 and voila!""",
 }
 
-display_no_note_name_error = "Error: You need to specify a note name to display it"
+display_no_note_name_error = \
+    "Error: You need to specify a note name to display it"
 
 display_separator = "=========================="
 
@@ -234,7 +237,10 @@ full_list_of_notes = [
     ),
 ]
 
-# The rest of the file is text to verify help messages.
+# The rest of the file is text to verify help or error messages.
+unknown_action = """app_name: unexistant_action is not a valid action. """ + \
+                 """Use option -h for a list of available actions."""
+
 help_more_details = """For more details, use option -h"""
 
 help_details_list = """Usage: app_name list [-h|-a]
@@ -248,7 +254,8 @@ help_details_display = """Usage: app_name display [-h] [note_name ...]
 Options:
   -h, --help  show this help message and exit"""
 
-help_details_search = """Usage: app_name search [-h] <search_pattern> [note_name ...]
+help_details_search = \
+    """Usage: app_name search [-h] <search_pattern> [note_name ...]
 
 Options:
   -h, --help  show this help message and exit"""

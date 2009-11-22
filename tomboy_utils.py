@@ -1,5 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Utility classes for communicating with Tomboy over dbus."""
+"""Utility classes for communicating with Tomboy over dbus.
+
+Exception:
+    ConnectionError -- A dbus connection problem occured.
+    NoteNotFound    -- A note searched by name was not found.
+
+Classes:
+    Tomtom             -- Takes user input and calls the appropriate methods.
+    TomboyCommunicator -- Communicates with dbus to fetch information on notes.
+    TomboyNote         -- Object representation of a Tomboy note.
+
+"""
 import dbus
 import datetime
 import time
@@ -11,39 +22,85 @@ class ConnectionError(Exception):
     pass
 
 class NoteNotFound(Exception):
-    """Simple exception raised when searching for a specific note that does not exist."""
+    """Simple exception raised when a specific note does not exist."""
     pass
 
 class Tomtom(object):
-    """Application class for Tomtom. Lists, prints or searches for notes in Tomboy via dbus."""
+    """Application class for Tomtom.
+
+    Returns listings, note content or search results. Tomtom is the application
+    entry point. It receives user input and calls the approriate methods to do
+    the requested work.
+
+    """
     def __init__(self):
+        """Constructor.
+
+        This method makes sure the communicator is instantiated.
+
+        """
         super(Tomtom, self).__init__()
         self.tomboy_communicator = TomboyCommunicator()
 
     def list_notes(self, count_limit=None):
-        """Entry point to listing notes. If specified, can limit the number of displayed notes"""
+        """Entry point to listing notes.
+
+        If specified, it can limit the number of displayed notes. By default,
+        it lists all notes.
+
+        Arguments:
+            count_limit -- Integer limit number of notes listed (default: None)
+
+        """
         return self.listing(self.tomboy_communicator.get_notes(count_limit))
 
     def listing(self, notes):
-        """Receives a list of notes and returns information about them"""
+        """Get information about notes.
+
+        Given a list of notes, this method collects listing information for
+        those notes and returns the list.
+
+        Arguments:
+            notes -- a list of TomboyNote objects
+
+        """
         return os.linesep.join( [note.listing() for note in notes] )
 
     def get_display_for_notes(self, names):
-        """Receives a list of note names and returns their contents"""
+        """Get contents of a list of notes.
+
+        Given a list of note names, this method retrieves the notes' contents
+        and returns them.
+
+        Arguments:
+            names -- a list of note names
+
+        """
         notes = self.tomboy_communicator.get_notes(names=names)
 
         separator = os.linesep + "==========================" + os.linesep
-        return separator.join( [self.tomboy_communicator.get_note_content(note) for note in notes] )
+        return separator.join(
+            [self.tomboy_communicator.get_note_content(note) for note in notes]
+        )
 
     def search_for_text(self, search_pattern, note_names=[]):
-        """Get concerned noted and search for the pattern in them"""
+        """Get specified notes and search for a pattern in them.
+
+        This function performs a case-independant text search within notes. If
+        note names are specified, it restricts its search to those notes.
+
+        Arguments:
+            search_pattern -- Pattern to seach for
+            note_names     -- List of note names (default: [])
+
+        """
         notes = self.tomboy_communicator.get_notes(names=note_names)
         search_results = []
 
         import re
         for note in notes:
             content = self.tomboy_communicator.get_note_content(note)
-            lines = content.split(os.linesep)[1:]
+            lines = content.splitlines()[1:]
             for index, line in enumerate(lines):
                 # Perform case-independant search of each word on each line
                 if re.search("(?i)%s" % (search_pattern, ), line):
@@ -56,24 +113,43 @@ class Tomtom(object):
         return search_results
 
 class TomboyCommunicator(object):
-    """Interface between the application and Tomboy's dbus link"""
+    """Interface between the application and Tomboy's dbus link."""
     def __init__(self):
-        """Create a link to the Tomboy application upon instanciation"""
+        """Create a link to the Tomboy application upon instanciation."""
         try:
             tb_bus = dbus.SessionBus()
         except:
             (dummy1, error, dummy2) = sys.exc_info()
-            raise ConnectionError("Could not connect to dbus session: %s" % (error, ) )
+            raise ConnectionError(
+                "Could not connect to dbus session: %s" % (error, )
+            )
 
         try:
-            tb_object = tb_bus.get_object("org.gnome.Tomboy", "/org/gnome/Tomboy/RemoteControl")
-            self.comm = dbus.Interface(tb_object, "org.gnome.Tomboy.RemoteControl")
+            tb_object = tb_bus.get_object(
+                "org.gnome.Tomboy",
+                "/org/gnome/Tomboy/RemoteControl"
+            )
+            self.comm = dbus.Interface(
+                tb_object,
+                "org.gnome.Tomboy.RemoteControl"
+            )
         except:
             (dummy1, error, dummy2) = sys.exc_info()
-            raise ConnectionError("Could not establish connection with Tomboy. Is it running?: %s" % (error, ) )
+            raise ConnectionError(
+                """Could not establish connection with Tomboy. """ + \
+                """Is it running?: %s""" % (error, )
+            )
 
     def get_uris_for_n_notes(self, count_max):
-        """Get a list of notes and limit it to the `count_max` latest ones"""
+        """Find the URIs for the `count_max` latest notes.
+
+        This method retrieves URIs of notes. If count_max is None, it gets URIs
+        for all notes. Otherwise, it gets `count_max` number of URIs.
+
+        Arguments:
+            count_max -- Maximum number of notes to lookup
+
+        """
         uris = self.comm.ListAllNotes()
 
         if count_max != None:
@@ -82,7 +158,15 @@ class TomboyCommunicator(object):
         return [(u, None) for u in uris]
 
     def get_uris_by_name(self, names):
-        """Search for all the notes with the given names"""
+        """Search for all the notes with the given names.
+
+        This method retreives URIs of notes by searching for them by names. It
+        searches for all names that are in the `names` list.
+
+        Arguments:
+            names -- a list of note names
+
+        """
         uris = []
 
         for name in names:
@@ -95,10 +179,18 @@ class TomboyCommunicator(object):
         return uris
 
     def get_notes(self, count_limit=None, names=[]):
-        """
-        Get a list of notes from Tomboy.
-        `count_limit` can limit the number of notes returned. Set it to None (default value) to get all notes
-        If `names` is given a list of note names, it will restrict the search to only those notes
+        """Get a list of notes from Tomboy.
+
+        This method gets a list of notes from Tomboy and converts them to
+        TomboyNote objects. It then returns the notes in a list. `count_limit`
+        can limit the number of notes returned. By default, it gets all notes.
+        If `names` is given a list of note names, it will restrict the search
+        to only those notes.
+
+        Arguments:
+            count_limit -- Integer limit of notes returned (default: None)
+            names       -- A list of names. Get only these notes (default: [])
+
         """
         if names:
             pairs = self.get_uris_by_name(names)
@@ -123,17 +215,40 @@ class TomboyCommunicator(object):
         return list_of_notes
 
     def get_note_content(self, note):
-        """Takes a TomboyNote object and returns its contents"""
-        lines = self.comm.GetNoteContents(note.uri).split(os.linesep)
-        #TODO Oddly (but it is good), splitting the lines makes the indentation bullets appear.. come up with a test for this to stay
+        """Get the content of a note.
+
+        This method returns the content of one note. The note must be a
+        TomboyNote object. Tags are added after the note name in the returned
+        content.
+
+        Arguments:
+            note -- A TomboyNote object
+
+        """
+        lines = self.comm.GetNoteContents(note.uri).splitlines()
+        #TODO Oddly (but it is good), splitting the lines makes the indentation
+        # bullets appear.. come up with a test for this to stay
         if note.tags:
             lines[0] = "%s  (%s)" % ( lines[0], ", ".join(note.tags) )
 
         return os.linesep.join(lines)
 
 class TomboyNote(object):
-    """Object corresponding to a Tomboy note coming from dbus"""
+    """Object corresponding to a Tomboy note coming from dbus."""
     def __init__(self, uri, title="", date=dbus.Int64(), tags=[]):
+        """Constructor.
+
+        This makes sure that instance attributes are set upon the note's
+        instantiation. The date can either be a dbus.Int64 object or a datetime
+        object.
+
+        Arguments:
+            uri -- A string representing the note's URI
+            title -- A string representing the note's title
+            date -- Can either be a dbus.Int64 or datetime object
+            tags -- A list of strings that represent tags
+
+        """
         super(TomboyNote, self).__init__()
         self.uri = uri
         self.title = title
@@ -145,7 +260,12 @@ class TomboyNote(object):
             self.date = date
 
     def listing(self):
-        """Return a listing for this note"""
+        """Get a listing for this note.
+
+        This method returns listing information about the note represented by
+        this object.
+
+        """
         printable_title = self.title
         if not self.title:
             printable_title = "_note doesn't have a name_"
@@ -156,7 +276,8 @@ class TomboyNote(object):
 
         return "%(date)s | %(title)s%(tags)s" % \
             {
-                "date": datetime.datetime.fromtimestamp(self.date).isoformat()[:10],
+                "date": datetime.datetime.fromtimestamp(self.date)\
+                            .isoformat()[:10],
                 "title": printable_title,
                 "tags": printable_tags,
             }
