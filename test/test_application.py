@@ -42,6 +42,47 @@ class BasicMocking(unittest.TestCase):
         """Remove stubs so that they don't interfere with other tests."""
         self.m.UnsetStubs()
 
+def verify_get_notes(self, tc, notes, note_names=[]):
+    """Verify the outcome of TomboyCommunicator.get_notes().
+
+    This function verifies if notes received from calling
+    TomboyCommunicator.get_notes are what we expect them to be. It provokes the
+    unit test to fail in case of discordance.
+
+    TomboyNotes are unhashable so we need to convert them to dictionaries
+    and check for list membership.
+
+    Arguments:
+        self       -- The TestCase instance
+        tc         -- TomboyCommunicator mock object instance
+        notes      -- list of TomboyNote objects
+        note_names -- list of note names to pass to get_notes
+
+    """
+    expectation = [{
+        "uri":n.uri,
+        "title":n.title,
+        "date":n.date,
+        "tags":n.tags,
+    } for n in notes]
+
+    # Order is not important
+    for note in tc.get_notes(names=note_names):
+        note_as_dict = {
+            "uri":note.uri,
+            "title":note.title,
+            "date":note.date,
+            "tags":note.tags
+        }
+
+        if note_as_dict not in expectation:
+            self.fail(
+                """Note named %s dated %s """ % (note.title, note.date) + \
+                """with uri %s and """ % (note.uri, ) + \
+                """tags [%s] not found in """ % (",".join(note.tags), ) + \
+                """expectation: [%s]""" % (",".join(expectation), )
+            )
+
 class TestApplication(BasicMocking):
     """Tests for code that is not directly linked with one particular feature."""
     def test_tomboy_communicator_is_initialized(self):
@@ -129,12 +170,7 @@ class TestApplication(BasicMocking):
 
         self.m.ReplayAll()
 
-        # TomboyNotes are unhashable so convert to dictionaries and check for list membership
-        expectation = [{"uri":n.uri, "title":n.title, "date":n.date, "tags":n.tags} for n in notes]
-        # Order is not important
-        for note in tc.get_notes(names=names):
-            if not {"uri":note.uri, "title":note.title, "date":note.date, "tags":note.tags} in expectation:
-                self.fail("Note named %(title)s dated %(date)s with uri %(uri)s and tags [%(tags)s] not found in expectation: [%(expectation)s]" % {"title": note.title, "date": note.date, "uri": note.uri, "tags": ",".join(note.tags), "expectation": ",".join(expectation)})
+        verify_get_notes(self, tc, notes, note_names=names)
 
         self.m.VerifyAll()
 
@@ -217,30 +253,29 @@ class TestListing(BasicMocking):
 
     def test_get_notes(self):
         """Listing: Get listing information for all the notes from Tomboy."""
-        tomboy_communicator = without_constructor(TomboyCommunicator)
+        tc = without_constructor(TomboyCommunicator)
 
-        tomboy_communicator.comm = self.m.CreateMockAnything()
-        self.m.StubOutWithMock(tomboy_communicator, "get_uris_for_n_notes")
-        self.m.StubOutWithMock(tomboy_communicator.comm, "ListAllNotes")
-        self.m.StubOutWithMock(tomboy_communicator.comm, "GetNoteTitle")
-        self.m.StubOutWithMock(tomboy_communicator.comm, "GetNoteChangeDate")
-        self.m.StubOutWithMock(tomboy_communicator.comm, "GetTagsForNote")
         list_of_uris = dbus.Array([note.uri for note in test_data.full_list_of_notes])
+        tc.comm = self.m.CreateMockAnything()
+        self.m.StubOutWithMock(tc, "get_uris_for_n_notes")
+        self.m.StubOutWithMock(tc.comm, "ListAllNotes")
+        self.m.StubOutWithMock(tc.comm, "GetNoteTitle")
+        self.m.StubOutWithMock(tc.comm, "GetNoteChangeDate")
+        self.m.StubOutWithMock(tc.comm, "GetTagsForNote")
 
-        tomboy_communicator.get_uris_for_n_notes(None).AndReturn( [(u, None) for u in list_of_uris] )
+        tc.get_uris_for_n_notes(None)\
+            .AndReturn( [(u, None) for u in list_of_uris] )
         for note in test_data.full_list_of_notes:
-            tomboy_communicator.comm.GetNoteTitle(note.uri).AndReturn(note.title)
-            tomboy_communicator.comm.GetNoteChangeDate(note.uri).AndReturn(note.date)
-            tomboy_communicator.comm.GetTagsForNote(note.uri).AndReturn(note.tags)
+            tc.comm.GetNoteTitle(note.uri)\
+                .AndReturn(note.title)
+            tc.comm.GetNoteChangeDate(note.uri)\
+                .AndReturn(note.date)
+            tc.comm.GetTagsForNote(note.uri)\
+                .AndReturn(note.tags)
 
         self.m.ReplayAll()
 
-        # TomboyNotes are unhashable so convert to dictionaries and check for list membership
-        expectation = [{"uri":n.uri, "title":n.title, "date":n.date, "tags":n.tags} for n in test_data.full_list_of_notes]
-        # Order is not important
-        for note in tomboy_communicator.get_notes():
-            if not {"uri":note.uri, "title":note.title, "date":note.date, "tags":note.tags} in expectation:
-                self.fail("Note named %(title)s dated %(date)s with uri %(uri)s and tags [%(tags)s] not found in expectation: [%(expectation)s]" % {"title": note.title, "date": note.date, "uri": note.uri, "tags": ",".join(note.tags), "expectation": ",".join(expectation)})
+        verify_get_notes(self, tc, test_data.full_list_of_notes)
 
         self.m.VerifyAll()
 
