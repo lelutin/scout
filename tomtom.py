@@ -4,19 +4,18 @@
 # Inspired by : http://arstechnica.com/open-source/news/2007/09/using-the-tomboy-d-bus-interface.ars
 #
 """
+Usage: tomtom.py (-h|--help) [action]
+       tomtom.py <action> [-h|--help] [options]
+
 Tomtom is a command line interface to the Tomboy note taking application.
 
-It is currently possible to perform three kinds of actions :
-    listing all or the 10 latest notes
-    displaying one or more notes at a time
-    searching for text in all notes or a specific list of notes
+Options depend on what action you are taking. To obtain details on options
+for a particular action, combine -h or --help and the action name.
 
-To obtain help, simply call:
-    tomtom.py -h
-
-It will list currently accessible actions. For details on how to use each option, call one of:
-    tomtom <action> -h
-    tomtom -h <action>
+Here is a list of all the available actions:
+  list    : listing all or the 10 latest notes
+  display : displaying one or more notes at a time
+  search  : searching for text in all notes or a specific list of notes
 """
 import sys
 import os
@@ -87,13 +86,10 @@ available_actions = {
 
 def main():
     """Checks the first parameters for general help argument and dispatches the actions."""
-    usage = """Usage: %(app_name)s (-h|--help) [action]
-       %(app_name)s <action> [-h|--help] [options]""" % {"app_name": os.path.basename(sys.argv[0])}
-
     if len(sys.argv) < 2:
-        usage_output =  os.linesep.join([
-            usage,
-            "",
+        # Use the docstring's first [significant] lines to display usage
+        usage_output =  (os.linesep * 2).join([
+            os.linesep.join( __doc__.split(os.linesep)[1:3] ),
             "For more details, use option -h"])
         print usage_output
         return
@@ -107,16 +103,8 @@ def main():
             arguments = [sys.argv[2], action] + sys.argv[3:]
             action = sys.argv[2]
         else:
-            print os.linesep.join([
-                usage,
-                "",
-                """Options depend on what action you are taking. To obtain details on options for a particular action, combine -h or --help and the action name.
-
-Here is a list of all the available actions:
-  list
-  display
-  search""",
-            ])
+            # Use the script's docstring the for basic help message
+            print __doc__[1:]
             return
 
     if action not in available_actions:

@@ -66,15 +66,22 @@ class AcceptanceTests(unittest.TestCase):
     def test_no_argument(self):
         """Acceptance: Application called without arguments must print usage."""
         sys.argv = ["app_name", ]
+        old_docstring = tomtom.__doc__
+        tomtom.__doc__ = os.linesep.join(["", "command -h", "command action", "", "unused", "but fake", "help text"])
+
         tomtom.main()
+        # Test that usage comes from the script's docstring.
+        # This test is not very flexible. Change this if more lines are
+        # added to the usage description in the docstring.
         self.assertEqual(
-            os.linesep.join([
-                test_data.help_usage,
-                "",
-                test_data.help_more_details,
+            (os.linesep * 2).join([
+                os.linesep.join( tomtom.__doc__.split(os.linesep)[1:3]),
+                test_data.help_more_details
             ]) + os.linesep,
             sys.stdout.getvalue()
         )
+
+        tomtom.__doc__ = old_docstring
 
     def test_unknown_action(self):
         """Acceptance: Giving an unknown action name must print an error."""
@@ -198,11 +205,18 @@ class AcceptanceTests(unittest.TestCase):
     def test_help_on_base_level(self):
         """Acceptance: Using "-h" or "--help" alone should print basic help and list actions."""
         sys.argv = ["app_name", "-h"]
+        old_docstring = tomtom.__doc__
+        tomtom.__doc__ = os.linesep.join(["", "some", "non-", "useful", "but fake", "help text"])
+
         tomtom.main()
+
+        # The help should be displayed using tomtom's docstring.
         self.assertEquals(
-            test_data.help_action_list + os.linesep,
+            tomtom.__doc__[1:] + os.linesep,
             sys.stdout.getvalue()
         )
+
+        tomtom.__doc__ = old_docstring
 
     def verify_help_text(self, args, text):
         """Mock out things to expect the application to exit while printing a specified text."""

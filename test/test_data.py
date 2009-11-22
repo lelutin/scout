@@ -235,21 +235,7 @@ full_list_of_notes = [
 ]
 
 # The rest of the file is text to verify help messages.
-help_usage = """Usage: app_name (-h|--help) [action]
-       app_name <action> [-h|--help] [options]"""
-
 help_more_details = """For more details, use option -h"""
-
-help_action_list = os.linesep.join([
-    help_usage,
-    "",
-    """Options depend on what action you are taking. To obtain details on options for a particular action, combine -h or --help and the action name.
-
-Here is a list of all the available actions:
-  list
-  display
-  search""",
-])
 
 help_details_list = """Usage: app_name list [-h|-a]
 
