@@ -41,7 +41,7 @@ import os
 import StringIO
 import mox
 
-import tomtom
+from tomtom import tomtom
 import dbus
 import test_data
 

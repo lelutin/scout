@@ -52,7 +52,7 @@ import sys
 import os
 import optparse
 
-from tomboy_utils import *
+from utils import *
 
 def action_list_notes(args):
     """Use the tomtom object to list notes.
