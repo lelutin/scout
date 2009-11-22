@@ -11,6 +11,8 @@ import os
 import dbus
 from tomboy_utils import TomboyNote
 
+# The following few values are for testing the "list" feature.
+#
 # To obtain modification dates for notes and corresponding real dates:
 # With "tomboy" being a dbus interface to the Tomboy application:
 # >>> [(datetime.fromtimestamp(tomboy.GetNoteChangeDate(url)),tomboy.GetNoteChangeDate(url)) for url in l]
@@ -29,8 +31,9 @@ expected_list = \
 list_appendix = \
 """2009-09-19 | conquer the world  (projects)
 2009-09-19 | recipes
-2009-09-19 | R&D  (reminders)"""
+2009-09-19 | R&D  (reminders, training)"""
 
+# Output values that are expected for the "search" feature.
 search_results = \
 """addressbook : 5 : John Doe (cell) - 555-5512
 business contacts : 7 : John Doe Sr. (office) - 555-5534"""
@@ -42,6 +45,7 @@ OpenSource Conference X : 15 : oops, and don't forget to talk about python"""
 
 search_no_argument_error = "Error: You must specify a pattern to perform a search"
 
+# Those are values to test the "display" feature.
 note_contents_from_dbus = {
     "addressbook": """addressbook
 
@@ -108,23 +112,47 @@ Mister Anderson (secretary) - 123-4567
 Python McClean - 777-7777""",
     "japanese": """japanese
 
-something""",
+robot = ロボット
+alien = 宇宙人
+invader = 侵入者
+octopus = たこ""",
     "Webpidgin": """Webpidgin
 
 something""",
     "conquer the world": """conquer the world
 
-something""",
+1. get into the whole being-a-villan thing
+2. practice evil skills
+3. plan something very mean
+4. acquire information
+5. study weaknesses
+6. execute plan
+7. acquire complete power over the world
+8. get some rest.. all of this is going to be tiresome""",
     "recipes": """recipes
 
 something""",
     "R&D": """R&D
 
-something""",
+I need something to get Prshan's attention to switch
+over to doing that R&D stuff. He refuses to do it because
+he thinks it is going nowhere.
+
+In the training, they gave me great arguments to be
+able to change his mind. He will see what I mean.
+
+powder
+refreshing
+barrel of whiskey
+gone fishing
+and voila!""",
 }
 
 display_no_note_name_error = "Error: You need to specify a note name to display it"
 
+display_separator = "=========================="
+
+# This is a list of false notes that are used throughout the majority of tests.
 full_list_of_notes = [
     TomboyNote(
         uri="note://tomboy/b332eb31-8139-4351-9f5d-738bf64ce172",
@@ -202,10 +230,11 @@ full_list_of_notes = [
         uri="note://tomboy/5df0fd74-cbdd-4cf3-bb08-7a7f09997afd",
         title="R&D",
         date=dbus.Int64(1253340600L),
-        tags=["reminders", ]
+        tags=["reminders", "training"]
     ),
 ]
 
+# The rest of the file is text to verify help messages.
 help_usage = """Usage: app_name (-h|--help) [action]
        app_name <action> [-h|--help] [options]"""
 

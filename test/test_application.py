@@ -296,26 +296,23 @@ class TestDisplay(BasicMocking):
         """Display: Tomtom.get_display_for_notes should return the contents of a list of notes separated by break lines."""
         tt = without_constructor(Tomtom)
         tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
-        note1 = self.m.CreateMock(TomboyNote)
-        note2 = self.m.CreateMock(TomboyNote)
-        note_names = ["note1", "note2"]
-        note1_expected_content = """note1  (tag1, tag2)
+        notes = [ test_data.full_list_of_notes[10], test_data.full_list_of_notes[8] ]
+        note_names = [n.title for n in notes]
+        note1_content = test_data.note_contents_from_dbus[ notes[0].title ]
+        note2_content = test_data.note_contents_from_dbus[ notes[1].title ]
 
-line1"""
-        note2_expected_content = """note2
-
-test
-teeest
-tetest"""
-
-        tt.tomboy_communicator.get_notes(names=note_names).AndReturn([note1, note2])
-        tt.tomboy_communicator.get_note_content(note1).AndReturn(note1_expected_content)
-        tt.tomboy_communicator.get_note_content(note2).AndReturn(note2_expected_content)
+        tt.tomboy_communicator.get_notes(names=note_names).AndReturn(notes)
+        tt.tomboy_communicator.get_note_content(notes[0]).AndReturn(note1_content)
+        tt.tomboy_communicator.get_note_content(notes[1]).AndReturn(note2_content)
 
         self.m.ReplayAll()
 
         self.assertEqual(
-            os.linesep.join([note1_expected_content, "==========================", note2_expected_content]),
+            os.linesep.join([
+                note1_content,
+                test_data.display_separator,
+                note2_content,
+            ]),
             tt.get_display_for_notes(note_names)
         )
 
@@ -325,23 +322,18 @@ tetest"""
         """Display: Using the communicator, get one note's content."""
         tc = without_constructor(TomboyCommunicator)
         tc.comm = self.m.CreateMockAnything()
-        note = self.m.CreateMockAnything()
-        note_content_lines = [
-            "note_name",
-            "",
-            "first line of text",
-            "second line",
-            "and stiiiiirrrrrike!",
-        ]
-        expected_result = list(note_content_lines)
-        expected_result[0] = "%s%s" % (note_content_lines[0], "  (tag1, tag2)")
 
-        tc.comm.GetNoteContents(note.uri).AndReturn( os.linesep.join(note_content_lines) )
-        note.tags = ["tag1", "tag2"]
+        note = test_data.full_list_of_notes[12]
+        raw_content = test_data.note_contents_from_dbus[note.title]
+        lines = raw_content.split(os.linesep)
+        lines[0] = "%s%s" % (lines[0], "  (reminders, training)")
+        expected_result = os.linesep.join(lines)
+
+        tc.comm.GetNoteContents(note.uri).AndReturn( raw_content )
 
         self.m.ReplayAll()
 
-        self.assertEqual( os.linesep.join(expected_result), tc.get_note_content(note) )
+        self.assertEqual( expected_result, tc.get_note_content(note) )
 
         self.m.VerifyAll()
 
