@@ -41,9 +41,10 @@ import os
 import StringIO
 import mox
 
-from tomtom import tomtom
 import dbus
 import test_data
+
+import cli
 
 class AcceptanceTests(unittest.TestCase):
     """Acceptance tests.
@@ -66,6 +67,7 @@ class AcceptanceTests(unittest.TestCase):
         self.old_stderr = sys.stderr
         sys.stderr = StringIO.StringIO()
         self.old_argv = sys.argv
+
         self.m = mox.Mox()
 
         # Mock out the entire dbus interaction so that acceptance tests don't
@@ -101,6 +103,7 @@ class AcceptanceTests(unittest.TestCase):
         sys.argv = self.old_argv
         dbus.SessionBus = self.old_SessionBus
         dbus.Interface = self.old_Interface
+
         self.m.UnsetStubs()
 
     def mock_out_listing(self, notes):
@@ -140,8 +143,8 @@ class AcceptanceTests(unittest.TestCase):
     def test_no_argument(self):
         """Acceptance: tomtom called without arguments must print usage."""
         sys.argv = ["app_name", ]
-        old_docstring = tomtom.__doc__
-        tomtom.__doc__ = os.linesep.join([
+        old_docstring = cli.__doc__
+        cli.__doc__ = os.linesep.join([
             "command -h",
             "command action",
             "",
@@ -151,24 +154,24 @@ class AcceptanceTests(unittest.TestCase):
         ])
 
         # Test that usage comes from the script's docstring.
-        tomtom.main()
+        cli.main()
 
         # This test is not very flexible. Change this if more lines are
         # added to the usage description in the docstring.
         self.assertEqual(
             (os.linesep * 2).join([
-                os.linesep.join( tomtom.__doc__.splitlines()[:3]),
+                os.linesep.join( cli.__doc__.splitlines()[:3]),
                 test_data.help_more_details
             ]) + os.linesep,
             sys.stdout.getvalue()
         )
 
-        tomtom.__doc__ = old_docstring
+        cli.__doc__ = old_docstring
 
     def test_unknown_action(self):
         """Acceptance: Giving an unknown action name must print an error."""
         sys.argv = ["app_name", "unexistant_action"]
-        tomtom.main()
+        self.assertRaises( SystemExit, cli.main )
         self.assertEqual(
             test_data.unknown_action + os.linesep,
             sys.stderr.getvalue()
@@ -181,7 +184,7 @@ class AcceptanceTests(unittest.TestCase):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "list"]
-        tomtom.main()
+        cli.main()
         self.assertEquals(
             test_data.expected_list + os.linesep,
             sys.stdout.getvalue()
@@ -196,7 +199,7 @@ class AcceptanceTests(unittest.TestCase):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "list", "-a"]
-        tomtom.main()
+        cli.main()
         self.assertEquals(
             os.linesep.join([
                 test_data.expected_list,
@@ -230,7 +233,7 @@ class AcceptanceTests(unittest.TestCase):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "display", "TODO-list", "python-work"]
-        tomtom.main()
+        cli.main()
         self.assertEquals(
             separator.join(expected_result_list) + os.linesep,
             sys.stdout.getvalue()
@@ -246,7 +249,7 @@ class AcceptanceTests(unittest.TestCase):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "display", "unexistant"]
-        tomtom.main()
+        cli.main()
         self.assertEquals(
             """Note named "unexistant" not found.""" + os.linesep,
             sys.stderr.getvalue()
@@ -257,7 +260,7 @@ class AcceptanceTests(unittest.TestCase):
     def test_display_zero_argument(self):
         """Acceptance: Action "display" with no argument prints an error."""
         sys.argv = ["app_name", "display"]
-        tomtom.main()
+        cli.main()
         self.assertEquals(
             test_data.display_no_note_name_error + os.linesep,
             sys.stderr.getvalue()
@@ -273,7 +276,7 @@ class AcceptanceTests(unittest.TestCase):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "search", "john doe"]
-        tomtom.main()
+        cli.main()
         self.assertEquals(
             test_data.search_results + os.linesep,
             sys.stdout.getvalue()
@@ -298,7 +301,7 @@ class AcceptanceTests(unittest.TestCase):
 
         sys.argv = ["unused_prog_name", "search", "python"] + \
                 [n.title for n in requested_notes]
-        tomtom.main()
+        cli.main()
         self.assertEquals(
             test_data.specific_search_results + os.linesep,
             sys.stdout.getvalue()
@@ -309,7 +312,7 @@ class AcceptanceTests(unittest.TestCase):
     def test_search_zero_arguments(self):
         """Acceptance: Action "search" with no argument prints an error."""
         sys.argv = ["unused_prog_name", "search"]
-        tomtom.main()
+        cli.main()
         self.assertEquals(
             test_data.search_no_argument_error + os.linesep,
             sys.stderr.getvalue()
@@ -317,25 +320,41 @@ class AcceptanceTests(unittest.TestCase):
 
     def test_help_on_base_level(self):
         """Acceptance: Using "-h" or "--help" alone prints basic help."""
-        sys.argv = ["app_name", "-h"]
-        old_docstring = tomtom.__doc__
-        tomtom.__doc__ = os.linesep.join([
+        # Remove stubs and reset mocks for dbus that the setUp method
+        # constructed as there will be no dbus interaction.
+        self.m.UnsetStubs()
+        self.m.ResetAll()
+
+        self.m.StubOutWithMock(cli, "action_names")
+
+        old_docstring = cli.__doc__
+        cli.__doc__ = os.linesep.join([
             "some",
             "non-",
             "useful",
             "but fake",
             "help text"
         ])
+        fake_list = ["line1", "line2"]
 
-        tomtom.main()
+        cli.action_names().AndReturn(fake_list)
+
+        # Verify this function call only, dbus doesn't get called for the help
+        # message
+        self.m.ReplayAll()
+
+        sys.argv = ["app_name", "-h"]
+        cli.main()
+
+        self.m.VerifyAll()
 
         # The help should be displayed using tomtom's docstring.
         self.assertEquals(
-            tomtom.__doc__[:-1] + os.linesep,
+            cli.__doc__[:-1] + os.linesep.join(fake_list) + os.linesep,
             sys.stdout.getvalue()
         )
 
-        tomtom.__doc__ = old_docstring
+        cli.__doc__ = old_docstring
 
     def verify_help_text(self, args, text):
         """Mock out help messages.
@@ -356,7 +375,7 @@ class AcceptanceTests(unittest.TestCase):
 
         self.m.ReplayAll()
 
-        self.assertRaises(SystemExit, tomtom.main)
+        self.assertRaises(SystemExit, cli.main)
         self.assertEquals(
             text + os.linesep,
             sys.stdout.getvalue()

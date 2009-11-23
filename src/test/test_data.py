@@ -40,7 +40,7 @@ to look at.
 """
 import os
 import dbus
-from tomtom.utils import TomboyNote
+from tomtom import TomboyNote
 
 # The following few values are for testing the "list" feature.
 #

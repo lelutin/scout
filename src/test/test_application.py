@@ -50,7 +50,7 @@ import datetime
 import time
 import dbus
 
-from tomtom.utils import *
+from tomtom import *
 import test_data
 
 def stub_constructor(self):
