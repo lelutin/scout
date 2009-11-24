@@ -42,16 +42,15 @@ to classify tests. Having this classification makes looking for failing
 tests a lot easier.
 
 """
-import unittest
-import mox
-
 import os
 import datetime
 import time
 import dbus
 
 from tomtom import *
+
 import test_data
+from test_utils import *
 
 def stub_constructor(self):
     """Dummy function used to stub out constructors."""
@@ -71,21 +70,6 @@ def without_constructor(cls):
     instance = cls()
     cls.__init__ = old_constructor
     return instance
-
-class BasicMocking(unittest.TestCase):
-    """Base class for unit tests.
-
-    Includes mox initialization and destruction for unit tests.
-    Test cases should be subclasses of this one.
-
-    """
-    def setUp(self):
-        """Setup a mox factory to be able to use mocks in tests."""
-        self.m = mox.Mox()
-
-    def tearDown(self):
-        """Remove stubs so that they don't interfere with other tests."""
-        self.m.UnsetStubs()
 
 def verify_get_notes(self, tc, notes, note_names=[]):
     """Verify the outcome of TomboyCommunicator.get_notes().
@@ -128,7 +112,7 @@ def verify_get_notes(self, tc, notes, note_names=[]):
                 """expectation: [%s]""" % (",".join(expectation), )
             )
 
-class TestApplication(BasicMocking):
+class TestUtilities(BasicMocking):
     """Tests for general code.
 
     This test case must containt tests for code that is not directly linked
@@ -136,7 +120,7 @@ class TestApplication(BasicMocking):
 
     """
     def test_tomboy_communicator_is_initialized(self):
-        """Application: Tommtom constructor instatiates TomboyCommunicator."""
+        """Utilities: Tommtom constructor instatiates TomboyCommunicator."""
         """Avoid calling TomboyCommunicator's constructor.
 
         TomboyCommunicator's constructor creates a dbus connection and it must
@@ -156,7 +140,7 @@ class TestApplication(BasicMocking):
         TomboyCommunicator.__init__ = old_constructor
 
     def test_TomboyCommunicator_constructor(self):
-        """Application: TomboyCommunicator's dbus interface is initialized."""
+        """Utilities: TomboyCommunicator's dbus interface is initialized."""
         old_SessionBus = dbus.SessionBus
         dbus.SessionBus = self.m.CreateMockAnything()
         old_Interface = dbus.Interface
@@ -185,7 +169,7 @@ class TestApplication(BasicMocking):
         dbus.Interface = old_Interface
 
     def test_TomboyNote_constructor(self):
-        """Application: TomboyNote initializes its instance variables."""
+        """Utilities: TomboyNote initializes its instance variables."""
         uri1 = "note://something-like-this"
         title = "Name"
         date_int64 = dbus.Int64()
@@ -219,7 +203,7 @@ class TestApplication(BasicMocking):
         )
 
     def test_get_notes_by_name(self):
-        """Application: TomboyCommunicator gets a list of given named notes."""
+        """Utilities: TomboyCommunicator gets a list of given named notes."""
         tc = without_constructor(TomboyCommunicator)
         todo = test_data.full_list_of_notes[1]
         recipes = test_data.full_list_of_notes[11]
@@ -246,7 +230,7 @@ class TestApplication(BasicMocking):
         self.m.VerifyAll()
 
     def test_get_uris_by_name(self):
-        """Application: TomboyCommunicator determines uris by names."""
+        """Utilities: TomboyCommunicator determines uris by names."""
         tc = without_constructor(TomboyCommunicator)
         r_n_d = test_data.full_list_of_notes[12]
         webpidgin = test_data.full_list_of_notes[9]
@@ -268,7 +252,7 @@ class TestApplication(BasicMocking):
         self.m.VerifyAll()
 
     def test_get_uris_by_name_unexistant(self):
-        """Application: TomboyCommunicator raises a NoteNotFound exception."""
+        """Utilities: TomboyCommunicator raises a NoteNotFound exception."""
         tc = without_constructor(TomboyCommunicator)
         tc.comm = self.m.CreateMockAnything()
 

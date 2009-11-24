@@ -35,18 +35,17 @@
 This defines the use cases and expected results.
 
 """
-import unittest
 import sys
 import os
-import StringIO
 import mox
-
 import dbus
+
 import test_data
+from test_utils import *
 
 import cli
 
-class AcceptanceTests(unittest.TestCase):
+class AcceptanceTests(BasicMocking, StreamMocking):
     """Acceptance tests.
 
     Define what the expected behaviour is from the user's point of view.
@@ -62,13 +61,9 @@ class AcceptanceTests(unittest.TestCase):
         establishes contact with Tomboy via dbus.
 
         """
-        self.old_stdout = sys.stdout
-        sys.stdout = StringIO.StringIO()
-        self.old_stderr = sys.stderr
-        sys.stderr = StringIO.StringIO()
-        self.old_argv = sys.argv
+        super(AcceptanceTests, self).setUp()
 
-        self.m = mox.Mox()
+        self.old_argv = sys.argv
 
         # Mock out the entire dbus interaction so that acceptance tests don't
         # depend on external code.
@@ -98,13 +93,11 @@ class AcceptanceTests(unittest.TestCase):
         other tests.
 
         """
-        sys.stderr = self.old_stderr
-        sys.stdout = self.old_stdout
+        super(AcceptanceTests, self).tearDown()
+
         sys.argv = self.old_argv
         dbus.SessionBus = self.old_SessionBus
         dbus.Interface = self.old_Interface
-
-        self.m.UnsetStubs()
 
     def mock_out_listing(self, notes):
         """Create mocks for note listing via dbus.
