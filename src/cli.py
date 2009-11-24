@@ -109,7 +109,7 @@ def dispatch(action_name, arguments):
         action.perform_action(arguments)
     except AttributeError:
         print >> sys.stderr, \
-            """%s: the %s action is """ % (sys.argv[0], action_name) + \
+            """%s: the "%s" action is """ % (sys.argv[0], action_name) + \
             """malformed: the function "perform_action" could not be """ + \
             """found within the action's module."""
         sys.exit(MALFORMED_ACTION_RETURN_CODE)

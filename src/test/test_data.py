@@ -293,3 +293,8 @@ Options:
 
 unexistant_note_error = """Note named "unexistant" not found."""
 
+malformed_action_module_error = \
+    """app_name: the "action" action is malformed: """ + \
+    """the function "perform_action" could not be found within """ + \
+    """the action's module."""
+
