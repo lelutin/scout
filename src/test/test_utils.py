@@ -62,28 +62,34 @@ class BasicMocking(unittest.TestCase):
         self.m.UnsetStubs()
         self.m.ResetAll()
 
-class StreamMocking(unittest.TestCase):
+class CLIMocking(unittest.TestCase):
     """Automatic mocking of standard streams.
 
     This class sets up mocking for standard streams so as to verify interaction
-    with "sys.stdout" and "sys.stderr". It does so by defining a setUp and a
-    tearDown method. Subclasses should call super(...).setUp() and
+    with "sys.stdout" and "sys.stderr". It also saves the value of sys.argv and
+    restores it after the test so that tests can modify the value of argv
+    without having an impact on other tests. It does so by defining a setUp and
+    a tearDown method. Subclasses should call super(...).setUp() and
     super(...).tearDown in each respective method if they get redefined by the
     subclass.
 
     """
     def setUp(self):
         """Monkey patch "sys.stdout" and "sys.stderr"."""
-        super(StreamMocking, self).setUp()
+        super(CLIMocking, self).setUp()
 
         self.old_stdout = sys.stdout
         sys.stdout = StringIO.StringIO()
         self.old_stderr = sys.stderr
         sys.stderr = StringIO.StringIO()
 
+        self.old_argv = sys.argv
+
     def tearDown(self):
         """Replace everything as it was before the test."""
-        super(StreamMocking, self).tearDown()
+        super(CLIMocking, self).tearDown()
+
+        sys.argv = self.old_argv
 
         sys.stderr = self.old_stderr
         sys.stdout = self.old_stdout

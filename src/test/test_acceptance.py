@@ -45,7 +45,7 @@ from test_utils import *
 
 import cli
 
-class AcceptanceTests(BasicMocking, StreamMocking):
+class AcceptanceTests(BasicMocking, CLIMocking):
     """Acceptance tests.
 
     Define what the expected behaviour is from the user's point of view.
@@ -62,8 +62,6 @@ class AcceptanceTests(BasicMocking, StreamMocking):
 
         """
         super(AcceptanceTests, self).setUp()
-
-        self.old_argv = sys.argv
 
         # Mock out the entire dbus interaction so that acceptance tests don't
         # depend on external code.
@@ -95,7 +93,6 @@ class AcceptanceTests(BasicMocking, StreamMocking):
         """
         super(AcceptanceTests, self).tearDown()
 
-        sys.argv = self.old_argv
         dbus.SessionBus = self.old_SessionBus
         dbus.Interface = self.old_Interface
 

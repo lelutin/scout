@@ -50,9 +50,12 @@ import os
 
 from tomtom import NoteNotFound
 
-# Return codes sent on errors
+# Return codes sent on errors.
+# Codes between 100 and 199 are fatal errors
+# Codes between 200 and 255 are minor errors
 ACTION_NOT_FOUND_RETURN_CODE = 100
 MALFORMED_ACTION_RETURN_CODE = 101
+ACTION_SYNTAX_ERROR_RETURN_CODE = 102
 NOTE_NOT_FOUND_RETURN_CODE   = 200
 
 def action_dynamic_load(name):
@@ -67,19 +70,44 @@ def action_dynamic_load(name):
         name -- A string representing the name of the action to load
 
     """
-    _temp = __import__(
-        "tomtom.actions",
-        globals(),
-        locals(),
-        [name, ]
-    )
+    try:
+        _temp = __import__(
+            "tomtom.actions",
+            globals(),
+            locals(),
+            [name, ]
+        )
+
+    except SyntaxError:
+        app_name = os.path.basename( sys.argv[0] )
+        print >> sys.stderr, """%s: The action module""" % app_name + \
+            """ "%s" has a syntax error that prevents tomtom """ % name + \
+            """from loading it. If it is not a custom module, you """ + \
+            """should report how you encountered this issue along """ + \
+            """with the version of python you are using and a full """ + \
+            """stack trace (see below for how to generate those) at:""" + \
+            (os.linesep * 2) + \
+            """http://github.com/lelutin/tomtom/issues""" + os.linesep + \
+            os.linesep + \
+            """The following two commands will show python's version """ + \
+            """number and generate a stack trace, respectively. """ + \
+            """Copy-paste the output of both commands in the issue you """ + \
+            """create, it will help in finding what went wrong:""" + \
+            (os.linesep * 2) + \
+            """python -V""" + os.linesep + \
+            """python -c "from actions import %s" """ % name
+        sys.exit(ACTION_SYNTAX_ERROR_RETURN_CODE)
 
     try:
         action = getattr(_temp, name)
+
     except AttributeError:
+        app_name = os.path.basename( sys.argv[0] )
+
         print >> sys.stderr, \
-            """%s: %s is not a valid """ % (sys.argv[0], name) + \
+            """%s: %s is not a valid """ % (app_name, name) + \
             """action. Use option -h for a list of available actions."""
+
         sys.exit(ACTION_NOT_FOUND_RETURN_CODE)
 
     return action
@@ -107,14 +135,20 @@ def dispatch(action_name, arguments):
 
     try:
         action.perform_action(arguments)
+
     except AttributeError:
+        app_name = os.path.basename( sys.argv[0] )
+
         print >> sys.stderr, \
-            """%s: the "%s" action is """ % (sys.argv[0], action_name) + \
+            """%s: the "%s" action is """ % (app_name, action_name) + \
             """malformed: the function "perform_action" could not be """ + \
             """found within the action's module."""
+
         sys.exit(MALFORMED_ACTION_RETURN_CODE)
+
     except NoteNotFound, e:
         print >> sys.stderr, """Note named "%s" not found.""" % e
+
         sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
 
 def action_names():

@@ -268,7 +268,7 @@ full_list_of_notes = [
     ),
 ]
 
-# The rest of the file is text to verify help or error messages.
+# The rest of the file is text to verify help or general error messages.
 unknown_action = """app_name: unexistant_action is not a valid action. """ + \
                  """Use option -h for a list of available actions."""
 
@@ -297,4 +297,21 @@ malformed_action_module_error = \
     """app_name: the "action" action is malformed: """ + \
     """the function "perform_action" could not be found within """ + \
     """the action's module."""
+
+syntax_error_message = \
+    """app_name: The action module "action" has a syntax error that """ + \
+    """prevents tomtom from loading it. If it is not a custom module, """ + \
+    """you should report how you encountered this issue along with the """ + \
+    """version of python you are using and a full stack trace (see """ + \
+    """below for how to generate those) at:""" + \
+    (os.linesep * 2) + \
+    """http://github.com/lelutin/tomtom/issues""" + \
+    (os.linesep * 2) + \
+    """The following two commands will show python's version number and """ + \
+    """generate a stack trace, respectively. Copy-paste the output of """ + \
+    """both commands in the issue you create, it will help in finding """ + \
+    """what went wrong:""" + \
+    (os.linesep * 2) + \
+    """python -V""" + os.linesep + \
+    """python -c "from actions import action" """
 

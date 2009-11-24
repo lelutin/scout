@@ -114,7 +114,7 @@ def verify_get_notes(self, tc, notes, note_names=[]):
                 """expectation: [%s]""" % (",".join(expectation), )
             )
 
-class TestMain(BasicMocking, StreamMocking):
+class TestMain(BasicMocking, CLIMocking):
     """Tests for functions in the main script.
 
     This test case verifies that functions in the main script behave as
@@ -189,6 +189,40 @@ class TestMain(BasicMocking, StreamMocking):
             AttributeError,
             test_data.malformed_action_module_error
         )
+
+    def test_action_dynamic_load_handles_SyntaxError(self):
+        """Main: Warn the user that an action has a syntax error."""
+        action_name = "action"
+
+        import __builtin__
+        self.m.StubOutWithMock(__builtin__, "__import__")
+        self.m.StubOutWithMock(__builtin__, "globals")
+        self.m.StubOutWithMock(__builtin__, "locals")
+
+        global_vars = __builtin__.globals()\
+                        .AndReturn( self.m.CreateMockAnything() )
+        local_vars = __builtin__.locals()\
+                        .AndReturn( self.m.CreateMockAnything() )
+
+        __builtin__.__import__(
+            "tomtom.actions",
+            global_vars,
+            local_vars,
+            [action_name, ]
+        ).AndRaise(SyntaxError)
+
+        self.m.ReplayAll()
+
+        # Fake a value for sys.argv[0] (the application name)
+        sys.argv = ["app_name", ]
+
+        self.assertRaises(SystemExit, cli.action_dynamic_load, action_name)
+        self.assertEqual(
+            test_data.syntax_error_message + os.linesep,
+            sys.stderr.getvalue()
+        )
+
+        self.m.VerifyAll()
 
     def test_arguments_converted_to_unicode(self):
         """Main: Arguments to action are converted to unicode objects."""
