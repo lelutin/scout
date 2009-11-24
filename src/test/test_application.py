@@ -161,6 +161,21 @@ class TestMain(BasicMocking, StreamMocking):
 
         self.m.VerifyAll()
 
+    def test_arguments_converted_to_unicode(self):
+        """Main: Arguments to action are converted to unicode objects."""
+        arguments = ["arg1", "arg2"]
+        sys.argv = ["app_name", "action"] + arguments
+
+        self.m.StubOutWithMock(cli, "dispatch")
+
+        cli.dispatch("action", [unicode(arg) for arg in arguments] )
+
+        self.m.ReplayAll()
+
+        cli.main()
+
+        self.m.VerifyAll()
+
 class TestUtilities(BasicMocking):
     """Tests for general code.
 

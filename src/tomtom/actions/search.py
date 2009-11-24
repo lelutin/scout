@@ -87,6 +87,7 @@ def perform_action(args):
         search_pattern=search_pattern,
         note_names=note_names
     )
+
     for result in results:
         print "%s : %s : %s" % \
             ( result["title"], result["line"], result["text"] )
