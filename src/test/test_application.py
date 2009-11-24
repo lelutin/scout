@@ -43,11 +43,13 @@ tests a lot easier.
 
 """
 import os
+import sys
 import datetime
 import time
 import dbus
 
 from tomtom import *
+import cli
 
 import test_data
 from test_utils import *
@@ -111,6 +113,53 @@ def verify_get_notes(self, tc, notes, note_names=[]):
                 """tags [%s] not found in """ % (",".join(note.tags), ) + \
                 """expectation: [%s]""" % (",".join(expectation), )
             )
+
+class TestMain(BasicMocking, StreamMocking):
+    """Tests for functions in the main script.
+
+    This test case verifies that functions in the main script behave as
+    expected.
+
+    """
+    def test_dispatch_handles_NoteNotFound_exceptions(self):
+        """Main: NoteNotFound exceptions dont't go unhandled."""
+        """This code resembles the acceptance test...
+
+        Yes, the test is very similar in nature to the acceptance test named
+        "test_note_does_not_exist". So, why have it repeated? The other test is
+        a use case, meant to define that an error message is expected when a
+        note is note found, while this one is a unit test meant to verify that
+        the code in charge of handling the NoteNotFound exception does so.
+
+        Plus, testing that the exception is handled in this function makes sure
+        that it will always be handled without requiring implicitly that the
+        actions to do so.
+
+        """
+        self.m.StubOutWithMock(cli, "action_dynamic_load")
+        action_name = self.m.CreateMockAnything()
+        module = self.m.CreateMockAnything()
+        arguments = self.m.CreateMockAnything()
+
+        # Fake the loaded module: not relevant to this test.
+        cli.action_dynamic_load(action_name)\
+            .AndReturn(module)
+
+        # Make the action call raise a NoteNotFound exception.
+        module.perform_action(arguments)\
+            .AndRaise( NoteNotFound("unexistant") )
+
+        self.m.ReplayAll()
+
+        # And make sure that we get a well formatted error message, and that
+        # the exception does not come out of dispatch.
+        cli.dispatch( action_name, arguments )
+        self.assertEqual(
+            test_data.unexistant_note_error + os.linesep,
+            sys.stderr.getvalue()
+        )
+
+        self.m.VerifyAll()
 
 class TestUtilities(BasicMocking):
     """Tests for general code.

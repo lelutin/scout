@@ -80,8 +80,5 @@ def perform_action(args):
 
     tomboy_interface = Tomtom()
 
-    try:
-        print tomboy_interface.get_display_for_notes(file_names)
-    except NoteNotFound, e:
-        print >> sys.stderr, """Note named "%s" not found.""" % e
+    print tomboy_interface.get_display_for_notes(file_names)
 

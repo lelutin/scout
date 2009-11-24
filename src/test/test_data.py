@@ -291,3 +291,5 @@ help_details_search = \
 Options:
   -h, --help  show this help message and exit"""
 
+unexistant_note_error = """Note named "unexistant" not found."""
+

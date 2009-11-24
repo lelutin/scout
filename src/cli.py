@@ -48,6 +48,8 @@ Here is a list of all the available actions:
 import sys
 import os
 
+from tomtom import NoteNotFound
+
 # Return codes sent on errors
 ACTION_NOT_FOUND_RETURN_CODE = 100
 MALFORMED_ACTION_RETURN_CODE = 101
@@ -110,6 +112,8 @@ def dispatch(action_name, arguments):
             """malformed: the function "perform_action" could not be """ + \
             """found within the action's module."""
         sys.exit(MALFORMED_ACTION_RETURN_CODE)
+    except NoteNotFound, e:
+        print >> sys.stderr, """Note named "%s" not found.""" % e
 
 def action_names():
     """Retrieve a list of available actions.

@@ -244,7 +244,7 @@ class AcceptanceTests(BasicMocking, StreamMocking):
         sys.argv = ["unused_prog_name", "display", "unexistant"]
         cli.main()
         self.assertEquals(
-            """Note named "unexistant" not found.""" + os.linesep,
+            test_data.unexistant_note_error + os.linesep,
             sys.stderr.getvalue()
         )
 
