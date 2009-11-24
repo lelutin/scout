@@ -242,7 +242,8 @@ class AcceptanceTests(BasicMocking, StreamMocking):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "display", "unexistant"]
-        cli.main()
+        self.assertRaises(SystemExit, cli.main)
+
         self.assertEquals(
             test_data.unexistant_note_error + os.linesep,
             sys.stderr.getvalue()

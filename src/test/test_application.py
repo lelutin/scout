@@ -153,7 +153,7 @@ class TestMain(BasicMocking, StreamMocking):
 
         # And make sure that we get a well formatted error message, and that
         # the exception does not come out of dispatch.
-        cli.dispatch( action_name, arguments )
+        self.assertRaises(SystemExit, cli.dispatch, action_name, arguments )
         self.assertEqual(
             test_data.unexistant_note_error + os.linesep,
             sys.stderr.getvalue()

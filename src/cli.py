@@ -53,6 +53,7 @@ from tomtom import NoteNotFound
 # Return codes sent on errors
 ACTION_NOT_FOUND_RETURN_CODE = 100
 MALFORMED_ACTION_RETURN_CODE = 101
+NOTE_NOT_FOUND_RETURN_CODE   = 200
 
 def action_dynamic_load(name):
     """Load an action with an arbitrary name.
@@ -114,6 +115,7 @@ def dispatch(action_name, arguments):
         sys.exit(MALFORMED_ACTION_RETURN_CODE)
     except NoteNotFound, e:
         print >> sys.stderr, """Note named "%s" not found.""" % e
+        sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
 
 def action_names():
     """Retrieve a list of available actions.
