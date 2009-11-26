@@ -238,7 +238,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        sys.argv = ["unused_prog_name", "display", "unexistant"]
+        sys.argv = ["app_name", "display", "unexistant"]
         self.assertRaises(SystemExit, cli.main)
 
         self.assertEquals(

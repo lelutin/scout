@@ -147,11 +147,6 @@ def dispatch(action_name, arguments):
 
         sys.exit(MALFORMED_ACTION_RETURN_CODE)
 
-    except NoteNotFound, e:
-        print >> sys.stderr, """Note named "%s" not found.""" % e
-
-        sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
-
 def action_names():
     """Retrieve a list of available actions.
 
@@ -242,6 +237,13 @@ def main():
             e
         )
         sys.exit(DBUS_CONNECTION_ERROR_RETURN_CODE)
+    except NoteNotFound, e:
+        print >> sys.stderr, """%s: Error: Note named "%s" was not found.""" % (
+            os.path.basename( sys.argv[0] ),
+            e
+        )
+        sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
+
 
 if __name__ == "__main__":
     try:

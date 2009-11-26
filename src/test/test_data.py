@@ -291,7 +291,8 @@ help_details_search = \
 Options:
   -h, --help  show this help message and exit"""
 
-unexistant_note_error = """Note named "unexistant" not found."""
+unexistant_note_error = \
+    """app_name: Error: Note named "unexistant" was not found."""
 
 malformed_action_module_error = \
     """app_name: the "action" action is malformed: """ + \

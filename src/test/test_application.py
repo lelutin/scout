@@ -176,11 +176,21 @@ class TestMain(BasicMocking, CLIMocking):
         actions to do so.
 
         """
-        self.verify_dispatch(
-            self.m.CreateMockAnything(),
-            NoteNotFound("unexistant"),
-            test_data.unexistant_note_error
+        self.m.StubOutWithMock(cli, "dispatch")
+
+        cli.dispatch("action", [])\
+            .AndRaise( NoteNotFound("unexistant") )
+
+        self.m.ReplayAll()
+
+        sys.argv = ["app_name", "action"]
+        self.assertRaises(SystemExit, cli.main)
+        self.assertEqual(
+            test_data.unexistant_note_error + os.linesep,
+            sys.stderr.getvalue()
         )
+
+        self.m.VerifyAll()
 
     def test_dispatch_handles_lack_of_perform_action(self):
         """Main: Warn the user if perform_action is not found in a module."""
