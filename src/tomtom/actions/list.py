@@ -34,14 +34,21 @@
 # This is an action module. Action modules need to have a function named
 # "perform_action". It can import tomtom classes and any other packages to help
 # in its task. An action should use tomtom to get or send information from or
-# to Tomboy and use the standard input, output and error streams as the its
-# interface.
+# to Tomboy and use the standard input, output and error streams as its
+# interface with the user.
 #
 # Actions are listed dynamically in tomtom's basic help message. Actions'
 # descriptions are taken from the first line of the action module's docstring.
 # Make sure to keep it short but precise, the entire line (two spaces for
 # indentation, the action's name and its description) should fit in less than
 # 80 characters.
+#
+# KeyboardInterrupt exceptions are handled by the main script. If an action is
+# currently doing work on data that could impact its integrity if the process
+# is stopped right away should handle this exception to finish work in a
+# consistant state. The user should be warned right away that the application
+# is trying to stop its work. After the state is safe, the action should raise
+# the same exception again so that the application exits cleanly.
 #
 """List information about all or the 10 latest notes.
 

@@ -236,5 +236,10 @@ def main():
     dispatch(action, arguments)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    # Default handling.
+    # If it goes this far up, it probably means it is not such a big deal.
+    except KeyboardInterrupt:
+        pass
 
