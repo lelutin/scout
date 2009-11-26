@@ -239,6 +239,24 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
+    def test_ConnectionError_is_handled(self):
+        """Main: ConnectionError should print an error message."""
+        self.m.StubOutWithMock(cli, "dispatch")
+
+        cli.dispatch("action", [])\
+            .AndRaise( ConnectionError("there was a problem") )
+
+        self.m.ReplayAll()
+
+        sys.argv = ["app_name", "action"]
+        self.assertRaises(SystemExit, cli.main)
+        self.assertEqual(
+            test_data.connection_error_message + os.linesep,
+            sys.stderr.getvalue()
+        )
+
+        self.m.VerifyAll()
+
 class TestUtilities(BasicMocking):
     """Tests for general code.
 
@@ -391,6 +409,71 @@ class TestUtilities(BasicMocking):
         self.assertRaises(NoteNotFound, tc.get_uris_by_name, ["unexistant"] )
 
         self.m.VerifyAll()
+
+    def test_dbus_session_not_available(self):
+        """Utilities: Raise an exception on dbus session creation problem."""
+        old_SessionBus = dbus.SessionBus
+        dbus.SessionBus = self.m.CreateMockAnything()
+
+        dbus.SessionBus()\
+            .AndRaise( Exception("something happened") )
+
+        self.m.ReplayAll()
+
+        # Do this one by hand. It is a tricky test: if the first try block
+        # doesn't raise the proper exception, it will still get raised on the
+        # second try block because it was not mocked out. We need to make sure
+        # that the content of the exception is the right one.
+        try:
+            tc = TomboyCommunicator()
+        except ConnectionError, e:
+            self.assertEqual(
+                test_data.dbus_session_exception_text,
+                e.__str__()
+            )
+        else:
+            # Make sure the second call was setup correctly
+            self.fail("Exception ConnectionError was never raised")
+
+        self.m.VerifyAll()
+        dbus.SessionBus = old_SessionBus
+
+    def test_dbus_Tomboy_communication_problem(self):
+        """Utilities: Raise an exception if linking dbus with Tomboy failed."""
+        old_SessionBus = dbus.SessionBus
+        dbus.SessionBus = self.m.CreateMockAnything()
+        old_Interface = dbus.Interface
+        dbus.Interface = self.m.CreateMockAnything()
+        session_bus = self.m.CreateMockAnything()
+        dbus_object = self.m.CreateMockAnything()
+        dbus_interface = self.m.CreateMockAnything()
+
+        dbus.SessionBus()\
+            .AndReturn(session_bus)
+        session_bus.get_object(
+            "org.gnome.Tomboy",
+            "/org/gnome/Tomboy/RemoteControl"
+        ).AndReturn(dbus_object)
+        dbus.Interface(
+            dbus_object,
+            "org.gnome.Tomboy.RemoteControl"
+        ).AndRaise( Exception("cosmos error") )
+
+        self.m.ReplayAll()
+
+        try:
+            tc = TomboyCommunicator()
+        except ConnectionError, e:
+            self.assertEqual(
+                test_data.dbus_interface_exception_text,
+                e.__str__()
+            )
+        else:
+            self.fail("Exception ConnectionError was never raised")
+
+        self.m.VerifyAll()
+        dbus.SessionBus = old_SessionBus
+        dbus.Interface = old_Interface
 
 class TestListing(BasicMocking):
     """Tests for code that handles the notes and lists them."""

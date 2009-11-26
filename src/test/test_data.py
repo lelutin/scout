@@ -315,3 +315,13 @@ syntax_error_message = \
     """python -V""" + os.linesep + \
     """python -c "from actions import action" """
 
+dbus_session_exception_text = \
+    """Could not connect to dbus session: something happened"""
+
+dbus_interface_exception_text = \
+    """Could not establish connection with Tomboy. """ + \
+    """Is it running?: cosmos error"""
+
+connection_error_message = \
+    """app_name: Error: there was a problem"""
+

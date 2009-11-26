@@ -48,13 +48,14 @@ Here is a list of all the available actions:
 import sys
 import os
 
-from tomtom import NoteNotFound
+from tomtom import NoteNotFound, ConnectionError
 
 # Return codes sent on errors.
 # Codes between 100 and 199 are fatal errors
 # Codes between 200 and 255 are minor errors
 ACTION_NOT_FOUND_RETURN_CODE = 100
 MALFORMED_ACTION_RETURN_CODE = 101
+DBUS_CONNECTION_ERROR_RETURN_CODE = 102
 ACTION_SYNTAX_ERROR_RETURN_CODE = 102
 NOTE_NOT_FOUND_RETURN_CODE   = 200
 
@@ -233,7 +234,14 @@ def main():
             print __doc__[:-1] + os.linesep.join( action_names() )
             return
 
-    dispatch(action, arguments)
+    try:
+        dispatch(action, arguments)
+    except ConnectionError, e:
+        print >> sys.stderr, "%s: Error: %s" % (
+            os.path.basename(sys.argv[0]),
+            e
+        )
+        sys.exit(DBUS_CONNECTION_ERROR_RETURN_CODE)
 
 if __name__ == "__main__":
     try:
