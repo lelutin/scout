@@ -256,6 +256,36 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
+    def test_list_of_actions(self):
+        """Main: list_of_actions returns names of modules."""
+        self.m.StubOutWithMock(os, "listdir")
+
+        import tomtom.actions
+
+        old_path = tomtom.actions.__path__
+        tomtom.actions.__path__ = ["some/path", ]
+        fake_list = [
+            "action1.py",
+            "action2.py",
+            "garbage.ds_store",
+            "__ini__.py",
+            "stale_binary.pyc"
+        ]
+
+        os.listdir("some/path")\
+            .AndReturn(fake_list)
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            ["action1", "action2"],
+            cli.list_of_actions()
+        )
+
+        self.m.VerifyAll()
+
+        tomtom.actions.__path__ = old_path
+
 class TestUtilities(BasicMocking):
     """Tests for general code.
 
