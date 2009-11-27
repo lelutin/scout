@@ -147,19 +147,17 @@ def dispatch(action_name, arguments):
 
         sys.exit(MALFORMED_ACTION_RETURN_CODE)
 
-def action_names():
-    """Retrieve a list of available actions.
+def list_of_actions():
+    """Retrieve a list of available action names.
 
-    Find the modules in the "actions" package and get their description from
-    the first line of their docstring. The names of the modules will be listed
-    as the action names.
+    Find the modules in the "actions" package and return a list of their names.
 
     """
     from tomtom import actions
 
     files = os.listdir( actions.__path__[0] )
 
-    list_of_actions = []
+    list_of_names = []
 
     # Build a list of files that are of interest in the "actions" directory
     for file_name in files:
@@ -168,17 +166,29 @@ def action_names():
         name = ".".join( name_parts[:-1] )
 
         if extension == "py" and name.find("_") != 0:
-            list_of_actions.append(name)
+            list_of_names.append(name)
+
+    return list_of_names
+
+def action_names():
+    """Retrieve a list of available actions.
+
+    Get descriptions from the first line of the actions' docstring and build a
+    list of output lines for the help message. The names of the modules will be
+    listed as the action names.
+
+    """
+    action_names = list_of_actions()
 
     # Get longest name's length. We will use this value to align descriptions.
     pad_up_to = reduce(
         lambda x,y : max(x, y),
-        [len(a) for a in list_of_actions]
+        [len(a) for a in action_names]
     )
 
     # Finally, build the list of output lines for all the actions.
     results = []
-    for name in list_of_actions:
+    for name in action_names:
             module = action_dynamic_load(name)
             description = getattr(module, "__doc__")
             if description is None:
@@ -231,19 +241,21 @@ def main():
 
     try:
         dispatch(action, arguments)
+
     except ConnectionError, e:
         print >> sys.stderr, "%s: Error: %s" % (
             os.path.basename(sys.argv[0]),
             e
         )
         sys.exit(DBUS_CONNECTION_ERROR_RETURN_CODE)
-    except NoteNotFound, e:
-        print >> sys.stderr, """%s: Error: Note named "%s" was not found.""" % (
-            os.path.basename( sys.argv[0] ),
-            e
-        )
-        sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
 
+    except NoteNotFound, e:
+        print >> sys.stderr, """%s: Error: Note named "%s" was not found.""" %\
+            (
+                os.path.basename( sys.argv[0] ),
+                e
+            )
+        sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
 
 if __name__ == "__main__":
     try:

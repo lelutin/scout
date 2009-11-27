@@ -121,47 +121,7 @@ class TestMain(BasicMocking, CLIMocking):
     expected.
 
     """
-    def verify_dispatch(self, action, perform_exception, validation_text):
-        """Call dispatch and verify that it prints an error and exits.
-
-        Dispatch must fail in a gracious manner. It should print an error
-        message to the standard output and exit with an error code when
-        something goes wrong.
-
-        Arguments:
-            action -- whatever is going to given to dynamic import
-            perform_exception -- Exception raised by perform_action
-            validation_text -- text that must be present after completion
-
-        """
-        self.m.StubOutWithMock(cli, "action_dynamic_load")
-        module = self.m.CreateMockAnything()
-        arguments = self.m.CreateMockAnything()
-
-        # Mock out the module
-        cli.action_dynamic_load(action)\
-            .AndReturn(module)
-
-        # Make the action call raise the exception we want to observe.
-        module.perform_action(arguments)\
-            .AndRaise(perform_exception)
-
-        self.m.ReplayAll()
-
-        # Fake a value for sys.argv[0] (the application name)
-        sys.argv = ["app_name", ]
-
-        # And make sure that we get a well formatted error message, and that
-        # the exception does not come out of dispatch.
-        self.assertRaises(SystemExit, cli.dispatch, action, arguments )
-        self.assertEqual(
-            validation_text + os.linesep,
-            sys.stderr.getvalue()
-        )
-
-        self.m.VerifyAll()
-
-    def test_dispatch_handles_NoteNotFound_exceptions(self):
+    def test_NoteNotFound_exceptions_are_handled(self):
         """Main: NoteNotFound exceptions dont't go unhandled."""
         """This code resembles the acceptance test...
 
@@ -194,11 +154,40 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_dispatch_handles_lack_of_perform_action(self):
         """Main: Warn the user if perform_action is not found in a module."""
-        self.verify_dispatch(
-            "action",
-            AttributeError,
-            test_data.malformed_action_module_error
+        """Call dispatch and verify that it prints an error and exits.
+
+        Dispatch must fail in a gracious manner. It should print an error
+        message to the standard output and exit with an error code when
+        something goes wrong.
+
+        """
+        self.m.StubOutWithMock(cli, "action_dynamic_load")
+        module = self.m.CreateMockAnything()
+        arguments = self.m.CreateMockAnything()
+        action = "action"
+
+        # Mock out the module
+        cli.action_dynamic_load(action)\
+            .AndReturn(module)
+
+        # Make the action call raise the exception we want to observe.
+        module.perform_action(arguments)\
+            .AndRaise(AttributeError)
+
+        self.m.ReplayAll()
+
+        # Fake a value for sys.argv[0] (the application name)
+        sys.argv = ["app_name", ]
+
+        # And make sure that we get a well formatted error message, and that
+        # the exception does not come out of dispatch.
+        self.assertRaises(SystemExit, cli.dispatch, action, arguments )
+        self.assertEqual(
+            test_data.malformed_action_module_error + os.linesep,
+            sys.stderr.getvalue()
         )
+
+        self.m.VerifyAll()
 
     def test_action_dynamic_load_handles_SyntaxError(self):
         """Main: Warn the user that an action has a syntax error."""
