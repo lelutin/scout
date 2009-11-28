@@ -268,10 +268,7 @@ full_list_of_notes = [
     ),
 ]
 
-# The rest of the file is text to verify help or general error messages.
-unknown_action = """app_name: unexistant_action is not a valid action. """ + \
-                 """Use option -h for a list of available actions."""
-
+# Help text and errors occuring in the main script
 help_more_details = """For more details, use option -h"""
 
 help_details_list = """Usage: app_name list [-h|-a]
@@ -293,6 +290,9 @@ Options:
 
 unexistant_note_error = \
     """app_name: Error: Note named "unexistant" was not found."""
+
+unknown_action = """app_name: unexistant_action is not a valid action. """ + \
+                 """Use option -h for a list of available actions."""
 
 malformed_action_module_error = \
     """app_name: the "action" action is malformed: """ + \
@@ -316,6 +316,9 @@ syntax_error_message = \
     """python -V""" + os.linesep + \
     """python -c "from actions import action" """
 
+connection_error_message = \
+    """app_name: Error: there was a problem"""
+
 dbus_session_exception_text = \
     """Could not connect to dbus session: something happened"""
 
@@ -323,6 +326,12 @@ dbus_interface_exception_text = \
     """Could not establish connection with Tomboy. """ + \
     """Is it running?: cosmos error"""
 
-connection_error_message = \
-    """app_name: Error: there was a problem"""
+module1_description = \
+    """This is action1 and it does something.""" + os.linesep + \
+    """This line of text will be ignored."""
+
+module_descriptions = [
+    "  action1     : This is action1 and it does something.",
+    "  otheraction : No description available.",
+]
 

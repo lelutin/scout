@@ -286,6 +286,35 @@ class TestMain(BasicMocking, CLIMocking):
 
         tomtom.actions.__path__ = old_path
 
+    def test_action_names_formats_descriptions(self):
+        """Main: Actions and their descriptions are formatted for help."""
+        self.m.StubOutWithMock(cli, "list_of_actions")
+        old_action_dyn_load = cli.action_dynamic_load
+        cli.action_dynamic_load = self.m.CreateMockAnything()
+        fake_module1 = self.m.CreateMockAnything()
+        fake_othermodule = self.m.CreateMockAnything()
+
+        fake_module1.__doc__ = test_data.module1_description
+        fake_othermodule.__doc__ = None
+
+        cli.list_of_actions()\
+            .AndReturn( ["action1", "otheraction"] )
+        cli.action_dynamic_load("action1")\
+            .AndReturn(fake_module1)
+        cli.action_dynamic_load("otheraction")\
+            .AndReturn(fake_othermodule)
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            test_data.module_descriptions,
+            cli.action_names()
+        )
+
+        self.m.VerifyAll()
+
+        cli.action_dynamic_load = old_action_dyn_load
+
 class TestUtilities(BasicMocking):
     """Tests for general code.
 

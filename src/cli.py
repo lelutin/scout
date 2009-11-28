@@ -173,9 +173,9 @@ def list_of_actions():
 def action_names():
     """Retrieve a list of available actions.
 
-    Get descriptions from the first line of the actions' docstring and build a
-    list of output lines for the help message. The names of the modules will be
-    listed as the action names.
+    Get descriptions from the first line of the actions' docstring and format
+    them as a list of output lines for the help message. The names of the
+    modules will be listed as the action names.
 
     """
     action_names = list_of_actions()
@@ -189,20 +189,20 @@ def action_names():
     # Finally, build the list of output lines for all the actions.
     results = []
     for name in action_names:
-            module = action_dynamic_load(name)
-            description = getattr(module, "__doc__")
-            if description is None:
-                description = "No description available."
+        module = action_dynamic_load(name)
+        description = getattr(module, "__doc__")
+        if description is None:
+            description = "No description available."
 
-            lines = description.splitlines()
+        lines = description.splitlines()
 
-            if len( lines ):
-                description = lines[0]
+        if len( lines ):
+            description = lines[0]
 
-            results.append(
-                """  %s%s """ % (name, " " * (pad_up_to - len(name) ) ) + \
-                """: %s""" % (description, )
-            )
+        results.append(
+            """  %s%s """ % (name, " " * (pad_up_to - len(name) ) ) + \
+            """: %s""" % (description, )
+        )
 
     return results
 
