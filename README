@@ -15,7 +15,7 @@ tomtom. If you use "-h"/"--help" and specify an action name at the same time, a
 detailed help will be displayed for that action.
 
 To use tomtom the first argument must be an action name. For example, say you
-want to get a list of 10 last modified notes. You can call the following:
+want to get a list of all notes. You can call the following:
 
 tomtom list
 

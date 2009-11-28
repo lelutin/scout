@@ -271,11 +271,11 @@ full_list_of_notes = [
 # Help text and errors occuring in the main script
 help_more_details = """For more details, use option -h"""
 
-help_details_list = """Usage: app_name list [-h|-a]
+help_details_list = """Usage: app_name list [-h|-n <num>]
 
 Options:
-  -h, --help  show this help message and exit
-  -a, --all   List all the notes"""
+  -h, --help    show this help message and exit
+  -n MAX_NOTES  Limit the number of notes listed."""
 
 help_details_display = """Usage: app_name display [-h] [note_name ...]
 

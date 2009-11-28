@@ -54,8 +54,8 @@
 
 This is the "list" action. Its role is to display quick information about notes
 on the standard output stream. By default (if no argument is given), it will
-list only the 10 latest notes. With the "-a" option, it will list all the
-notes.
+list all the notes. With the "-n" argument and an integer value, listed notes
+will be limited in number to the value given as an argument.
 
 """
 import optparse
@@ -73,17 +73,19 @@ def perform_action(args):
         args -- A list composed of action and file names
 
     """
-    parser = optparse.OptionParser(usage="%prog list [-h|-a]")
-    parser.add_option("-a", "--all",
-        dest="full_list", default=False, action="store_true",
-        help="List all the notes")
+    parser = optparse.OptionParser(usage="%prog list [-h|-n <num>]")
+    parser.add_option(
+        "-n", type="int",
+        dest="max_notes", default=None,
+        help="Limit the number of notes listed."
+    )
 
     (options, file_names) = parser.parse_args(args)
 
     tomboy_interface = Tomtom()
 
-    if options.full_list:
+    if options.max_notes is None:
         print tomboy_interface.list_notes()
     else:
-        print tomboy_interface.list_notes(count_limit=10)
+        print tomboy_interface.list_notes(count_limit=options.max_notes)
 

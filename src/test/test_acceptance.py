@@ -168,12 +168,12 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         )
 
     def test_action_list(self):
-        """Acceptance: Action "list" prints a list of the last 10 notes."""
+        """Acceptance: Action "list -n" prints a list of the last n notes."""
         self.mock_out_listing(test_data.full_list_of_notes[:10])
 
         self.m.ReplayAll()
 
-        sys.argv = ["unused_prog_name", "list"]
+        sys.argv = ["unused_prog_name", "list", "-n", "10"]
         cli.main()
         self.assertEquals(
             test_data.expected_list + os.linesep,
@@ -183,12 +183,12 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_full_list(self):
-        """Acceptance: Action "list" with "-a" produces a list of all notes."""
+        """Acceptance: Action "list" alone produces a list of all notes."""
         self.mock_out_listing(test_data.full_list_of_notes)
 
         self.m.ReplayAll()
 
-        sys.argv = ["unused_prog_name", "list", "-a"]
+        sys.argv = ["unused_prog_name", "list"]
         cli.main()
         self.assertEquals(
             os.linesep.join([
