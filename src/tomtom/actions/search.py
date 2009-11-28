@@ -62,7 +62,7 @@ the content of the line on which the text is appearing.
 import optparse
 import sys
 
-from tomtom import Tomtom
+from tomtom.core import Tomtom
 
 def perform_action(args):
     """Use the tomtom object to search for some text within notes.

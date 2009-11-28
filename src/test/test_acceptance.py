@@ -43,7 +43,7 @@ import dbus
 import test_data
 from test_utils import *
 
-import cli
+from tomtom import cli
 
 class AcceptanceTests(BasicMocking, CLIMocking):
     """Acceptance tests.

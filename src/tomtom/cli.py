@@ -48,7 +48,7 @@ Here is a list of all the available actions:
 import sys
 import os
 
-from tomtom import NoteNotFound, ConnectionError
+from core import NoteNotFound, ConnectionError
 
 # Return codes sent on errors.
 # Codes between 100 and 199 are fatal errors
@@ -73,7 +73,7 @@ def action_dynamic_load(name):
     """
     try:
         _temp = __import__(
-            "tomtom.actions",
+            "actions",
             globals(),
             locals(),
             [name, ]
@@ -153,7 +153,7 @@ def list_of_actions():
     Find the modules in the "actions" package and return a list of their names.
 
     """
-    from tomtom import actions
+    import actions
 
     files = os.listdir( actions.__path__[0] )
 

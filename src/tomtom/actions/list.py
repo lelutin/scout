@@ -61,7 +61,7 @@ notes.
 import optparse
 import sys
 
-from tomtom import Tomtom
+from tomtom.core import Tomtom
 
 def perform_action(args):
     """Use the tomtom object to list notes.

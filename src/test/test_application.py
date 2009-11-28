@@ -48,8 +48,8 @@ import datetime
 import time
 import dbus
 
-from tomtom import *
-import cli
+from tomtom.core import *
+from tomtom import cli
 
 import test_data
 from test_utils import *
@@ -204,7 +204,7 @@ class TestMain(BasicMocking, CLIMocking):
                         .AndReturn( self.m.CreateMockAnything() )
 
         __builtin__.__import__(
-            "tomtom.actions",
+            "actions",
             global_vars,
             local_vars,
             [action_name, ]
