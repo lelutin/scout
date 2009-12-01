@@ -257,7 +257,8 @@ def main():
             )
         sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
 
-if __name__ == "__main__":
+def exception_wrapped_main():
+    """Wrap around main function to handle general exceptions."""
     try:
         main()
     # Default handling.
@@ -265,3 +266,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
 
+if __name__ == "__main__":
+    exception_wrapped_name()
