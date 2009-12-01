@@ -267,4 +267,4 @@ def exception_wrapped_main():
         pass
 
 if __name__ == "__main__":
-    exception_wrapped_name()
+    exception_wrapped_main()

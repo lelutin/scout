@@ -84,8 +84,5 @@ def perform_action(args):
 
     tomboy_interface = Tomtom()
 
-    if options.max_notes is None:
-        print tomboy_interface.list_notes()
-    else:
-        print tomboy_interface.list_notes(count_limit=options.max_notes)
+    print tomboy_interface.list_notes(count_limit=options.max_notes)
 
