@@ -152,6 +152,22 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
+    def test_KeyboardInterrupt_is_handled(self):
+        """Main: KeyboardInterrupt doesn't come out of the application."""
+        self.m.StubOutWithMock(cli, "main")
+
+        cli.main().AndRaise(KeyboardInterrupt)
+
+        self.m.ReplayAll()
+
+        # No output is expected, simply check if an exception goes through.
+        try:
+            cli.exception_wrapped_main()
+        except KeyboardInterrupt:
+            self.fail("KeyboardInterrupt got out of the program")
+
+        self.m.VerifyAll()
+
     def test_dispatch_handles_lack_of_perform_action(self):
         """Main: Warn the user if perform_action is not found in a module."""
         """Call dispatch and verify that it prints an error and exits.
