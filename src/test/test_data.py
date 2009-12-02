@@ -43,11 +43,6 @@ import dbus
 from tomtom.core import TomboyNote
 
 # The following few values are for testing the "list" feature.
-#
-# To obtain modification dates for notes and corresponding real dates:
-# With "tomboy" being a dbus interface to the Tomboy application:
-# >>> [(datetime.fromtimestamp(tomboy.GetNoteChangeDate(url)),
-# >>>     tomboy.GetNoteChangeDate(url)) for url in l]
 expected_list = \
 """2009-11-09 | addressbook  (system:notebook:pim)
 2009-11-02 | TODO-list  (system:notebook:reminders, system:notebook:pim)
@@ -203,6 +198,11 @@ display_no_note_name_error = \
 display_separator = "=========================="
 
 # This is a list of false notes that are used throughout the majority of tests.
+#
+# To obtain modification dates for notes and corresponding real dates:
+# With "tomboy" being a dbus interface to the Tomboy application:
+# >>> [(datetime.fromtimestamp(tomboy.GetNoteChangeDate(url)),
+# >>>     tomboy.GetNoteChangeDate(url)) for url in l]
 full_list_of_notes = [
     TomboyNote(
         uri="note://tomboy/b332eb31-8139-4351-9f5d-738bf64ce172",
@@ -281,6 +281,12 @@ full_list_of_notes = [
         title="R&D",
         date=dbus.Int64(1253340600L),
         tags=["system:notebook:reminders", "training"]
+    ),
+    TomboyNote(
+        uri="note://tomboy/0045cd16-2977-456a-b790-9a256f5b2a71",
+        title="New note template",
+        date=dbus.Int64(1253342190L),
+        tags=["system:template", ]
     ),
 ]
 

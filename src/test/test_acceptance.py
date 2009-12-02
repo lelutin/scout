@@ -265,7 +265,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_search(self):
         """Acceptance: Action "search" searches in all notes, case-indep."""
         self.mock_out_listing(test_data.full_list_of_notes)
-        for note in test_data.full_list_of_notes:
+        # Forget about last note (a template)
+        for note in test_data.full_list_of_notes[:-1]:
             self.dbus_interface.GetNoteContents(note.uri)\
                 .AndReturn(test_data.note_contents_from_dbus[note.title])
 

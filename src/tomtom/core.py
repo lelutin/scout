@@ -226,6 +226,10 @@ class TomboyCommunicator(object):
 
         return filtered_list
 
+    def filter_out_templates(self, notes):
+        """Take out those annoying templates from display."""
+        return [n for n in notes if "system:template" not in n.tags]
+
     def get_notes(self, count_limit=None, names=[], tags=[]):
         """Get a list of notes from Tomboy.
 
@@ -262,6 +266,8 @@ class TomboyCommunicator(object):
 
         if tags:
             list_of_notes = self.filter_by_tags(list_of_notes, tags)
+
+        list_of_notes = self.filter_out_templates(list_of_notes)
 
         return list_of_notes
 

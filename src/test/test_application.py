@@ -643,7 +643,8 @@ class TestListing(BasicMocking):
     def test_note_listing(self):
         """Listing: Get the information on a list of notes."""
         tt = without_constructor(Tomtom)
-        for note in test_data.full_list_of_notes:
+        # Forget about last note (a template)
+        for note in test_data.full_list_of_notes[:-1]:
             self.m.StubOutWithMock(note, "listing")
             tag_text = ""
             if len(note.tags):
@@ -663,7 +664,7 @@ class TestListing(BasicMocking):
 
         self.assertEqual(
             test_data.expected_list + os.linesep + test_data.list_appendix,
-            tt.listing(test_data.full_list_of_notes)
+            tt.listing(test_data.full_list_of_notes[:-1])
         )
 
         self.m.VerifyAll()
@@ -782,7 +783,8 @@ class TestSearch(BasicMocking):
         tt.tomboy_communicator = self.m.CreateMockAnything()
 
         note_contents = {}
-        for note in test_data.full_list_of_notes:
+        # Forget about last note (a template)
+        for note in test_data.full_list_of_notes[:-1]:
             content = test_data.note_contents_from_dbus[note.title]
 
             if note.tags:
@@ -806,8 +808,8 @@ class TestSearch(BasicMocking):
         ]
 
         tt.tomboy_communicator.get_notes(names=[])\
-            .AndReturn(test_data.full_list_of_notes)
-        for note in test_data.full_list_of_notes:
+            .AndReturn(test_data.full_list_of_notes[:-1])
+        for note in test_data.full_list_of_notes[:-1]:
             tt.tomboy_communicator.get_note_content(note)\
                 .AndReturn(note_contents[note.title])
 
