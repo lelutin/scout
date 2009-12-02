@@ -347,6 +347,22 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         cli.__doc__ = old_docstring
 
+    def test_filter_notes_by_tags(self):
+        """Acceptance: Using "-t" limits the notes by tags."""
+        self.mock_out_listing(test_data.full_list_of_notes)
+
+        self.m.ReplayAll()
+
+        sys.argv = ["app_name", "list", "-t", "pim", "-t", "projects"]
+        cli.main()
+
+        self.assertEqual(
+            test_data.tag_limited_list + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+        self.m.VerifyAll()
+
     def verify_help_text(self, args, text):
         """Mock out help messages.
 

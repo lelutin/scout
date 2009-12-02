@@ -559,7 +559,7 @@ class TestListing(BasicMocking):
         self.m.StubOutWithMock(tt, "listing")
         self.m.StubOutWithMock(tt.tomboy_communicator, "get_notes")
 
-        tt.tomboy_communicator.get_notes(None)\
+        tt.tomboy_communicator.get_notes(count_limit=None, tags=[])\
             .AndReturn(fake_list)
         tt.listing(fake_list)
 

@@ -65,6 +65,14 @@ list_appendix = \
 2009-09-19 | recipes
 2009-09-19 | R&D  (reminders, training)"""
 
+tag_limited_list = \
+"""2009-11-09 | addressbook  (pim)
+2009-11-02 | TODO-list  (reminders, pim)
+2009-10-22 | dell 750  (projects)
+2009-10-03 | business contacts  (pim)
+2009-09-19 | Webpidgin  (projects)
+2009-09-19 | conquer the world  (projects)"""
+
 # Output values that are expected for the "search" feature.
 search_results = \
 """addressbook : 5 : John Doe (cell) - 555-5512
@@ -271,11 +279,14 @@ full_list_of_notes = [
 # Help text and errors occuring in the main script
 help_more_details = """For more details, use option -h"""
 
-help_details_list = """Usage: app_name list [-h|-n <num>]
+help_details_list = """Usage: app_name list [-h|-n <num>|-t <tag>[,<tag>...]]
 
 Options:
   -h, --help    show this help message and exit
-  -n MAX_NOTES  Limit the number of notes listed."""
+  -n MAX_NOTES  Limit the number of notes listed.
+  -t TAGS       List only notes with specified tags. Use this option once for
+                each desired tag. This option selects raw tags and could be
+                useful for user-assigned tags."""
 
 help_details_display = """Usage: app_name display [-h] [note_name ...]
 

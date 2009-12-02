@@ -73,16 +73,29 @@ def perform_action(args):
         args -- A list composed of action and file names
 
     """
-    parser = optparse.OptionParser(usage="%prog list [-h|-n <num>]")
+    parser = optparse.OptionParser(
+        usage="%prog list [-h|-n <num>|-t <tag>[,<tag>...]]"
+    )
+
     parser.add_option(
         "-n", type="int",
         dest="max_notes", default=None,
         help="Limit the number of notes listed."
+    )
+    parser.add_option(
+        "-t",
+        dest="tags", action="append",
+        help="""List only notes with specified tags. Use this option once """
+        """for each desired tag. This option selects raw tags and could be """
+        """useful for user-assigned tags."""
     )
 
     (options, file_names) = parser.parse_args(args)
 
     tomboy_interface = Tomtom()
 
-    print tomboy_interface.list_notes(count_limit=options.max_notes)
+    print tomboy_interface.list_notes(
+        count_limit=options.max_notes,
+        tags=options.tags,
+    )
 

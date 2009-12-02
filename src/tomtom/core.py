@@ -73,7 +73,7 @@ class Tomtom(object):
         super(Tomtom, self).__init__()
         self.tomboy_communicator = TomboyCommunicator()
 
-    def list_notes(self, count_limit=None):
+    def list_notes(self, count_limit=None, tags=[]):
         """Entry point to listing notes.
 
         If specified, it can limit the number of displayed notes. By default,
@@ -83,7 +83,12 @@ class Tomtom(object):
             count_limit -- Integer limit number of notes listed (default: None)
 
         """
-        return self.listing(self.tomboy_communicator.get_notes(count_limit))
+        return self.listing(
+            self.tomboy_communicator.get_notes(
+                count_limit=count_limit,
+                tags=tags
+            )
+        )
 
     def listing(self, notes):
         """Get information about notes.
@@ -209,7 +214,19 @@ class TomboyCommunicator(object):
 
         return uris
 
-    def get_notes(self, count_limit=None, names=[]):
+    def filter_by_tags(self, notes, tags):
+        """docstring for filter_by_tags"""
+        # What a dumb way to do this...
+        filtered_list = []
+        for note in notes:
+            for tag in note.tags:
+                if tag in tags:
+                    filtered_list.append(note)
+                    break
+
+        return filtered_list
+
+    def get_notes(self, count_limit=None, names=[], tags=[]):
         """Get a list of notes from Tomboy.
 
         This method gets a list of notes from Tomboy and converts them to
@@ -242,6 +259,9 @@ class TomboyCommunicator(object):
                     tags=self.comm.GetTagsForNote(uri)
                 )
             )
+
+        if tags:
+            list_of_notes = self.filter_by_tags(list_of_notes, tags)
 
         return list_of_notes
 
