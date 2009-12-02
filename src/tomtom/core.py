@@ -230,20 +230,16 @@ class TomboyCommunicator(object):
         """Take out those annoying templates from display."""
         return [n for n in notes if "system:template" not in n.tags]
 
-    def get_notes(self, count_limit=None, names=[], tags=[]):
-        """Get a list of notes from Tomboy.
+    def build_note_list(self, **kwargs):
+        """Find notes and build a list of TomboyNote objects.
 
         This method gets a list of notes from Tomboy and converts them to
-        TomboyNote objects. It then returns the notes in a list. `count_limit`
-        can limit the number of notes returned. By default, it gets all notes.
-        If `names` is given a list of note names, it will restrict the search
-        to only those notes.
-
-        Arguments:
-            count_limit -- Integer limit of notes returned (default: None)
-            names       -- A list of names. Get only these notes (default: [])
+        TomboyNote objects. It then returns the notes in a list.
 
         """
+        names = kwargs.pop("names", [])
+        count_limit = kwargs.pop("count_limit", None)
+
         if names:
             pairs = self.get_uris_by_name(names)
         else:
@@ -253,8 +249,10 @@ class TomboyCommunicator(object):
         for pair in pairs:
             uri = pair[0]
             note_title = pair[1]
+
             if note_title is None:
                 note_title = self.comm.GetNoteTitle(uri)
+
             list_of_notes.append(
                 TomboyNote(
                     uri=uri,
@@ -264,12 +262,41 @@ class TomboyCommunicator(object):
                 )
             )
 
-        if tags:
-            list_of_notes = self.filter_by_tags(list_of_notes, tags)
-
-        list_of_notes = self.filter_out_templates(list_of_notes)
-
         return list_of_notes
+
+    def filter_notes(self, notes, **kwargs):
+        """Filter a list of notes according to some criteria.
+
+        Filter a list of TomboyNote objects according to a list of filtering
+        options.
+        `count_limit` can limit the number of notes returned. By default, it
+        gets all notes.
+        `names` will filter out any notes but those whose names are in the
+        list.
+
+        """
+        tags = kwargs.pop("tags", [])
+
+        if tags:
+            notes = self.filter_by_tags(notes, tags)
+
+        return self.filter_out_templates(notes)
+
+    def get_notes(self, **kwargs):
+        """Get a list of notes from Tomboy.
+
+        This function is the single point of entry to get a list of notes that
+        will match the given selection options. The first step is to build a
+        list of TomboyNote objects and the last step is to filter out this list
+        according to the other options.
+
+        Arguments:
+            kwargs -- Map of arguments used for getting and filtering notes.
+
+        """
+        notes = self.build_note_list(**kwargs)
+
+        return self.filter_notes(notes, **kwargs)
 
     def get_note_content(self, note):
         """Get the content of a note.

@@ -73,7 +73,7 @@ def without_constructor(cls):
     cls.__init__ = old_constructor
     return instance
 
-def verify_get_notes(self, tc, notes, note_names=[]):
+def verify_note_list(self, tc, notes, note_names=[]):
     """Verify the outcome of TomboyCommunicator.get_notes().
 
     This function verifies if notes received from calling
@@ -98,7 +98,7 @@ def verify_get_notes(self, tc, notes, note_names=[]):
     } for n in notes]
 
     # Order is not important
-    for note in tc.get_notes(names=note_names):
+    for note in tc.build_note_list(names=note_names):
         note_as_dict = {
             "uri":note.uri,
             "title":note.title,
@@ -421,9 +421,11 @@ class TestUtilities(BasicMocking):
             tn.date
         )
 
-    def test_get_notes_by_name(self):
+    def test_build_note_list_by_names(self):
         """Utilities: TomboyCommunicator gets a list of given named notes."""
         tc = without_constructor(TomboyCommunicator)
+        tc.comm = self.m.CreateMockAnything()
+
         todo = test_data.full_list_of_notes[1]
         recipes = test_data.full_list_of_notes[11]
         notes = [todo, recipes]
@@ -432,7 +434,6 @@ class TestUtilities(BasicMocking):
         self.m.StubOutWithMock(tc, "get_uris_by_name")
         tc.get_uris_by_name(names)\
             .AndReturn([(todo.uri,todo.title), (recipes.uri, recipes.title)])
-        tc.comm = self.m.CreateMockAnything()
         tc.comm.GetNoteChangeDate(todo.uri)\
             .AndReturn(todo.date)
         tc.comm.GetTagsForNote(todo.uri)\
@@ -444,7 +445,34 @@ class TestUtilities(BasicMocking):
 
         self.m.ReplayAll()
 
-        verify_get_notes(self, tc, notes, note_names=names)
+        verify_note_list(self, tc, notes, note_names=names)
+
+        self.m.VerifyAll()
+
+    def test_build_note_list(self):
+        """Utilities: TomboyCommunicator gets a full list of notes."""
+        tc = without_constructor(TomboyCommunicator)
+        tc.comm = self.m.CreateMockAnything()
+
+        list_of_uris = dbus.Array(
+            [note.uri for note in test_data.full_list_of_notes]
+        )
+
+        self.m.StubOutWithMock(tc, "get_uris_for_n_notes")
+
+        tc.get_uris_for_n_notes(None)\
+            .AndReturn( [(u, None) for u in list_of_uris] )
+        for note in test_data.full_list_of_notes:
+            tc.comm.GetNoteTitle(note.uri)\
+                .AndReturn(note.title)
+            tc.comm.GetNoteChangeDate(note.uri)\
+                .AndReturn(note.date)
+            tc.comm.GetTagsForNote(note.uri)\
+                .AndReturn(note.tags)
+
+        self.m.ReplayAll()
+
+        verify_note_list(self, tc, test_data.full_list_of_notes)
 
         self.m.VerifyAll()
 
@@ -607,36 +635,6 @@ class TestListing(BasicMocking):
             [(uri, None) for uri in list_of_uris[:6] ],
             tc.get_uris_for_n_notes(6)
         )
-
-        self.m.VerifyAll()
-
-    def test_get_notes(self):
-        """Listing: Get listing information for all the notes from Tomboy."""
-        tc = without_constructor(TomboyCommunicator)
-
-        tc.comm = self.m.CreateMockAnything()
-        self.m.StubOutWithMock(tc, "get_uris_for_n_notes")
-        self.m.StubOutWithMock(tc.comm, "ListAllNotes")
-        self.m.StubOutWithMock(tc.comm, "GetNoteTitle")
-        self.m.StubOutWithMock(tc.comm, "GetNoteChangeDate")
-        self.m.StubOutWithMock(tc.comm, "GetTagsForNote")
-        list_of_uris = dbus.Array(
-            [note.uri for note in test_data.full_list_of_notes]
-        )
-
-        tc.get_uris_for_n_notes(None)\
-            .AndReturn( [(u, None) for u in list_of_uris] )
-        for note in test_data.full_list_of_notes:
-            tc.comm.GetNoteTitle(note.uri)\
-                .AndReturn(note.title)
-            tc.comm.GetNoteChangeDate(note.uri)\
-                .AndReturn(note.date)
-            tc.comm.GetTagsForNote(note.uri)\
-                .AndReturn(note.tags)
-
-        self.m.ReplayAll()
-
-        verify_get_notes(self, tc, test_data.full_list_of_notes)
 
         self.m.VerifyAll()
 
