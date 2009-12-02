@@ -49,29 +49,37 @@ from tomtom.core import TomboyNote
 # >>> [(datetime.fromtimestamp(tomboy.GetNoteChangeDate(url)),
 # >>>     tomboy.GetNoteChangeDate(url)) for url in l]
 expected_list = \
-"""2009-11-09 | addressbook  (pim)
-2009-11-02 | TODO-list  (reminders, pim)
-2009-11-02 | Bash  (reminders)
+"""2009-11-09 | addressbook  (system:notebook:pim)
+2009-11-02 | TODO-list  (system:notebook:reminders, system:notebook:pim)
+2009-11-02 | Bash  (system:notebook:reminders)
 2009-10-22 | dell 750  (projects)
 2009-10-22 | python-work
 2009-10-18 | TDD
 2009-10-18 | OpenSource Conference X
-2009-10-03 | business contacts  (pim)
-2009-10-01 | japanese  (reminders)
+2009-10-03 | business contacts  (system:notebook:pim)
+2009-10-01 | japanese  (system:notebook:reminders)
 2009-09-19 | Webpidgin  (projects)"""
 
 list_appendix = \
 """2009-09-19 | conquer the world  (projects)
 2009-09-19 | recipes
-2009-09-19 | R&D  (reminders, training)"""
+2009-09-19 | R&D  (system:notebook:reminders, training)"""
 
 tag_limited_list = \
-"""2009-11-09 | addressbook  (pim)
-2009-11-02 | TODO-list  (reminders, pim)
+"""2009-11-09 | addressbook  (system:notebook:pim)
+2009-11-02 | TODO-list  (system:notebook:reminders, system:notebook:pim)
 2009-10-22 | dell 750  (projects)
-2009-10-03 | business contacts  (pim)
+2009-10-03 | business contacts  (system:notebook:pim)
 2009-09-19 | Webpidgin  (projects)
 2009-09-19 | conquer the world  (projects)"""
+
+book_limited_list = \
+"""2009-11-09 | addressbook  (system:notebook:pim)
+2009-11-02 | TODO-list  (system:notebook:reminders, system:notebook:pim)
+2009-11-02 | Bash  (system:notebook:reminders)
+2009-10-03 | business contacts  (system:notebook:pim)
+2009-10-01 | japanese  (system:notebook:reminders)
+2009-09-19 | R&D  (system:notebook:reminders, training)"""
 
 # Output values that are expected for the "search" feature.
 search_results = \
@@ -200,19 +208,19 @@ full_list_of_notes = [
         uri="note://tomboy/b332eb31-8139-4351-9f5d-738bf64ce172",
         title="addressbook",
         date=dbus.Int64(1257805144L),
-        tags=["pim", ]
+        tags=["system:notebook:pim", ]
     ),
     TomboyNote(
         uri="note://tomboy/30ae533a-2789-4789-a409-16a6f65edf54",
         title="TODO-list",
         date=dbus.Int64(1257140572L),
-        tags=["reminders", "pim"]
+        tags=["system:notebook:reminders", "system:notebook:pim"]
     ),
     TomboyNote(
         uri="note://tomboy/4652f914-85dd-487d-b614-188242f52241",
         title="Bash",
         date=dbus.Int64(1257138697L),
-        tags=["reminders", ]
+        tags=["system:notebook:reminders", ]
     ),
     TomboyNote(
         uri="note://tomboy/5815160c-7143-4c56-9c5f-007acca375ad",
@@ -242,13 +250,13 @@ full_list_of_notes = [
         uri="note://tomboy/21612e71-e2ec-4afb-82bb-7e663e58e88c",
         title="business contacts",
         date=dbus.Int64(1254553804L),
-        tags=["pim", ]
+        tags=["system:notebook:pim", ]
     ),
     TomboyNote(
         uri="note://tomboy/8dd14cf8-4766-4122-8178-192cdc0e99dc",
         title="japanese",
         date=dbus.Int64(1254384931L),
-        tags=["reminders", ]
+        tags=["system:notebook:reminders", ]
     ),
     TomboyNote(
         uri="note://tomboy/c0263232-c3b8-45a8-bfdc-7cb8ee4b2a5d",
@@ -272,18 +280,22 @@ full_list_of_notes = [
         uri="note://tomboy/5df0fd74-cbdd-4cf3-bb08-7a7f09997afd",
         title="R&D",
         date=dbus.Int64(1253340600L),
-        tags=["reminders", "training"]
+        tags=["system:notebook:reminders", "training"]
     ),
 ]
 
 # Help text and errors occuring in the main script
 help_more_details = """For more details, use option -h"""
 
-help_details_list = """Usage: app_name list [-h|-n <num>|-t <tag>[,<tag>...]]
+help_details_list = \
+"""Usage: app_name list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]
 
 Options:
   -h, --help    show this help message and exit
   -n MAX_NOTES  Limit the number of notes listed.
+  -b BOOKS      List only notes belonging to specified notebooks. It is a
+                shortcut to option "-t" to specify notebooks more easily. Use
+                this option once for each desired book.
   -t TAGS       List only notes with specified tags. Use this option once for
                 each desired tag. This option selects raw tags and could be
                 useful for user-assigned tags."""

@@ -74,7 +74,7 @@ def perform_action(args):
 
     """
     parser = optparse.OptionParser(
-        usage="%prog list [-h|-n <num>|-t <tag>[,<tag>...]]"
+        usage="%prog list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]"
     )
 
     parser.add_option(
@@ -83,8 +83,15 @@ def perform_action(args):
         help="Limit the number of notes listed."
     )
     parser.add_option(
+        "-b",
+        dest="books", action="append", default=[],
+        help="""List only notes belonging to specified notebooks. It is a """
+        """shortcut to option "-t" to specify notebooks more easily. Use """
+        """this option once for each desired book."""
+    )
+    parser.add_option(
         "-t",
-        dest="tags", action="append",
+        dest="tags", action="append", default=[],
         help="""List only notes with specified tags. Use this option once """
         """for each desired tag. This option selects raw tags and could be """
         """useful for user-assigned tags."""
@@ -94,8 +101,13 @@ def perform_action(args):
 
     tomboy_interface = Tomtom()
 
+    tags_to_select = options.tags
+    if options.books:
+        tags_to_select = tags_to_select + \
+            ["system:notebook:%s" % book for book in options.books]
+
     print tomboy_interface.list_notes(
         count_limit=options.max_notes,
-        tags=options.tags,
+        tags=tags_to_select,
     )
 

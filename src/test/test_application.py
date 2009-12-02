@@ -759,7 +759,10 @@ class TestDisplay(BasicMocking):
         note = test_data.full_list_of_notes[12]
         raw_content = test_data.note_contents_from_dbus[note.title]
         lines = raw_content.splitlines()
-        lines[0] = "%s%s" % (lines[0], "  (reminders, training)")
+        lines[0] = "%s%s" % (
+            lines[0],
+            "  (system:notebook:reminders, training)"
+        )
         expected_result = os.linesep.join(lines)
 
         tc.comm.GetNoteContents(note.uri)\

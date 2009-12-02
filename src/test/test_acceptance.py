@@ -207,7 +207,12 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         separator = os.linesep + "==========================" + os.linesep
         note_lines = test_data.note_contents_from_dbus["TODO-list"]\
                         .splitlines()
-        note_lines[0] = "%s  (reminders, pim)" % note_lines[0]
+
+        note_lines[0] = \
+            "%s  (system:notebook:reminders, system:notebook:pim)" % (
+                note_lines[0],
+            )
+
         expected_result_list = [
             os.linesep.join(note_lines),
             test_data.note_contents_from_dbus["python-work"]
@@ -353,11 +358,31 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        sys.argv = ["app_name", "list", "-t", "pim", "-t", "projects"]
+        sys.argv = [
+            "app_name", "list",
+            "-t", "system:notebook:pim",
+            "-t", "projects"
+        ]
         cli.main()
 
         self.assertEqual(
             test_data.tag_limited_list + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+        self.m.VerifyAll()
+
+    def test_filter_notes_by_books(self):
+        """Acceptance: Using "-b" limits the notes by notebooks."""
+        self.mock_out_listing(test_data.full_list_of_notes)
+
+        self.m.ReplayAll()
+
+        sys.argv = ["app_name", "list", "-b", "pim", "-b", "reminders"]
+        cli.main()
+
+        self.assertEqual(
+            test_data.book_limited_list + os.linesep,
             sys.stdout.getvalue()
         )
 
