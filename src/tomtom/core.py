@@ -154,13 +154,6 @@ class TomboyCommunicator(object):
         """Create a link to the Tomboy application upon instanciation."""
         try:
             tb_bus = dbus.SessionBus()
-        except:
-            (dummy1, error, dummy2) = sys.exc_info()
-            raise ConnectionError(
-                "Could not connect to dbus session: %s" % (error, )
-            )
-
-        try:
             tb_object = tb_bus.get_object(
                 "org.gnome.Tomboy",
                 "/org/gnome/Tomboy/RemoteControl"
@@ -169,11 +162,10 @@ class TomboyCommunicator(object):
                 tb_object,
                 "org.gnome.Tomboy.RemoteControl"
             )
-        except:
-            (dummy1, error, dummy2) = sys.exc_info()
+        except dbus.DBusException, e:
             raise ConnectionError(
                 """Could not establish connection with Tomboy. """ + \
-                """Is it running?: %s""" % (error, )
+                """Is it running?: %s""" % (e, )
             )
 
     def get_uris_for_n_notes(self, count_max):

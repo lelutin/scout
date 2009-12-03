@@ -54,66 +54,6 @@ from tomtom import cli
 import test_data
 from test_utils import *
 
-def stub_constructor(self):
-    """Dummy function used to stub out constructors."""
-    pass
-
-def without_constructor(cls):
-    """Stub out the constructor of a class.
-
-    Remove external dependencies wihin a class' __init__ function.
-
-    Arguments:
-        cls -- The class to be instantiated without constructor
-
-    """
-    old_constructor = cls.__init__
-    cls.__init__ = stub_constructor
-    instance = cls()
-    cls.__init__ = old_constructor
-    return instance
-
-def verify_note_list(self, tc, notes, note_names=[]):
-    """Verify the outcome of TomboyCommunicator.get_notes().
-
-    This function verifies if notes received from calling
-    TomboyCommunicator.get_notes are what we expect them to be. It provokes the
-    unit test to fail in case of discordance.
-
-    TomboyNotes are unhashable so we need to convert them to dictionaries
-    and check for list membership.
-
-    Arguments:
-        self       -- The TestCase instance
-        tc         -- TomboyCommunicator mock object instance
-        notes      -- list of TomboyNote objects
-        note_names -- list of note names to pass to get_notes
-
-    """
-    expectation = [{
-        "uri":n.uri,
-        "title":n.title,
-        "date":n.date,
-        "tags":n.tags,
-    } for n in notes]
-
-    # Order is not important
-    for note in tc.build_note_list(names=note_names):
-        note_as_dict = {
-            "uri":note.uri,
-            "title":note.title,
-            "date":note.date,
-            "tags":note.tags
-        }
-
-        if note_as_dict not in expectation:
-            self.fail(
-                """Note named %s dated %s """ % (note.title, note.date) + \
-                """with uri %s and """ % (note.uri, ) + \
-                """tags [%s] not found in """ % (",".join(note.tags), ) + \
-                """expectation: [%s]""" % (",".join(expectation), )
-            )
-
 class TestMain(BasicMocking, CLIMocking):
     """Tests for functions in the main script.
 
@@ -145,6 +85,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         sys.argv = ["app_name", "action"]
         self.assertRaises(SystemExit, cli.main)
+
         self.assertEqual(
             test_data.unexistant_note_error + os.linesep,
             sys.stderr.getvalue()
@@ -195,8 +136,8 @@ class TestMain(BasicMocking, CLIMocking):
         # Fake a value for sys.argv[0] (the application name)
         sys.argv = ["app_name", ]
 
-        # And make sure that we get a well formatted error message, and that
-        # the exception does not come out of dispatch.
+        # Finally make sure that we get a well formatted error message, and
+        # that the exception does not come out of dispatch.
         self.assertRaises(SystemExit, cli.dispatch, action, arguments )
         self.assertEqual(
             test_data.malformed_action_module_error + os.linesep,
@@ -207,6 +148,8 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_action_dynamic_load_handles_SyntaxError(self):
         """Main: Warn the user that an action has a syntax error."""
+        global_vars = self.m.CreateMockAnything()
+        local_vars = self.m.CreateMockAnything()
         action_name = "action"
 
         import __builtin__
@@ -214,10 +157,10 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.StubOutWithMock(__builtin__, "globals")
         self.m.StubOutWithMock(__builtin__, "locals")
 
-        global_vars = __builtin__.globals()\
-                        .AndReturn( self.m.CreateMockAnything() )
-        local_vars = __builtin__.locals()\
-                        .AndReturn( self.m.CreateMockAnything() )
+        __builtin__.globals()\
+            .AndReturn( global_vars )
+        __builtin__.locals()\
+            .AndReturn( local_vars )
 
         __builtin__.__import__(
             "actions",
@@ -304,11 +247,11 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_action_names_formats_descriptions(self):
         """Main: Actions and their descriptions are formatted for help."""
-        self.m.StubOutWithMock(cli, "list_of_actions")
-        old_action_dyn_load = cli.action_dynamic_load
-        cli.action_dynamic_load = self.m.CreateMockAnything()
         fake_module1 = self.m.CreateMockAnything()
         fake_othermodule = self.m.CreateMockAnything()
+
+        self.m.StubOutWithMock(cli, "list_of_actions")
+        self.m.StubOutWithMock(cli, "action_dynamic_load")
 
         fake_module1.__doc__ = test_data.module1_description
         fake_othermodule.__doc__ = None
@@ -329,8 +272,6 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-        cli.action_dynamic_load = old_action_dyn_load
-
 class TestUtilities(BasicMocking):
     """Tests for general code.
 
@@ -345,24 +286,35 @@ class TestUtilities(BasicMocking):
         TomboyCommunicator's constructor creates a dbus connection and it must
         be abstracted to testing purposes.
 
-        "without_constructor" cannot be used here to replace the constructor
-        because we are testing whether Tomtom's constructor instantiates a
-        TomboyCommunicator
-
         """
-        old_constructor = TomboyCommunicator.__init__
-        TomboyCommunicator.__init__ = stub_constructor
-        self.assertTrue( isinstance(
-            Tomtom().tomboy_communicator,
-            TomboyCommunicator
-        ) )
-        TomboyCommunicator.__init__ = old_constructor
+        tt = self.wrap_subject(Tomtom, "__init__")
+
+        self.m.StubOutWithMock(TomboyCommunicator, "__init__")
+
+        TomboyCommunicator.__init__()\
+            .AndReturn( None )
+
+        self.m.ReplayAll()
+
+        tt.__init__()
+
+        self.assertTrue(
+            isinstance(
+                tt.tomboy_communicator,
+                TomboyCommunicator
+            )
+        )
+
+        self.m.VerifyAll()
 
     def test_TomboyCommunicator_constructor(self):
         """Utilities: TomboyCommunicator's dbus interface is initialized."""
+        tc = self.wrap_subject(TomboyCommunicator, "__init__")
+
         old_SessionBus = dbus.SessionBus
-        dbus.SessionBus = self.m.CreateMockAnything()
         old_Interface = dbus.Interface
+
+        dbus.SessionBus = self.m.CreateMockAnything()
         dbus.Interface = self.m.CreateMockAnything()
         session_bus = self.m.CreateMockAnything()
         dbus_object = self.m.CreateMockAnything()
@@ -381,20 +333,39 @@ class TestUtilities(BasicMocking):
 
         self.m.ReplayAll()
 
-        self.assertEqual( dbus_interface, TomboyCommunicator().comm )
+        tc.__init__()
+        self.assertEqual( dbus_interface, tc.comm )
 
         self.m.VerifyAll()
         dbus.SessionBus = old_SessionBus
         dbus.Interface = old_Interface
 
-    def test_TomboyNote_constructor(self):
-        """Utilities: TomboyNote initializes its instance variables."""
+    def mock_out_TomboyNote_and_verify_constructor(self, **kwargs):
+        """Build a TomboyNote mock and make __init__ its test subject."""
+        tn = self.wrap_subject(TomboyNote, "__init__")
+
+        self.m.ReplayAll()
+
+        tn.__init__(**kwargs)
+
+        self.m.VerifyAll()
+
+        return tn
+
+    def test_TomboyNote_constructor_all_args_int64(self):
+        """Utilities: TomboyNote initializes its instance variables. case 1."""
         uri1 = "note://something-like-this"
         title = "Name"
         date_int64 = dbus.Int64()
         tags = ["tag1", "tag2"]
-        # Construct with all data and a dbus.Int64 date
-        tn = TomboyNote(uri=uri1, title=title, date=date_int64, tags=tags)
+
+        # case 1: Construct with all data and a dbus.Int64 date
+        tn = self.mock_out_TomboyNote_and_verify_constructor(
+            uri=uri1,
+            title=title,
+            date=date_int64,
+            tags=tags
+        )
 
         self.assertEqual(uri1, tn.uri)
         self.assertEqual(title, tn.title)
@@ -402,17 +373,27 @@ class TestUtilities(BasicMocking):
         # Order is not important
         self.assertEqual( set(tags), set(tn.tags) )
 
-        # Construct with only uri, rest is default
+    def test_TomboyNote_constructor_all_defaults(self):
+        """Utilities: TomboyNote initializes its instance variables. case 2."""
         uri2 = "note://another-false-uri"
-        tn = TomboyNote(uri=uri2)
+
+        tn = self.mock_out_TomboyNote_and_verify_constructor(uri=uri2)
+
+        # case 2: Construct with only uri, rest is default
         self.assertEqual(tn.uri, uri2)
         self.assertEqual(tn.title, "")
         self.assertEqual(tn.date, dbus.Int64() )
         self.assertEqual(tn.tags, [])
 
-        # One more thing: the date can be entered with a datetime.datetime
+    def test_TomboyNote_constructor_datetetime(self):
+        """Utilities: TomboyNote initializes its instance variables. case 2."""
         datetime_date = datetime.datetime(2009, 11, 13, 18, 42, 23)
-        tn = TomboyNote(uri="not important", date=datetime_date)
+
+        # case 3: the date can be entered with a datetime.datetime
+        tn = self.mock_out_TomboyNote_and_verify_constructor(
+            uri="not important",
+            date=datetime_date
+        )
 
         self.assertEqual(
             dbus.Int64(
@@ -421,9 +402,65 @@ class TestUtilities(BasicMocking):
             tn.date
         )
 
+    def test_get_notes(self):
+        """Utilities: Note fetching entry point builds and filters a list."""
+        tc = self.wrap_subject(TomboyCommunicator, "get_notes")
+
+        tc.build_note_list()\
+            .AndReturn(test_data.full_list_of_notes)
+        tc.filter_notes(test_data.full_list_of_notes)
+
+        self.m.ReplayAll()
+
+        tc.get_notes()
+
+        self.m.VerifyAll()
+
+    def verify_note_list(self, tc, notes, note_names=[]):
+        """Verify the outcome of TomboyCommunicator.get_notes().
+
+        This function verifies if notes received from calling
+        TomboyCommunicator.get_notes are what we expect them to be. It provokes
+        the unit test to fail in case of discordance.
+
+        TomboyNotes are unhashable so we need to convert them to dictionaries
+        and check for list membership.
+
+        Arguments:
+            self       -- The TestCase instance
+            tc         -- TomboyCommunicator mock object instance
+            notes      -- list of TomboyNote objects
+            note_names -- list of note names to pass to get_notes
+
+        """
+        expectation = [{
+            "uri":n.uri,
+            "title":n.title,
+            "date":n.date,
+            "tags":n.tags,
+        } for n in notes]
+
+        # Order is not important
+        for note in tc.build_note_list(names=note_names):
+            note_as_dict = {
+                "uri":note.uri,
+                "title":note.title,
+                "date":note.date,
+                "tags":note.tags
+            }
+
+            if note_as_dict not in expectation:
+                self.fail(
+                    """Note named %s dated %s """ % (note.title, note.date) + \
+                    """with uri %s and """ % (note.uri, ) + \
+                    """tags [%s] not found in """ % (",".join(note.tags), ) + \
+                    """expectation: [%s]""" % (",".join(expectation), )
+                )
+
     def test_build_note_list_by_names(self):
         """Utilities: TomboyCommunicator gets a list of given named notes."""
-        tc = without_constructor(TomboyCommunicator)
+        tc = self.wrap_subject(TomboyCommunicator, "build_note_list")
+
         tc.comm = self.m.CreateMockAnything()
 
         todo = test_data.full_list_of_notes[1]
@@ -431,9 +468,10 @@ class TestUtilities(BasicMocking):
         notes = [todo, recipes]
         names = [n.title for n in notes]
 
-        self.m.StubOutWithMock(tc, "get_uris_by_name")
         tc.get_uris_by_name(names)\
-            .AndReturn([(todo.uri,todo.title), (recipes.uri, recipes.title)])
+            .AndReturn(
+                [(todo.uri, todo.title), (recipes.uri, recipes.title)]
+            )
         tc.comm.GetNoteChangeDate(todo.uri)\
             .AndReturn(todo.date)
         tc.comm.GetTagsForNote(todo.uri)\
@@ -445,23 +483,23 @@ class TestUtilities(BasicMocking):
 
         self.m.ReplayAll()
 
-        verify_note_list(self, tc, notes, note_names=names)
+        self.verify_note_list(tc, notes, note_names=names)
 
         self.m.VerifyAll()
 
     def test_build_note_list(self):
         """Utilities: TomboyCommunicator gets a full list of notes."""
-        tc = without_constructor(TomboyCommunicator)
+        tc = self.wrap_subject(TomboyCommunicator, "build_note_list")
+
         tc.comm = self.m.CreateMockAnything()
 
         list_of_uris = dbus.Array(
             [note.uri for note in test_data.full_list_of_notes]
         )
 
-        self.m.StubOutWithMock(tc, "get_uris_for_n_notes")
-
         tc.get_uris_for_n_notes(None)\
             .AndReturn( [(u, None) for u in list_of_uris] )
+
         for note in test_data.full_list_of_notes:
             tc.comm.GetNoteTitle(note.uri)\
                 .AndReturn(note.title)
@@ -472,18 +510,20 @@ class TestUtilities(BasicMocking):
 
         self.m.ReplayAll()
 
-        verify_note_list(self, tc, test_data.full_list_of_notes)
+        self.verify_note_list(tc, test_data.full_list_of_notes)
 
         self.m.VerifyAll()
 
     def test_get_uris_by_name(self):
         """Utilities: TomboyCommunicator determines uris by names."""
-        tc = without_constructor(TomboyCommunicator)
+        tc = self.wrap_subject(TomboyCommunicator, "get_uris_by_name")
+
+        tc.comm = self.m.CreateMockAnything()
+
         r_n_d = test_data.full_list_of_notes[12]
         webpidgin = test_data.full_list_of_notes[9]
         names = [r_n_d.title, webpidgin.title]
 
-        tc.comm = self.m.CreateMockAnything()
         tc.comm.FindNote(r_n_d.title)\
             .AndReturn(r_n_d.uri)
         tc.comm.FindNote(webpidgin.title)\
@@ -500,7 +540,8 @@ class TestUtilities(BasicMocking):
 
     def test_get_uris_by_name_unexistant(self):
         """Utilities: TomboyCommunicator raises a NoteNotFound exception."""
-        tc = without_constructor(TomboyCommunicator)
+        tc = self.wrap_subject(TomboyCommunicator, "get_uris_by_name")
+
         tc.comm = self.m.CreateMockAnything()
 
         tc.comm.FindNote("unexistant")\
@@ -512,39 +553,14 @@ class TestUtilities(BasicMocking):
 
         self.m.VerifyAll()
 
-    def test_dbus_session_not_available(self):
-        """Utilities: Raise an exception on dbus session creation problem."""
-        old_SessionBus = dbus.SessionBus
-        dbus.SessionBus = self.m.CreateMockAnything()
-
-        dbus.SessionBus()\
-            .AndRaise( Exception("something happened") )
-
-        self.m.ReplayAll()
-
-        # Do this one by hand. It is a tricky test: if the first try block
-        # doesn't raise the proper exception, it will still get raised on the
-        # second try block because it was not mocked out. We need to make sure
-        # that the content of the exception is the right one.
-        try:
-            tc = TomboyCommunicator()
-        except ConnectionError, e:
-            self.assertEqual(
-                test_data.dbus_session_exception_text,
-                e.__str__()
-            )
-        else:
-            # Make sure the second call was setup correctly
-            self.fail("Exception ConnectionError was never raised")
-
-        self.m.VerifyAll()
-        dbus.SessionBus = old_SessionBus
-
     def test_dbus_Tomboy_communication_problem(self):
         """Utilities: Raise an exception if linking dbus with Tomboy failed."""
+        tc = self.wrap_subject(TomboyCommunicator, "__init__")
+
         old_SessionBus = dbus.SessionBus
-        dbus.SessionBus = self.m.CreateMockAnything()
         old_Interface = dbus.Interface
+
+        dbus.SessionBus = self.m.CreateMockAnything()
         dbus.Interface = self.m.CreateMockAnything()
         session_bus = self.m.CreateMockAnything()
         dbus_object = self.m.CreateMockAnything()
@@ -559,21 +575,14 @@ class TestUtilities(BasicMocking):
         dbus.Interface(
             dbus_object,
             "org.gnome.Tomboy.RemoteControl"
-        ).AndRaise( Exception("cosmos error") )
+        ).AndRaise( dbus.DBusException("cosmos error") )
 
         self.m.ReplayAll()
 
-        try:
-            tc = TomboyCommunicator()
-        except ConnectionError, e:
-            self.assertEqual(
-                test_data.dbus_interface_exception_text,
-                e.__str__()
-            )
-        else:
-            self.fail("Exception ConnectionError was never raised")
+        self.assertRaises(ConnectionError, tc.__init__)
 
         self.m.VerifyAll()
+
         dbus.SessionBus = old_SessionBus
         dbus.Interface = old_Interface
 
@@ -581,11 +590,10 @@ class TestListing(BasicMocking):
     """Tests for code that handles the notes and lists them."""
     def test_list_all_notes(self):
         """Listing: Retrieve a list of all notes."""
-        tt = without_constructor(Tomtom)
+        tt = self.wrap_subject(Tomtom, "list_notes")
+
         tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
         fake_list = self.m.CreateMock(list)
-        self.m.StubOutWithMock(tt, "listing")
-        self.m.StubOutWithMock(tt.tomboy_communicator, "get_notes")
 
         tt.tomboy_communicator.get_notes(count_limit=None, tags=[])\
             .AndReturn(fake_list)
@@ -599,7 +607,8 @@ class TestListing(BasicMocking):
 
     def test_get_uris_for_n_notes_no_limit(self):
         """Listing: Given no limit, get all the notes' uris."""
-        tc = without_constructor(TomboyCommunicator)
+        tc = self.wrap_subject(TomboyCommunicator, "get_uris_for_n_notes")
+
         tc.comm = self.m.CreateMockAnything()
 
         list_of_uris = dbus.Array(
@@ -620,12 +629,14 @@ class TestListing(BasicMocking):
 
     def test_get_uris_for_n_notes(self):
         """Listing: Given a numerical limit, get the n latest notes' uris."""
-        tc = without_constructor(TomboyCommunicator)
+        tc = self.wrap_subject(TomboyCommunicator, "get_uris_for_n_notes")
+
+        tc.comm = self.m.CreateMockAnything()
 
         list_of_uris = dbus.Array(
             [note.uri for note in test_data.full_list_of_notes]
         )
-        tc.comm = self.m.CreateMockAnything()
+
         tc.comm.ListAllNotes()\
             .AndReturn( list_of_uris )
 
@@ -640,7 +651,8 @@ class TestListing(BasicMocking):
 
     def test_note_listing(self):
         """Listing: Get the information on a list of notes."""
-        tt = without_constructor(Tomtom)
+        tt = self.wrap_subject(Tomtom, "listing")
+
         # Forget about last note (a template)
         for note in test_data.full_list_of_notes[:-1]:
             self.m.StubOutWithMock(note, "listing")
@@ -720,7 +732,8 @@ class TestDisplay(BasicMocking):
     """Tests for code that display notes' content."""
     def test_get_display_for_notes(self):
         """Display: Tomtom returns notes' contents, separated a marker."""
-        tt = without_constructor(Tomtom)
+        tt = self.wrap_subject(Tomtom, "get_display_for_notes")
+
         tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
         notes = [
             test_data.full_list_of_notes[10],
@@ -752,7 +765,8 @@ class TestDisplay(BasicMocking):
 
     def test_TomboyCommunicator_get_note_content(self):
         """Display: Using the communicator, get one note's content."""
-        tc = without_constructor(TomboyCommunicator)
+        tc = self.wrap_subject(TomboyCommunicator, "get_note_content")
+
         tc.comm = self.m.CreateMockAnything()
 
         note = test_data.full_list_of_notes[12]
@@ -777,8 +791,9 @@ class TestSearch(BasicMocking):
     """Tests for code that perform a textual search within notes."""
     def test_search_for_text(self):
         """Search: Tomtom triggers a search through requested notes."""
-        tt = without_constructor(Tomtom)
-        tt.tomboy_communicator = self.m.CreateMockAnything()
+        tt = self.wrap_subject(Tomtom, "search_for_text")
+
+        tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
 
         note_contents = {}
         # Forget about last note (a template)
@@ -807,6 +822,7 @@ class TestSearch(BasicMocking):
 
         tt.tomboy_communicator.get_notes(names=[])\
             .AndReturn(test_data.full_list_of_notes[:-1])
+
         for note in test_data.full_list_of_notes[:-1]:
             tt.tomboy_communicator.get_note_content(note)\
                 .AndReturn(note_contents[note.title])

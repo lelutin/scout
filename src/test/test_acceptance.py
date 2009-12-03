@@ -132,6 +132,10 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_no_argument(self):
         """Acceptance: tomtom called without arguments must print usage."""
+        # No dbus interaction for this test
+        self.m.ResetAll()
+        self.m.UnsetStubs()
+
         sys.argv = ["app_name", ]
         old_docstring = cli.__doc__
         cli.__doc__ = os.linesep.join([
@@ -143,8 +147,12 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             "help text"
         ])
 
+        self.m.ReplayAll()
+
         # Test that usage comes from the script's docstring.
         cli.main()
+
+        self.m.VerifyAll()
 
         # This test is not very flexible. Change this if more lines are
         # added to the usage description in the docstring.
@@ -160,8 +168,17 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_unknown_action(self):
         """Acceptance: Giving an unknown action name must print an error."""
+        # No dbus interaction for this test
+        self.m.ResetAll()
+        self.m.UnsetStubs()
+
+        self.m.ReplayAll()
+
         sys.argv = ["app_name", "unexistant_action"]
         self.assertRaises( SystemExit, cli.main )
+
+        self.m.VerifyAll()
+
         self.assertEqual(
             test_data.unknown_action + os.linesep,
             sys.stderr.getvalue()
@@ -175,12 +192,13 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         sys.argv = ["unused_prog_name", "list", "-n", "10"]
         cli.main()
+
+        self.m.VerifyAll()
+
         self.assertEquals(
             test_data.expected_list + os.linesep,
             sys.stdout.getvalue()
         )
-
-        self.m.VerifyAll()
 
     def test_full_list(self):
         """Acceptance: Action "list" alone produces a list of all notes."""
@@ -190,6 +208,9 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         sys.argv = ["unused_prog_name", "list"]
         cli.main()
+
+        self.m.VerifyAll()
+
         self.assertEquals(
             os.linesep.join([
                 test_data.expected_list,
@@ -197,8 +218,6 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             ]) + os.linesep,
             sys.stdout.getvalue()
         )
-
-        self.m.VerifyAll()
 
     def test_notes_displaying(self):
         """Acceptance: Action "display" prints the content given note names."""
@@ -229,12 +248,13 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         sys.argv = ["unused_prog_name", "display", "TODO-list", "python-work"]
         cli.main()
+
+        self.m.VerifyAll()
+
         self.assertEquals(
             separator.join(expected_result_list) + os.linesep,
             sys.stdout.getvalue()
         )
-
-        self.m.VerifyAll()
 
     def test_note_does_not_exist(self):
         """Acceptance: Specified note non-existant: display an error."""
@@ -255,8 +275,17 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_display_zero_argument(self):
         """Acceptance: Action "display" with no argument prints an error."""
+        # No dbus interaction for this test
+        self.m.ResetAll()
+        self.m.UnsetStubs()
+
+        self.m.ReplayAll()
+
         sys.argv = ["app_name", "display"]
         cli.main()
+
+        self.m.VerifyAll()
+
         self.assertEquals(
             test_data.display_no_note_name_error + os.linesep,
             sys.stderr.getvalue()
@@ -265,6 +294,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_search(self):
         """Acceptance: Action "search" searches in all notes, case-indep."""
         self.mock_out_listing(test_data.full_list_of_notes)
+
         # Forget about last note (a template)
         for note in test_data.full_list_of_notes[:-1]:
             self.dbus_interface.GetNoteContents(note.uri)\
@@ -274,12 +304,13 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         sys.argv = ["unused_prog_name", "search", "john doe"]
         cli.main()
+
+        self.m.VerifyAll()
+
         self.assertEquals(
             test_data.search_results + os.linesep,
             sys.stdout.getvalue()
         )
-
-        self.m.VerifyAll()
 
     def test_search_specific_notes(self):
         """Acceptance: Action "search" restricts the search to given notes."""
@@ -290,6 +321,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         ]
 
         self.mock_out_get_notes_by_names(requested_notes)
+
         for note in requested_notes:
             self.dbus_interface.GetNoteContents(note.uri)\
                 .AndReturn(test_data.note_contents_from_dbus[note.title])
@@ -299,17 +331,27 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         sys.argv = ["unused_prog_name", "search", "python"] + \
                 [n.title for n in requested_notes]
         cli.main()
+
+        self.m.VerifyAll()
+
         self.assertEquals(
             test_data.specific_search_results + os.linesep,
             sys.stdout.getvalue()
         )
 
-        self.m.VerifyAll()
-
     def test_search_zero_arguments(self):
         """Acceptance: Action "search" with no argument prints an error."""
+        # No dbus interaction for this test
+        self.m.ResetAll()
+        self.m.UnsetStubs()
+
+        self.m.ReplayAll()
+
         sys.argv = ["unused_prog_name", "search"]
         cli.main()
+
+        self.m.VerifyAll()
+
         self.assertEquals(
             test_data.search_no_argument_error + os.linesep,
             sys.stderr.getvalue()
@@ -322,6 +364,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.UnsetStubs()
         self.m.ResetAll()
 
+        # Mock this function out as it would be too complex to make up false
+        # modules.
         self.m.StubOutWithMock(cli, "action_names")
 
         old_docstring = cli.__doc__
@@ -336,8 +380,6 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         cli.action_names().AndReturn(fake_list)
 
-        # Verify this function call only, dbus doesn't get called for the help
-        # message
         self.m.ReplayAll()
 
         sys.argv = ["app_name", "-h"]
@@ -366,12 +408,12 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         ]
         cli.main()
 
+        self.m.VerifyAll()
+
         self.assertEqual(
             test_data.tag_limited_list + os.linesep,
             sys.stdout.getvalue()
         )
-
-        self.m.VerifyAll()
 
     def test_filter_notes_by_books(self):
         """Acceptance: Using "-b" limits the notes by notebooks."""
@@ -382,12 +424,12 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         sys.argv = ["app_name", "list", "-b", "pim", "-b", "reminders"]
         cli.main()
 
+        self.m.VerifyAll()
+
         self.assertEqual(
             test_data.book_limited_list + os.linesep,
             sys.stdout.getvalue()
         )
-
-        self.m.VerifyAll()
 
     def verify_help_text(self, args, text):
         """Mock out help messages.
@@ -400,6 +442,10 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             text -- the text to verify against
 
         """
+        # No dbus interaction should occur if we get a help text.
+        self.m.ResetAll()
+        self.m.UnsetStubs()
+
         sys.argv = args
 
         # Mock out sys.exit : optparse calls this when help is displayed
@@ -413,6 +459,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             text + os.linesep,
             sys.stdout.getvalue()
         )
+
+        self.m.VerifyAll()
 
     def test_help_before_action_name(self):
         """Acceptance: Using "-h" before an action displays detailed help."""

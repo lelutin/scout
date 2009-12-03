@@ -62,6 +62,28 @@ class BasicMocking(unittest.TestCase):
         self.m.UnsetStubs()
         self.m.ResetAll()
 
+    def wrap_subject(self, cls, subject_name):
+        """Create a mock instance of a class and wrap the subject function.
+
+        This will instantiate a mock of the given class and enclose the subject
+        function (the one supposed to be tested) in the mock instance. With
+        this modified mock, you can test the subject function while making sure
+        that no other methods from the same class are called withtout you
+        explicitly recording it beforehand in the "record" phase of the test.
+
+        Arguments:
+            cls -- The class to be mocked.
+            subject_name -- Name of the function that should be tested.
+
+        """
+        mock = self.m.CreateMock(cls)
+
+        func = getattr(cls, subject_name)
+        wrapper = lambda *x, **y: func(mock, *x, **y)
+        setattr(mock, subject_name, wrapper)
+
+        return mock
+
 class CLIMocking(unittest.TestCase):
     """Automatic mocking of standard streams.
 
