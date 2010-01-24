@@ -206,17 +206,14 @@ class TomboyCommunicator(object):
 
         return uris
 
-    def filter_by_tags(self, notes, tags):
-        """docstring for filter_by_tags"""
-        # What a dumb way to do this...
-        filtered_list = []
-        for note in notes:
-            for tag in note.tags:
-                if tag in tags:
-                    filtered_list.append(note)
-                    break
+    def filter_by_tags(self, notes, tag_list):
+        """Remove notes from the list if they have no tags from the list."""
+        tags = set(tag_list)
 
-        return filtered_list
+        return [
+            note for note in notes
+            if tags.intersection( set(note.tags) )
+        ]
 
     def filter_out_templates(self, notes):
         """Take out those annoying templates from display."""
@@ -268,11 +265,17 @@ class TomboyCommunicator(object):
 
         """
         tags = kwargs.pop("tags", [])
+        names = kwargs.pop("names", [])
 
         if tags:
             notes = self.filter_by_tags(notes, tags)
 
-        return self.filter_out_templates(notes)
+        # Avoid filtering if names are specified. This makes it possible to
+        # select a template by name
+        if not names:
+            return self.filter_out_templates(notes)
+
+        return notes
 
     def get_notes(self, **kwargs):
         """Get a list of notes from Tomboy.
@@ -286,6 +289,7 @@ class TomboyCommunicator(object):
             kwargs -- Map of arguments used for getting and filtering notes.
 
         """
+        # Consumes "names" and "count_limit" arguments
         notes = self.build_note_list(**kwargs)
 
         return self.filter_notes(notes, **kwargs)

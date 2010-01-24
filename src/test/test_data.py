@@ -286,7 +286,7 @@ full_list_of_notes = [
         uri="note://tomboy/0045cd16-2977-456a-b790-9a256f5b2a71",
         title="New note template",
         date=dbus.Int64(1253342190L),
-        tags=["system:template", ]
+        tags=["system:template", "system:notebook:pim"]
     ),
 ]
 

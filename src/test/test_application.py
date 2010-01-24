@@ -406,6 +406,7 @@ class TestUtilities(BasicMocking):
         """Utilities: Note fetching entry point builds and filters a list."""
         tc = self.wrap_subject(TomboyCommunicator, "get_notes")
 
+        # Only verify calls here, results are tested separately
         tc.build_note_list()\
             .AndReturn(test_data.full_list_of_notes)
         tc.filter_notes(test_data.full_list_of_notes)
@@ -413,6 +414,98 @@ class TestUtilities(BasicMocking):
         self.m.ReplayAll()
 
         tc.get_notes()
+
+        self.m.VerifyAll()
+
+    def test_filter_notes(self):
+        """Utilities: Note filtering."""
+        tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
+
+        notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
+        tags = [self.m.CreateMockAnything()]
+        fake_filtered_list = self.m.CreateMockAnything()
+
+        # Only test calls here, results are tested elsewhere
+        tc.filter_by_tags(notes, tags)\
+            .AndReturn(fake_filtered_list)
+        tc.filter_out_templates(fake_filtered_list)
+
+        self.m.ReplayAll()
+
+        tc.filter_notes(notes, tags=tags)
+
+        self.m.VerifyAll()
+
+    def test_filter_notes_by_names(self):
+        """Utilities: Filter notes by names."""
+        """No template filtering should occur if names were given.
+
+        If names were given, the user will expect to see templates if they were
+        explicitly named. Thus, filtering should not happen in this case.
+
+        """
+        tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
+
+        notes = [
+            test_data.full_list_of_notes[4],
+            # A template is requested: it should be returned
+            test_data.full_list_of_notes[13],
+        ]
+
+        names = ["python-work", "New note template"]
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            notes,
+            tc.filter_notes(notes, names=names)
+        )
+
+        self.m.VerifyAll()
+
+    def test_filter_by_tags(self):
+        """Utilities: Filter notes by tags."""
+        tc = self.wrap_subject(TomboyCommunicator, "filter_by_tags")
+
+        notes = [
+            test_data.full_list_of_notes[0],
+            test_data.full_list_of_notes[1],
+            test_data.full_list_of_notes[10],
+            # Doesn't have the tags
+            test_data.full_list_of_notes[12],
+        ]
+        tag_list = ["system:notebook:pim", "projects"]
+
+        expected_result = notes[:-1]
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            expected_result,
+            tc.filter_by_tags(notes, tag_list=tag_list)
+        )
+
+        self.m.VerifyAll()
+
+    def test_filter_out_templates(self):
+        """Utilities: Remove templates from a list of notes."""
+        tc = self.wrap_subject(TomboyCommunicator, "filter_out_templates")
+
+        notes = [
+            test_data.full_list_of_notes[9],
+            test_data.full_list_of_notes[10],
+            # This one is a template
+            test_data.full_list_of_notes[13],
+        ]
+
+        expected_result = notes[:-1]
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            expected_result,
+            tc.filter_out_templates(notes)
+        )
 
         self.m.VerifyAll()
 
@@ -469,17 +562,13 @@ class TestUtilities(BasicMocking):
         names = [n.title for n in notes]
 
         tc.get_uris_by_name(names)\
-            .AndReturn(
-                [(todo.uri, todo.title), (recipes.uri, recipes.title)]
-            )
-        tc.comm.GetNoteChangeDate(todo.uri)\
-            .AndReturn(todo.date)
-        tc.comm.GetTagsForNote(todo.uri)\
-            .AndReturn(todo.tags)
-        tc.comm.GetNoteChangeDate(recipes.uri)\
-            .AndReturn(recipes.date)
-        tc.comm.GetTagsForNote(recipes.uri)\
-            .AndReturn(recipes.tags)
+            .AndReturn( [(n.uri, n.title) for n in notes] )
+
+        for note in notes:
+            tc.comm.GetNoteChangeDate(note.uri)\
+                .AndReturn(note.date)
+            tc.comm.GetTagsForNote(note.uri)\
+                .AndReturn(note.tags)
 
         self.m.ReplayAll()
 
