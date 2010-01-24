@@ -300,8 +300,9 @@ Options:
   -h, --help    show this help message and exit
   -n MAX_NOTES  Limit the number of notes listed.
   -b BOOKS      List only notes belonging to specified notebooks. It is a
-                shortcut to option "-t" to specify notebooks more easily. Use
-                this option once for each desired book.
+                shortcut to option "-t" to specify notebooks more easily. For
+                example, use "-b HGTTG" instead of "-t system:notebook:HGTTG".
+                Use this option once for each desired book.
   -t TAGS       List only notes with specified tags. Use this option once for
                 each desired tag. This option selects raw tags and could be
                 useful for user-assigned tags."""

@@ -86,8 +86,9 @@ def perform_action(args):
         "-b",
         dest="books", action="append", default=[],
         help="""List only notes belonging to specified notebooks. It is a """
-        """shortcut to option "-t" to specify notebooks more easily. Use """
-        """this option once for each desired book."""
+        """shortcut to option "-t" to specify notebooks more easily. For """
+        """example, use "-b HGTTG" instead of "-t system:notebook:HGTTG". """
+        """Use this option once for each desired book."""
     )
     parser.add_option(
         "-t",
