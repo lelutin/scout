@@ -946,8 +946,11 @@ class TestSearch(BasicMocking):
             },
         ]
 
-        tt.tomboy_communicator.get_notes(names=[])\
-            .AndReturn(test_data.full_list_of_notes[:-1])
+        tt.tomboy_communicator.get_notes(
+            names=[],
+            tags=[],
+            templates_non_exclusive=False
+        ).AndReturn(test_data.full_list_of_notes[:-1])
 
         for note in test_data.full_list_of_notes[:-1]:
             tt.tomboy_communicator.get_note_content(note)\

@@ -324,10 +324,24 @@ Options:
   -h, --help  show this help message and exit"""
 
 help_details_search = \
-    """Usage: app_name search [-h] <search_pattern> [note_name ...]
+"""Usage: app_name search -h
+       app_name search [-b <book name>[,...]|-t <tag>[,...]|--with-templates] <search_pattern> [note_name ...]
 
 Options:
-  -h, --help  show this help message and exit"""
+  -h, --help        show this help message and exit
+  -b BOOKS          Search only in notes belonging to specified notebooks. It
+                    is a shortcut to option "-t" to specify notebooks more
+                    easily. For example, use "-b HGTTG" instead of "-t
+                    system:notebook:HGTTG". Use this option once for each
+                    desired book.
+  --with-templates  Include template notes in the search. This option is
+                    different from using "-t system:template" in that the
+                    latter used alone will search only in the templates, while
+                    using "--with-templates" without specifying tags for
+                    selection will search in all notes including templates.
+  -t TAGS           Search only in notes with specified tags. Use this option
+                    once for each desired tag. This option selects raw tags
+                    and could be useful for user-assigned tags."""
 
 unexistant_note_error = \
     """app_name: Error: Note named "unexistant" was not found."""

@@ -61,6 +61,7 @@ the content of the line on which the text is appearing.
 """
 import optparse
 import sys
+import os
 
 from tomtom.core import Tomtom
 
@@ -75,7 +76,35 @@ def perform_action(args):
 
     """
     parser = optparse.OptionParser(
-        usage="%prog search [-h] <search_pattern> [note_name ...]"
+        usage="""%prog search -h""" + os.linesep + """       """
+            """%prog search [-b <book name>[,...]|-t <tag>[,...]|"""
+            """--with-templates] <search_pattern> [note_name ...]"""
+    )
+
+    parser.add_option(
+        "-b",
+        dest="books", action="append", default=[],
+        help="""Search only in notes belonging to specified notebooks. It """
+        """is a shortcut to option "-t" to specify notebooks more easily. """
+        """For example, use "-b HGTTG" instead of """
+        """"-t system:notebook:HGTTG". Use this option once for each """
+        """desired book."""
+    )
+    parser.add_option(
+        "--with-templates",
+        dest="templates", action="store_true", default=False,
+        help="""Include template notes in the search. This option is """
+        """different from using "-t system:template" in that the latter """
+        """used alone will search only in the templates, while using """
+        """"--with-templates" without specifying tags for selection will """
+        """search in all notes including templates."""
+    )
+    parser.add_option(
+        "-t",
+        dest="tags", action="append", default=[],
+        help="""Search only in notes with specified tags. Use this option """
+        """once for each desired tag. This option selects raw tags and """
+        """could be useful for user-assigned tags."""
     )
 
     (options, file_names) = parser.parse_args(args)
@@ -90,9 +119,19 @@ def perform_action(args):
     search_pattern = file_names[0]
     note_names = file_names[1:]
 
+    tags_to_select = options.tags
+    if options.templates:
+        tags_to_select.append("system:template")
+
+    if options.books:
+        tags_to_select = tags_to_select + \
+            ["system:notebook:%s" % book for book in options.books]
+
     results = tomboy_interface.search_for_text(
         search_pattern=search_pattern,
-        note_names=note_names
+        note_names=note_names,
+        tags=tags_to_select,
+        non_exclusive=options.templates
     )
 
     for result in results:

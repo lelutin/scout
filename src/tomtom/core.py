@@ -80,7 +80,9 @@ class Tomtom(object):
         it lists all notes.
 
         Arguments:
-            count_limit -- Integer limit number of notes listed (default: None)
+            count_limit   -- Integer limit of notes listed (default: None)
+            tags          -- List of tags that should be listed (default: [])
+            non_exclusive -- Boolean to include templates inclusively
 
         """
         return self.listing(
@@ -120,7 +122,8 @@ class Tomtom(object):
             [self.tomboy_communicator.get_note_content(note) for note in notes]
         )
 
-    def search_for_text(self, search_pattern, note_names=[]):
+    def search_for_text(self, search_pattern, note_names=[], tags=[],
+            non_exclusive=False):
         """Get specified notes and search for a pattern in them.
 
         This function performs a case-independant text search within notes. If
@@ -129,9 +132,15 @@ class Tomtom(object):
         Arguments:
             search_pattern -- Pattern to seach for
             note_names     -- List of note names (default: [])
+            tags           -- List of tags to restrict search (default: [])
+            non_exclusive  -- Boolean to include templates inclusively
 
         """
-        notes = self.tomboy_communicator.get_notes(names=note_names)
+        notes = self.tomboy_communicator.get_notes(
+            names=note_names,
+            tags=tags,
+            templates_non_exclusive=non_exclusive
+        )
         search_results = []
 
         import re
