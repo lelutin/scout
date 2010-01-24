@@ -40,7 +40,7 @@ to look at.
 """
 import os
 import dbus
-from tomtom.core import TomboyNote
+from tomtom.core import TomboyNote, tomtom_version
 
 # The following few values are for testing the "list" feature.
 expected_list = \
@@ -295,6 +295,10 @@ full_list_of_notes = [
     ),
 ]
 
+# This value is the output of the "version" action
+tomboy_version_output = \
+    """Tomtom version %s using Tomboy version 1.0.1""" % tomtom_version
+
 # Help text and errors occuring in the main script
 help_more_details = """For more details, use option -h"""
 
@@ -342,6 +346,12 @@ Options:
   -t TAGS           Search only in notes with specified tags. Use this option
                     once for each desired tag. This option selects raw tags
                     and could be useful for user-assigned tags."""
+
+help_details_version = \
+"""Usage: app_name version [-h]
+
+Options:
+  -h, --help  show this help message and exit"""
 
 unexistant_note_error = \
     """app_name: Error: Note named "unexistant" was not found."""

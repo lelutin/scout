@@ -48,6 +48,9 @@ import time
 import sys
 import os
 
+# This must be modified with all version bumps!
+tomtom_version = "0.2"
+
 class ConnectionError(Exception):
     """Simple exception raised when contacting Tomboy via dbus fails."""
     pass

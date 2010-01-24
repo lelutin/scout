@@ -527,3 +527,32 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             test_data.help_details_search
         )
 
+    def test_tomboy_version(self):
+        """Acceptance: Get Tomboy's version."""
+        self.dbus_interface.Version()\
+            .AndReturn(u'1.0.1')
+
+        self.m.ReplayAll()
+
+        # Call function and make assertions here
+        sys.argv = ["app_name", "version"]
+        cli.main()
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.tomboy_version_output + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+    def test_help_version_specific(self):
+        """Acceptance: Detailed help using "-h" after "version" action."""
+        self.verify_help_text(
+            [
+                "app_name",
+                "version",
+                "--help"
+            ],
+            test_data.help_details_version
+        )
+
