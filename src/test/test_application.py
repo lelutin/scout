@@ -119,7 +119,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         """
         self.m.StubOutWithMock(cli, "action_dynamic_load")
-        module = self.m.CreateMockAnything()
+        import mock_module as module
         arguments = self.m.CreateMockAnything()
         action = "action"
 
@@ -127,9 +127,11 @@ class TestMain(BasicMocking, CLIMocking):
         cli.action_dynamic_load(action)\
             .AndReturn(module)
 
-        # Make the action call raise the exception we want to observe.
-        module.perform_action(arguments)\
-            .AndRaise(AttributeError)
+        # The mock_module file shouldn't have a "perform_action" function, so
+        # an AttributeError exception will naturally be raised. I wasn't able
+        # to mock out the call to getattr on the module, probably because of
+        # how pymox works. So this is a workaround to be able to perform this
+        # test.
 
         self.m.ReplayAll()
 

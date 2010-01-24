@@ -133,17 +133,35 @@ def dispatch(action_name, arguments):
     # asked on the command line. For example, the command "tomtom list ..."
     # will import the list.py module from the actions package.
     action = action_dynamic_load(action_name)
+    app_name = os.path.basename( sys.argv[0] )
 
     try:
-        action.perform_action(arguments)
+        perform_action = getattr(action, "perform_action")
 
     except AttributeError:
-        app_name = os.path.basename( sys.argv[0] )
-
         print >> sys.stderr, \
             """%s: the "%s" action is """ % (app_name, action_name) + \
             """malformed: the function "perform_action" could not be """ + \
             """found within the action's module."""
+
+        sys.exit(MALFORMED_ACTION_RETURN_CODE)
+
+    try:
+        perform_action(arguments)
+    #WARNING: do not forget to add types here for exceptions that must be
+    # handled on an upper level or they will be catched by the next except
+    # block.
+    except (SystemExit, KeyboardInterrupt, ConnectionError, NoteNotFound):
+        # Exceptions handled at an upper level. Let them through
+        raise
+    except:
+        import traceback
+
+        print >> sys.stderr, \
+            """%s: the "%s" action is """ % (app_name, action_name) + \
+            """malformed: An uncaught exception was raised while """ \
+            """executing its "perform_action" function:""" + os.linesep
+        traceback.print_exc()
 
         sys.exit(MALFORMED_ACTION_RETURN_CODE)
 
