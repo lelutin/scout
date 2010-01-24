@@ -272,7 +272,7 @@ class TomboyCommunicator(object):
 
         # Avoid filtering if names are specified. This makes it possible to
         # select a template by name
-        if not names:
+        if not names and "system:template" not in tags:
             return self.filter_out_templates(notes)
 
         return notes

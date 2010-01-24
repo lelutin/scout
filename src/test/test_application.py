@@ -463,6 +463,25 @@ class TestUtilities(BasicMocking):
 
         self.m.VerifyAll()
 
+    def test_fiter_notes_template_as_a_tag(self):
+        """Utilities: Specifying templates as a tag should include them."""
+        tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
+
+        notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
+        tags = ["system:template", "someothertag"]
+
+        fake_filtered_list = self.m.CreateMockAnything()
+
+        # Only test calls here, results are tested elsewhere
+        tc.filter_by_tags(notes, tags)\
+            .AndReturn(fake_filtered_list)
+
+        self.m.ReplayAll()
+
+        tc.filter_notes(notes, tags=tags)
+
+        self.m.VerifyAll()
+
     def test_filter_by_tags(self):
         """Utilities: Filter notes by tags."""
         tc = self.wrap_subject(TomboyCommunicator, "filter_by_tags")
