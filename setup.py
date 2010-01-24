@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 setup(
     # General information
     name = "Tomtom",
-    version = "0.1",
+    version = "0.2",
     author = "Gabriel Filion",
     author_email = "lelutin@gmail.com",
     description = "A CLI interface to Tomboy via dbus",
