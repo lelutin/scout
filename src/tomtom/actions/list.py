@@ -91,6 +91,15 @@ def perform_action(args):
         """Use this option once for each desired book."""
     )
     parser.add_option(
+        "--with-templates",
+        dest="templates", action="store_true", default=False,
+        help="""Include template notes in the list. This option is """
+        """different from using "-t system:template" in that the latter """
+        """used alone will list only the templates, while using """
+        """"--with-templates" without specifying tags for selection will """
+        """list notes including templates."""
+    )
+    parser.add_option(
         "-t",
         dest="tags", action="append", default=[],
         help="""List only notes with specified tags. Use this option once """
@@ -103,6 +112,9 @@ def perform_action(args):
     tomboy_interface = Tomtom()
 
     tags_to_select = options.tags
+    if options.templates:
+        tags_to_select.append("system:template")
+
     if options.books:
         tags_to_select = tags_to_select + \
             ["system:notebook:%s" % book for book in options.books]
@@ -110,5 +122,6 @@ def perform_action(args):
     print tomboy_interface.list_notes(
         count_limit=options.max_notes,
         tags=tags_to_select,
+        non_exclusive=options.templates
     )
 

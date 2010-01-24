@@ -395,6 +395,27 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         cli.__doc__ = old_docstring
 
+    def test_filter_notes_with_templates(self):
+        """Acceptance: Using "--with-templates" lists notes and templates."""
+        self.mock_out_listing(test_data.full_list_of_notes)
+
+        self.m.ReplayAll()
+
+        sys.argv = [
+            "app_name", "list",
+            "--with-templates"
+        ]
+        cli.main()
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.expected_list + os.linesep +
+                test_data.list_appendix + os.linesep +
+                test_data.normally_hidden_template + os.linesep,
+            sys.stdout.getvalue()
+        )
+
     def test_filter_notes_by_tags(self):
         """Acceptance: Using "-t" limits the notes by tags."""
         self.mock_out_listing(test_data.full_list_of_notes)

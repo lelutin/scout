@@ -73,7 +73,7 @@ class Tomtom(object):
         super(Tomtom, self).__init__()
         self.tomboy_communicator = TomboyCommunicator()
 
-    def list_notes(self, count_limit=None, tags=[]):
+    def list_notes(self, count_limit=None, tags=[], non_exclusive=False):
         """Entry point to listing notes.
 
         If specified, it can limit the number of displayed notes. By default,
@@ -86,7 +86,8 @@ class Tomtom(object):
         return self.listing(
             self.tomboy_communicator.get_notes(
                 count_limit=count_limit,
-                tags=tags
+                tags=tags,
+                templates_non_exclusive=non_exclusive
             )
         )
 
@@ -266,12 +267,15 @@ class TomboyCommunicator(object):
         """
         tags = kwargs.pop("tags", [])
         names = kwargs.pop("names", [])
+        inclusive = \
+            kwargs.pop("templates_non_exclusive", False) and \
+            tags == ["system:template"]
 
-        if tags:
+        if tags and not inclusive:
             notes = self.filter_by_tags(notes, tags)
 
         # Avoid filtering if names are specified. This makes it possible to
-        # select a template by name
+        # select a template by name. Also avoid if template tag is specified.
         if not names and "system:template" not in tags:
             return self.filter_out_templates(notes)
 

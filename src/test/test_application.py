@@ -482,6 +482,21 @@ class TestUtilities(BasicMocking):
 
         self.m.VerifyAll()
 
+    def test_fiter_notes_with_templates(self):
+        """Utilities: Non-exclusive inclusion of templates."""
+        tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
+
+        notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
+        tags = ["system:template"]
+
+        fake_filtered_list = self.m.CreateMockAnything()
+
+        self.m.ReplayAll()
+
+        tc.filter_notes(notes, tags=tags, templates_non_exclusive=True)
+
+        self.m.VerifyAll()
+
     def test_filter_by_tags(self):
         """Utilities: Filter notes by tags."""
         tc = self.wrap_subject(TomboyCommunicator, "filter_by_tags")
@@ -703,8 +718,11 @@ class TestListing(BasicMocking):
         tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
         fake_list = self.m.CreateMock(list)
 
-        tt.tomboy_communicator.get_notes(count_limit=None, tags=[])\
-            .AndReturn(fake_list)
+        tt.tomboy_communicator.get_notes(
+            count_limit=None,
+            tags=[],
+            templates_non_exclusive=False
+        ).AndReturn(fake_list)
         tt.listing(fake_list)
 
         self.m.ReplayAll()

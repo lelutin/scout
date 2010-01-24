@@ -76,6 +76,9 @@ book_limited_list = \
 2009-10-01 | japanese  (system:notebook:reminders)
 2009-09-19 | R&D  (system:notebook:reminders, training)"""
 
+normally_hidden_template = \
+"""2009-09-19 | New note template  (system:template, system:notebook:pim)"""
+
 # Output values that are expected for the "search" feature.
 search_results = \
 """addressbook : 5 : John Doe (cell) - 555-5512
@@ -201,6 +204,8 @@ display_separator = "=========================="
 #
 # To obtain modification dates for notes and corresponding real dates:
 # With "tomboy" being a dbus interface to the Tomboy application:
+# >>> from datetime import datetime
+# >>> l = tomboy.ListAllNotes()
 # >>> [(datetime.fromtimestamp(tomboy.GetNoteChangeDate(url)),
 # >>>     tomboy.GetNoteChangeDate(url)) for url in l]
 full_list_of_notes = [
@@ -285,7 +290,7 @@ full_list_of_notes = [
     TomboyNote(
         uri="note://tomboy/0045cd16-2977-456a-b790-9a256f5b2a71",
         title="New note template",
-        date=dbus.Int64(1253342190L),
+        date=dbus.Int64(1253340983L),
         tags=["system:template", "system:notebook:pim"]
     ),
 ]
@@ -297,15 +302,21 @@ help_details_list = \
 """Usage: app_name list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]
 
 Options:
-  -h, --help    show this help message and exit
-  -n MAX_NOTES  Limit the number of notes listed.
-  -b BOOKS      List only notes belonging to specified notebooks. It is a
-                shortcut to option "-t" to specify notebooks more easily. For
-                example, use "-b HGTTG" instead of "-t system:notebook:HGTTG".
-                Use this option once for each desired book.
-  -t TAGS       List only notes with specified tags. Use this option once for
-                each desired tag. This option selects raw tags and could be
-                useful for user-assigned tags."""
+  -h, --help        show this help message and exit
+  -n MAX_NOTES      Limit the number of notes listed.
+  -b BOOKS          List only notes belonging to specified notebooks. It is a
+                    shortcut to option "-t" to specify notebooks more easily.
+                    For example, use "-b HGTTG" instead of "-t
+                    system:notebook:HGTTG". Use this option once for each
+                    desired book.
+  --with-templates  Include template notes in the list. This option is
+                    different from using "-t system:template" in that the
+                    latter used alone will list only the templates, while
+                    using "--with-templates" without specifying tags for
+                    selection will list notes including templates.
+  -t TAGS           List only notes with specified tags. Use this option once
+                    for each desired tag. This option selects raw tags and
+                    could be useful for user-assigned tags."""
 
 help_details_display = """Usage: app_name display [-h] [note_name ...]
 
