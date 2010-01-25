@@ -75,9 +75,11 @@ def perform_action(args):
 
     tomboy_interface = Tomtom()
 
-    print """Tomtom version %s using Tomboy version %s""" % \
-        (
-            tomtom_version,
-            tomboy_interface.tomboy_communicator.comm.Version()
-        )
+    print (
+        """Tomtom version %s using Tomboy version %s""" % \
+            (
+                tomtom_version,
+                tomboy_interface.tomboy_communicator.comm.Version()
+            )
+        ).encode('utf-8')
 

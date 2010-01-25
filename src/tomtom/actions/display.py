@@ -87,5 +87,5 @@ def perform_action(args):
 
     tomboy_interface = Tomtom()
 
-    print tomboy_interface.get_display_for_notes(file_names)
+    print tomboy_interface.get_display_for_notes(file_names).encode('utf-8')
 

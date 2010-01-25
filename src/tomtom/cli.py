@@ -244,7 +244,7 @@ def main():
     # Convert the rest of the arguments to unicode objects so that they are
     # handled correctly afterwards. This expects to receive arguments in UTF-8
     # format from the command line.
-    arguments = [unicode(arg, "utf-8") for arg in sys.argv[2:] ]
+    arguments = [arg.decode("utf-8") for arg in sys.argv[2:] ]
 
     if action in ["-h", "--help"]:
         if sys.argv[2:]:

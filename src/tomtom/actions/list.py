@@ -123,5 +123,5 @@ def perform_action(args):
         count_limit=options.max_notes,
         tags=tags_to_select,
         non_exclusive=options.templates
-    )
+    ).encode('utf-8')
 

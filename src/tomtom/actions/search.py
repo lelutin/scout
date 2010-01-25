@@ -135,6 +135,8 @@ def perform_action(args):
     )
 
     for result in results:
-        print "%s : %s : %s" % \
+        print (
+            "%s : %s : %s" % \
             ( result["title"], result["line"], result["text"] )
+        ).encode('utf-8')
 
