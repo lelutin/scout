@@ -34,8 +34,9 @@
 #
 # Inspired by : http://arstechnica.com/open-source/news/2007/09/using-the-tomboy-d-bus-interface.ars
 #
-"""Usage: tomtom.py (-h|--help) [action]
-       tomtom.py <action> [-h|--help] [options]
+"""Usage: tomtom.py <action> [-h|--help] [options]
+       tomtom.py (-h|--help) [action]
+       tomtom.py (-v|--version)
 
 Tomtom is a command line interface to the Tomboy note taking application.
 
@@ -48,7 +49,7 @@ Here is a list of all the available actions:
 import sys
 import os
 
-from tomtom.core import NoteNotFound, ConnectionError
+from tomtom.core import tomtom_version, NoteNotFound, ConnectionError
 
 # Return codes sent on errors.
 # Codes between 100 and 199 are fatal errors
@@ -256,6 +257,13 @@ def main():
             # list of available actions and display it.
             print __doc__[:-1] + os.linesep.join( action_names() )
             return
+    elif action in ["-v", "--version"]:
+        print """Tomtom version %s""" % tomtom_version + os.linesep + \
+            """Copyright © 2010 Gabriel Filion""" + os.linesep + \
+            """License: BSD""" + os.linesep + """This is free software: """ \
+            """you are free to change and redistribute it.""" + os.linesep + \
+            """There is NO WARRANTY, to the extent permitted by law."""
+        return
 
     try:
         dispatch(action, arguments)
