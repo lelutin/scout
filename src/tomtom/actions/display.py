@@ -62,7 +62,7 @@ will give an error message on the standard error stream.
 import optparse
 import sys
 
-from tomtom.core import Tomtom, NoteNotFound
+from tomtom.core import Tomtom
 
 def perform_action(args):
     """Use the tomtom object to print the content of one or more notes.

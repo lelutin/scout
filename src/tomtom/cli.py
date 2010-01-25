@@ -48,7 +48,7 @@ Here is a list of all the available actions:
 import sys
 import os
 
-from core import NoteNotFound, ConnectionError
+from tomtom.core import NoteNotFound, ConnectionError
 
 # Return codes sent on errors.
 # Codes between 100 and 199 are fatal errors
