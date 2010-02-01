@@ -1,14 +1,15 @@
 Changes since 0.1:
-- Fixed NoteNotFound handling (issue #1)
-- Fixed searching for non-ascii characters (issue #2)
-- Added KeyboardInterrupt (Ctrl-C) handling (issue #8)
-- Improved coverage by added tests that were missing
-- Refactored tests for better organization and better function call
+
+* Fixed NoteNotFound handling (issue #1)
+* Fixed searching for non-ascii characters (issue #2)
+* Added KeyboardInterrupt (Ctrl-C) handling (issue #8)
+* Improved coverage by added tests that were missing
+* Refactored tests for better organization and better function call
   verification
-- Added automating installation with setuptools
-- Removed -a option from list action. Default behavior is now to list all
+* Added automating installation with setuptools
+* Removed -a option from list action. Default behavior is now to list all
   notes. Number of lists can be restricted with -n option.
-- Added selection by tag (issue #4)
-- Templates are now filtered by default (issue #3)
-- No more test runner code. Now using nosetests
+* Added selection by tag (issue #4)
+* Templates are now filtered by default (issue #3)
+* No more test runner code. Now using nosetests
 
