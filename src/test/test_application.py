@@ -274,7 +274,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-class TestUtilities(BasicMocking):
+class TestCore(BasicMocking):
     """Tests for general code.
 
     This test case must containt tests for code that is not directly linked
@@ -282,7 +282,7 @@ class TestUtilities(BasicMocking):
 
     """
     def test_tomboy_communicator_is_initialized(self):
-        """Utilities: Tommtom constructor instatiates TomboyCommunicator."""
+        """Core: Tommtom constructor instatiates TomboyCommunicator."""
         """Avoid calling TomboyCommunicator's constructor.
 
         TomboyCommunicator's constructor creates a dbus connection and it must
@@ -310,7 +310,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_TomboyCommunicator_constructor(self):
-        """Utilities: TomboyCommunicator's dbus interface is initialized."""
+        """Core: TomboyCommunicator's dbus interface is initialized."""
         tc = self.wrap_subject(TomboyCommunicator, "__init__")
 
         old_SessionBus = dbus.SessionBus
@@ -355,7 +355,7 @@ class TestUtilities(BasicMocking):
         return tn
 
     def test_TomboyNote_constructor_all_args_int64(self):
-        """Utilities: TomboyNote initializes its instance variables. case 1."""
+        """Core: TomboyNote initializes its instance variables. case 1."""
         uri1 = "note://something-like-this"
         title = "Name"
         date_int64 = dbus.Int64()
@@ -376,7 +376,7 @@ class TestUtilities(BasicMocking):
         self.assertEqual( set(tags), set(tn.tags) )
 
     def test_TomboyNote_constructor_all_defaults(self):
-        """Utilities: TomboyNote initializes its instance variables. case 2."""
+        """Core: TomboyNote initializes its instance variables. case 2."""
         uri2 = "note://another-false-uri"
 
         tn = self.mock_out_TomboyNote_and_verify_constructor(uri=uri2)
@@ -388,7 +388,7 @@ class TestUtilities(BasicMocking):
         self.assertEqual(tn.tags, [])
 
     def test_TomboyNote_constructor_datetetime(self):
-        """Utilities: TomboyNote initializes its instance variables. case 2."""
+        """Core: TomboyNote initializes its instance variables. case 2."""
         datetime_date = datetime.datetime(2009, 11, 13, 18, 42, 23)
 
         # case 3: the date can be entered with a datetime.datetime
@@ -405,7 +405,7 @@ class TestUtilities(BasicMocking):
         )
 
     def test_get_notes(self):
-        """Utilities: Note fetching entry point builds and filters a list."""
+        """Core: Note fetching entry point builds and filters a list."""
         tc = self.wrap_subject(TomboyCommunicator, "get_notes")
 
         # Only verify calls here, results are tested separately
@@ -420,7 +420,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_filter_notes(self):
-        """Utilities: Note filtering."""
+        """Core: Note filtering."""
         tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
 
         notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
@@ -439,7 +439,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_filter_notes_by_names(self):
-        """Utilities: Filter notes by names."""
+        """Core: Filter notes by names."""
         """No template filtering should occur if names were given.
 
         If names were given, the user will expect to see templates if they were
@@ -466,7 +466,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_fiter_notes_template_as_a_tag(self):
-        """Utilities: Specifying templates as a tag should include them."""
+        """Core: Specifying templates as a tag should include them."""
         tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
 
         notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
@@ -485,7 +485,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_fiter_notes_with_templates(self):
-        """Utilities: Non-exclusive inclusion of templates."""
+        """Core: Non-exclusive inclusion of templates."""
         tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
 
         notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
@@ -500,7 +500,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_filter_by_tags(self):
-        """Utilities: Filter notes by tags."""
+        """Core: Filter notes by tags."""
         tc = self.wrap_subject(TomboyCommunicator, "filter_by_tags")
 
         notes = [
@@ -524,7 +524,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_filter_out_templates(self):
-        """Utilities: Remove templates from a list of notes."""
+        """Core: Remove templates from a list of notes."""
         tc = self.wrap_subject(TomboyCommunicator, "filter_out_templates")
 
         notes = [
@@ -587,7 +587,7 @@ class TestUtilities(BasicMocking):
                 )
 
     def test_build_note_list_by_names(self):
-        """Utilities: TomboyCommunicator gets a list of given named notes."""
+        """Core: TomboyCommunicator gets a list of given named notes."""
         tc = self.wrap_subject(TomboyCommunicator, "build_note_list")
 
         tc.comm = self.m.CreateMockAnything()
@@ -613,7 +613,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_build_note_list(self):
-        """Utilities: TomboyCommunicator gets a full list of notes."""
+        """Core: TomboyCommunicator gets a full list of notes."""
         tc = self.wrap_subject(TomboyCommunicator, "build_note_list")
 
         tc.comm = self.m.CreateMockAnything()
@@ -640,7 +640,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_get_uris_by_name(self):
-        """Utilities: TomboyCommunicator determines uris by names."""
+        """Core: TomboyCommunicator determines uris by names."""
         tc = self.wrap_subject(TomboyCommunicator, "get_uris_by_name")
 
         tc.comm = self.m.CreateMockAnything()
@@ -664,7 +664,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_get_uris_by_name_unexistant(self):
-        """Utilities: TomboyCommunicator raises a NoteNotFound exception."""
+        """Core: TomboyCommunicator raises a NoteNotFound exception."""
         tc = self.wrap_subject(TomboyCommunicator, "get_uris_by_name")
 
         tc.comm = self.m.CreateMockAnything()
@@ -679,7 +679,7 @@ class TestUtilities(BasicMocking):
         self.m.VerifyAll()
 
     def test_dbus_Tomboy_communication_problem(self):
-        """Utilities: Raise an exception if linking dbus with Tomboy failed."""
+        """Core: Raise an exception if linking dbus with Tomboy failed."""
         tc = self.wrap_subject(TomboyCommunicator, "__init__")
 
         old_SessionBus = dbus.SessionBus
