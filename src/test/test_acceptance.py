@@ -366,7 +366,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         # Mock this function out as it would be too complex to make up false
         # modules.
-        self.m.StubOutWithMock(cli, "action_names")
+        self.m.StubOutWithMock(cli, "action_short_summaries")
 
         old_docstring = cli.__doc__
         cli.__doc__ = os.linesep.join([
@@ -378,7 +378,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         ])
         fake_list = ["line1", "line2"]
 
-        cli.action_names().AndReturn(fake_list)
+        cli.action_short_summaries().AndReturn(fake_list)
 
         self.m.ReplayAll()
 

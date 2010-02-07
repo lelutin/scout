@@ -32,7 +32,7 @@
 ###############################################################################
 """Utility classes for communicating with Tomboy over dbus.
 
-Exception:
+Exceptions:
     ConnectionError -- A dbus connection problem occured.
     NoteNotFound    -- A note searched by name was not found.
 

@@ -63,29 +63,40 @@ import optparse
 import sys
 
 from tomtom.core import Tomtom
+from tomtom.plugins import ActionPlugin
 
-def perform_action(args):
-    """Use the tomtom object to print the content of one or more notes.
+desc = __doc__.splitlines()[0]
 
-    This action fetches note contents and displays them to the screen.
+class DisplayAction(ActionPlugin):
+    """Plugin object for displaying notes' contents"""
+    short_description = desc
 
-    Arguments:
-        args -- A list composed of action and file names
+    def perform_action(self, args, positional):
+        """Use the tomtom object to print the content of one or more notes.
 
-    """
-    parser = optparse.OptionParser(usage="%prog display [-h] [note_name ...]")
-    #parser.add_option("-a", "--all",
-    #    dest="full_list", default=False, action="store_true",
-    #    help="Display all the notes")
+        This action fetches note contents and displays them to the screen.
 
-    (options, file_names) = parser.parse_args(args)
+        Arguments:
+            args -- A list composed of action and file names
 
-    if len(file_names) <= 0:
-        print >> sys.stderr, \
-            "Error: You need to specify a note name to display it"
-        return
+        """
+        parser = optparse.OptionParser(
+            usage="%prog display [-h] [note_name ...]"
+        )
+        #parser.add_option("-a", "--all",
+        #    dest="full_list", default=False, action="store_true",
+        #    help="Display all the notes")
 
-    tomboy_interface = Tomtom()
+        (options, file_names) = parser.parse_args(args)
 
-    print tomboy_interface.get_display_for_notes(file_names).encode('utf-8')
+        if len(file_names) <= 0:
+            print >> sys.stderr, \
+                "Error: You need to specify a note name to display it"
+            return
+
+        tomboy_interface = Tomtom()
+
+        print tomboy_interface.get_display_for_notes(
+            file_names
+        ).encode('utf-8')
 

@@ -31,9 +31,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ###############################################################################
-#
-# Inspired by : http://arstechnica.com/open-source/news/2007/09/using-the-tomboy-d-bus-interface.ars
-#
 """Usage: tomtom.py <action> [-h|--help] [options]
        tomtom.py (-h|--help) [action]
        tomtom.py (-v|--version)
@@ -48,8 +45,10 @@ Here is a list of all the available actions:
 """
 import sys
 import os
+import pkg_resources
 
 from tomtom.core import tomtom_version, NoteNotFound, ConnectionError
+from tomtom.plugins import ActionPlugin
 
 # Return codes sent on errors.
 # Codes between 100 and 199 are fatal errors
@@ -60,59 +59,31 @@ DBUS_CONNECTION_ERROR_RETURN_CODE = 102
 ACTION_SYNTAX_ERROR_RETURN_CODE = 102
 NOTE_NOT_FOUND_RETURN_CODE   = 200
 
-def action_dynamic_load(name):
-    """Load an action with an arbitrary name.
+def load_action(action_name):
+    """Load the action named <action_name>.
 
-    This function loads a module in the "actions" package that has the same
-    name as the action called. If no module correspond to the required action,
-    an error message is printed on the standard error stream and the program
-    exits.
+    Load an action by specifying its name. Returns an instance of the action's
+    plugin object.
 
     Arguments:
-        name -- A string representing the name of the action to load
+        action_name -- String representing the name of the action.
 
     """
-    try:
-        _temp = __import__(
-            "actions",
-            globals(),
-            locals(),
-            [name, ]
-        )
+    action_class = [
+        ac for ac in list_of_actions()
+        if ac.name == action_name
+    ]
 
-    except SyntaxError:
-        app_name = os.path.basename( sys.argv[0] )
-        print >> sys.stderr, """%s: The action module""" % app_name + \
-            """ "%s" has a syntax error that prevents tomtom """ % name + \
-            """from loading it. If it is not a custom module, you """ + \
-            """should report how you encountered this issue along """ + \
-            """with the version of python you are using and a full """ + \
-            """stack trace (see below for how to generate those) at:""" + \
-            (os.linesep * 2) + \
-            """http://github.com/lelutin/tomtom/issues""" + os.linesep + \
-            os.linesep + \
-            """The following two commands will show python's version """ + \
-            """number and generate a stack trace, respectively. """ + \
-            """Copy-paste the output of both commands in the issue you """ + \
-            """create, it will help in finding what went wrong:""" + \
-            (os.linesep * 2) + \
-            """python -V""" + os.linesep + \
-            """python -c "from actions import %s" """ % name
-        sys.exit(ACTION_SYNTAX_ERROR_RETURN_CODE)
-
-    try:
-        action = getattr(_temp, name)
-
-    except AttributeError:
+    if not action_class:
         app_name = os.path.basename( sys.argv[0] )
 
         print >> sys.stderr, \
-            """%s: %s is not a valid """ % (app_name, name) + \
+            """%s: %s is not a valid """ % (app_name, action_name) + \
             """action. Use option -h for a list of available actions."""
 
         sys.exit(ACTION_NOT_FOUND_RETURN_CODE)
 
-    return action
+    return action_class[0]()
 
 def dispatch(action_name, arguments):
     """Call upon a requested action.
@@ -133,30 +104,38 @@ def dispatch(action_name, arguments):
     # modules in the actions package must have the same name as the action
     # asked on the command line. For example, the command "tomtom list ..."
     # will import the list.py module from the actions package.
-    action = action_dynamic_load(action_name)
-    app_name = os.path.basename( sys.argv[0] )
+    action = load_action(action_name)
 
     try:
-        perform_action = getattr(action, "perform_action")
+        #FIXME arguments to this function must be the parsed options and the
+        #positional args
+        action.perform_action(arguments, [])
 
-    except AttributeError:
-        print >> sys.stderr, \
-            """%s: the "%s" action is """ % (app_name, action_name) + \
-            """malformed: the function "perform_action" could not be """ + \
-            """found within the action's module."""
-
-        sys.exit(MALFORMED_ACTION_RETURN_CODE)
-
-    try:
-        perform_action(arguments)
-    #WARNING: do not forget to add types here for exceptions that must be
-    # handled on an upper level or they will be catched by the next except
-    # block.
-    except (SystemExit, KeyboardInterrupt, ConnectionError, NoteNotFound):
-        # Exceptions handled at an upper level. Let them through
+    except (SystemExit, KeyboardInterrupt):
+        # Let the application exit if it wants to, and KeyboardInterrupt is
+        # handled on an upper level so that interrupting execution with Ctrl-C
+        # always exits cleanly.
         raise
+
+    except ConnectionError, e:
+        print >> sys.stderr, "%s: Error: %s" % (
+            os.path.basename(sys.argv[0]),
+            e
+        )
+        sys.exit(DBUS_CONNECTION_ERROR_RETURN_CODE)
+
+    except NoteNotFound, e:
+        print >> sys.stderr, """%s: Error: Note named "%s" was not found.""" %\
+            (
+                os.path.basename( sys.argv[0] ),
+                e
+            )
+        sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
+
     except:
         import traceback
+
+        app_name = os.path.basename( sys.argv[0] )
 
         print >> sys.stderr, \
             """%s: the "%s" action is """ % (app_name, action_name) + \
@@ -167,29 +146,23 @@ def dispatch(action_name, arguments):
         sys.exit(MALFORMED_ACTION_RETURN_CODE)
 
 def list_of_actions():
-    """Retrieve a list of available action names.
+    """Retrieve a list of all registered actions.
 
-    Find the modules in the "actions" package and return a list of their names.
+    Return a list of classes corresponding to all the plugins.
 
     """
-    import actions
+    group = "tomtom.actions"
+    action_list = []
 
-    files = os.listdir( actions.__path__[0] )
+    for entrypoint in pkg_resources.iter_entry_points(group=group):
+        plugin_class = entrypoint.load()
+        plugin_class.name = entrypoint.name
+        if issubclass(plugin_class, ActionPlugin):
+            action_list.append(plugin_class)
 
-    list_of_names = []
+    return action_list
 
-    # Build a list of files that are of interest in the "actions" directory
-    for file_name in files:
-        name_parts = file_name.split(".")
-        extension = name_parts[-1]
-        name = ".".join( name_parts[:-1] )
-
-        if extension == "py" and name.find("_") != 0:
-            list_of_names.append(name)
-
-    return list_of_names
-
-def action_names():
+def action_short_summaries():
     """Retrieve a list of available actions.
 
     Get descriptions from the first line of the actions' docstring and format
@@ -197,33 +170,28 @@ def action_names():
     modules will be listed as the action names.
 
     """
-    action_names = list_of_actions()
+    actions = list_of_actions()
 
     # Get longest name's length. We will use this value to align descriptions.
     pad_up_to = reduce(
         lambda x,y : max(x, y),
-        [len(a) for a in action_names]
+        [len(a.name) for a in actions]
     )
 
-    # Finally, build the list of output lines for all the actions.
-    results = []
-    for name in action_names:
-        module = action_dynamic_load(name)
-        description = getattr(module, "__doc__")
-        if description is None:
-            description = "No description available."
+    descriptions = []
+    for action in actions:
+        if action.short_description:
+            description_text = action.short_description
+        else:
+            description_text = "No description available."
 
-        lines = description.splitlines()
-
-        if len( lines ):
-            description = lines[0]
-
-        results.append(
-            """  %s%s """ % (name, " " * (pad_up_to - len(name) ) ) + \
-            """: %s""" % (description, )
+        descriptions.append(
+            """  %s""" % action.name +
+            """%s """ % ( " " * (pad_up_to - len(action.name) ) ) +
+            """: %s""" % description_text
         )
 
-    return results
+    return descriptions
 
 def main():
     """Application entry point.
@@ -255,7 +223,7 @@ def main():
         else:
             # Use the script's docstring for the basic help message. Also get a
             # list of available actions and display it.
-            print __doc__[:-1] + os.linesep.join( action_names() )
+            print __doc__[:-1] + os.linesep.join( action_short_summaries() )
             return
     elif action in ["-v", "--version"]:
         print """Tomtom version %s""" % tomtom_version + os.linesep + \
@@ -265,23 +233,7 @@ def main():
             """There is NO WARRANTY, to the extent permitted by law."""
         return
 
-    try:
-        dispatch(action, arguments)
-
-    except ConnectionError, e:
-        print >> sys.stderr, "%s: Error: %s" % (
-            os.path.basename(sys.argv[0]),
-            e
-        )
-        sys.exit(DBUS_CONNECTION_ERROR_RETURN_CODE)
-
-    except NoteNotFound, e:
-        print >> sys.stderr, """%s: Error: Note named "%s" was not found.""" %\
-            (
-                os.path.basename( sys.argv[0] ),
-                e
-            )
-        sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
+    dispatch(action, arguments)
 
 def exception_wrapped_main():
     """Wrap around main function to handle general exceptions."""

@@ -47,9 +47,12 @@ import sys
 import datetime
 import time
 import dbus
+import pkg_resources
+import traceback
 
 from tomtom.core import *
 from tomtom import cli
+from tomtom.plugins import ActionPlugin
 
 import test_data
 from test_utils import *
@@ -61,38 +64,6 @@ class TestMain(BasicMocking, CLIMocking):
     expected.
 
     """
-    def test_NoteNotFound_exceptions_are_handled(self):
-        """Main: NoteNotFound exceptions dont't go unhandled."""
-        """This code resembles the acceptance test...
-
-        Yes, the test is very similar in nature to the acceptance test named
-        "test_note_does_not_exist". So, why have it repeated? The other test is
-        a use case, meant to define that an error message is expected when a
-        note is note found, while this one is a unit test meant to verify that
-        the code in charge of handling the NoteNotFound exception does so.
-
-        Plus, testing that the exception is handled in this function makes sure
-        that it will always be handled without requiring implicitly that the
-        actions to do so.
-
-        """
-        self.m.StubOutWithMock(cli, "dispatch")
-
-        cli.dispatch("action", [])\
-            .AndRaise( NoteNotFound("unexistant") )
-
-        self.m.ReplayAll()
-
-        sys.argv = ["app_name", "action"]
-        self.assertRaises(SystemExit, cli.main)
-
-        self.assertEqual(
-            test_data.unexistant_note_error + os.linesep,
-            sys.stderr.getvalue()
-        )
-
-        self.m.VerifyAll()
-
     def test_KeyboardInterrupt_is_handled(self):
         """Main: KeyboardInterrupt doesn't come out of the application."""
         self.m.StubOutWithMock(cli, "main")
@@ -109,87 +80,12 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-    def test_dispatch_handles_lack_of_perform_action(self):
-        """Main: Warn the user if perform_action is not found in a module."""
-        """Call dispatch and verify that it prints an error and exits.
-
-        Dispatch must fail in a gracious manner. It should print an error
-        message to the standard output and exit with an error code when
-        something goes wrong.
-
-        """
-        self.m.StubOutWithMock(cli, "action_dynamic_load")
-        import mock_module as module
-        arguments = self.m.CreateMockAnything()
-        action = "action"
-
-        # Mock out the module
-        cli.action_dynamic_load(action)\
-            .AndReturn(module)
-
-        # The mock_module file shouldn't have a "perform_action" function, so
-        # an AttributeError exception will naturally be raised. I wasn't able
-        # to mock out the call to getattr on the module, probably because of
-        # how pymox works. So this is a workaround to be able to perform this
-        # test.
-
-        self.m.ReplayAll()
-
-        # Fake a value for sys.argv[0] (the application name)
-        sys.argv = ["app_name", ]
-
-        # Finally make sure that we get a well formatted error message, and
-        # that the exception does not come out of dispatch.
-        self.assertRaises(SystemExit, cli.dispatch, action, arguments )
-        self.assertEqual(
-            test_data.malformed_action_module_error + os.linesep,
-            sys.stderr.getvalue()
-        )
-
-        self.m.VerifyAll()
-
-    def test_action_dynamic_load_handles_SyntaxError(self):
-        """Main: Warn the user that an action has a syntax error."""
-        global_vars = self.m.CreateMockAnything()
-        local_vars = self.m.CreateMockAnything()
-        action_name = "action"
-
-        import __builtin__
-        self.m.StubOutWithMock(__builtin__, "__import__")
-        self.m.StubOutWithMock(__builtin__, "globals")
-        self.m.StubOutWithMock(__builtin__, "locals")
-
-        __builtin__.globals()\
-            .AndReturn( global_vars )
-        __builtin__.locals()\
-            .AndReturn( local_vars )
-
-        __builtin__.__import__(
-            "actions",
-            global_vars,
-            local_vars,
-            [action_name, ]
-        ).AndRaise(SyntaxError)
-
-        self.m.ReplayAll()
-
-        # Fake a value for sys.argv[0] (the application name)
-        sys.argv = ["app_name", ]
-
-        self.assertRaises(SystemExit, cli.action_dynamic_load, action_name)
-        self.assertEqual(
-            test_data.syntax_error_message + os.linesep,
-            sys.stderr.getvalue()
-        )
-
-        self.m.VerifyAll()
-
     def test_arguments_converted_to_unicode(self):
         """Main: Arguments to action are converted to unicode objects."""
+        self.m.StubOutWithMock(cli, "dispatch")
+
         arguments = ["arg1", "arg2"]
         sys.argv = ["app_name", "action"] + arguments
-
-        self.m.StubOutWithMock(cli, "dispatch")
 
         cli.dispatch("action", [unicode(arg) for arg in arguments] )
 
@@ -199,80 +95,263 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-    def test_ConnectionError_is_handled(self):
-        """Main: ConnectionError should print an error message."""
-        self.m.StubOutWithMock(cli, "dispatch")
-
-        cli.dispatch("action", [])\
-            .AndRaise( ConnectionError("there was a problem") )
-
-        self.m.ReplayAll()
-
-        sys.argv = ["app_name", "action"]
-        self.assertRaises(SystemExit, cli.main)
-        self.assertEqual(
-            test_data.connection_error_message + os.linesep,
-            sys.stderr.getvalue()
-        )
-
-        self.m.VerifyAll()
-
     def test_list_of_actions(self):
-        """Main: list_of_actions returns names of modules."""
-        self.m.StubOutWithMock(os, "listdir")
+        """Main: list_of_actions returns classes of action plugins."""
+        self.m.StubOutWithMock(pkg_resources, "iter_entry_points")
 
-        import tomtom.actions
-
-        old_path = tomtom.actions.__path__
-        tomtom.actions.__path__ = ["some/path", ]
-        fake_list = [
-            "action1.py",
-            "action2.py",
-            "garbage.ds_store",
-            "__ini__.py",
-            "stale_binary.pyc"
+        # Entry points as returned by pkg_resources
+        entry_points = [
+            self.m.CreateMock(pkg_resources.EntryPoint),
+            self.m.CreateMock(pkg_resources.EntryPoint),
+            self.m.CreateMock(pkg_resources.EntryPoint),
+            self.m.CreateMock(pkg_resources.EntryPoint),
         ]
 
-        os.listdir("some/path")\
-            .AndReturn(fake_list)
+        # Force the entry point names
+        for (index, entry_point) in enumerate(entry_points):
+            entry_point.name = "action%d" % index
+
+        # Plugin classes as returned by EntryPoint.load()
+        plugin_classes = [
+            ActionPlugin,
+            ActionPlugin,
+            ActionPlugin,
+            # The last one on the list is not a subclass of ActionPlugin and
+            # should get discarded
+            Tomtom,
+        ]
+
+        pkg_resources.iter_entry_points(group="tomtom.actions")\
+            .AndReturn(entry_points)
+
+        for (index, entry_point) in enumerate(entry_points):
+            entry_point.load()\
+                .AndReturn( plugin_classes[index] )
 
         self.m.ReplayAll()
 
+        # "name" attributes are irrelevant here as 3 classes are the same
         self.assertEqual(
-            ["action1", "action2"],
+            plugin_classes[:-1],
             cli.list_of_actions()
         )
 
         self.m.VerifyAll()
 
-        tomtom.actions.__path__ = old_path
-
-    def test_action_names_formats_descriptions(self):
-        """Main: Actions and their descriptions are formatted for help."""
-        fake_module1 = self.m.CreateMockAnything()
-        fake_othermodule = self.m.CreateMockAnything()
-
+    def test_load_action(self):
+        """Main: Initialize an action plugin instance."""
         self.m.StubOutWithMock(cli, "list_of_actions")
-        self.m.StubOutWithMock(cli, "action_dynamic_load")
 
-        fake_module1.__doc__ = test_data.module1_description
-        fake_othermodule.__doc__ = None
+        action1 = self.m.CreateMockAnything()
+        action1.name = "action1"
+        action2 = self.m.CreateMockAnything()
+        action2.name = "action2"
+
+        mock_class = self.m.CreateMockAnything()
 
         cli.list_of_actions()\
-            .AndReturn( ["action1", "otheraction"] )
-        cli.action_dynamic_load("action1")\
-            .AndReturn(fake_module1)
-        cli.action_dynamic_load("otheraction")\
-            .AndReturn(fake_othermodule)
+            .AndReturn( [action1, action2] )
+
+        action2()\
+            .AndReturn( mock_class )
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            mock_class,
+            cli.load_action("action2")
+        )
+
+        self.m.VerifyAll()
+
+    def test_load_unknown_action(self):
+        """Main: Requested action name is invalid."""
+        self.m.StubOutWithMock(cli, "list_of_actions")
+        self.m.StubOutWithMock(os.path, "basename")
+
+        sys.argv = ["app_name"]
+
+        cli.list_of_actions()\
+            .AndReturn( [] )
+
+        os.path.basename("app_name")\
+            .AndReturn("app_name")
+
+        self.m.ReplayAll()
+
+        self.assertRaises(
+            SystemExit,
+            cli.load_action, "unexistant_action"
+        )
+
+        self.assertEqual(
+            test_data.unknown_action + os.linesep,
+            sys.stderr.getvalue()
+        )
+
+        self.m.VerifyAll()
+
+    def test_action_short_summaries(self):
+        """Main: Extract short summaries from action plugins."""
+        self.m.StubOutWithMock(cli, "list_of_actions")
+
+        action1 = self.m.CreateMockAnything()
+        action1.name = "action1"
+        action1.short_description = test_data.module1_description
+        action2 = self.m.CreateMockAnything()
+        action2.name = "otheraction"
+        action2.short_description = None
+
+        cli.list_of_actions()\
+            .AndReturn( [action1, action2] )
 
         self.m.ReplayAll()
 
         self.assertEqual(
             test_data.module_descriptions,
-            cli.action_names()
+            cli.action_short_summaries()
         )
 
         self.m.VerifyAll()
+
+    def mock_out_dispatch(self, exception_class, exception_argument):
+        """Mock out calls in dispatch that we go through in all cases."""
+        self.m.StubOutWithMock(cli, "load_action")
+
+        action_name = "some_action"
+        fake_action = self.m.CreateMock(ActionPlugin)
+        arguments = [u"arg1", u"arg2"]
+
+        cli.load_action(action_name)\
+            .AndReturn(fake_action)
+
+        if exception_class:
+            fake_action.perform_action(arguments, [])\
+                .AndRaise( exception_class(exception_argument) )
+        else:
+            fake_action.perform_action(arguments, [])\
+                .AndReturn(None)
+
+        return (action_name, fake_action, arguments)
+
+
+    def test_dispatch(self):
+        """Main: Action calls are dispatched to the right action."""
+        action_name, fake_action, arguments = \
+            self.mock_out_dispatch(None, None)
+
+        self.m.ReplayAll()
+
+        cli.dispatch(action_name, arguments)
+
+        self.m.VerifyAll()
+
+    def verify_dispatch_exception(self, exception_class,
+            exception_out=None, exception_argument="",
+            expected_text=""):
+        """Verify that dispatch lets a specific exception go through.
+
+        dispatch should let some exceptions stay unhandled. They are handled on
+        a higher level so that their processing stays the most global possible.
+        The rest of the exceptions coming from the action call should be
+        handled.
+
+        By default, exception expected in output is the same. This can be
+        changed by passing in another exception to the argument exception_out.
+        By default, it also expects to have no output on stderr. To expect
+        somee text in stderr, pass the string to the argument expected_text.
+
+        An argument can be given to the exception upon instanciation with the
+        argument exception_argument.
+
+        Arguments:
+            exception_class -- Class of the exception that goes through
+            exception_out -- If defined, exception expected to come out
+            expected_text -- String of text that is expected on stderr
+
+        """
+        # Raise catch same exception by default
+        if not exception_out:
+            exception_out = exception_class
+
+        action_name, fake_action, arguments = \
+            self.mock_out_dispatch(exception_class, exception_argument)
+
+        self.m.ReplayAll()
+
+        self.assertRaises(
+            exception_out,
+            cli.dispatch, action_name, arguments
+        )
+        self.assertEqual(
+            expected_text,
+            sys.stderr.getvalue()
+        )
+
+        self.m.VerifyAll()
+
+    def test_dispatch_SystemExit_goes_through(self):
+        """Main: SystemExit exceptions pass through dispatch."""
+        self.verify_dispatch_exception(SystemExit)
+
+    def test_dispatch_KeyboardInterrupt_goes_through(self):
+        """Main: KeyboardInterrupt exceptions pass through dispatch."""
+        self.verify_dispatch_exception(KeyboardInterrupt)
+
+    def test_dispatch_handles_ConnectionError(self):
+        """Main: ConnectionError should print an error message."""
+        sys.argv = ["app_name"]
+        self.verify_dispatch_exception(
+            ConnectionError,
+            exception_out=SystemExit,
+            exception_argument="there was a problem",
+            expected_text=test_data.connection_error_message + os.linesep
+        )
+
+    def test_dispatch_handles_NoteNotFound(self):
+        """Main: NoteNotFound exceptions dont't go unhandled."""
+        sys.argv = ["app_name"]
+        self.verify_dispatch_exception(
+            NoteNotFound,
+            exception_out=SystemExit,
+            exception_argument="unexistant",
+            expected_text=test_data.unexistant_note_error + os.linesep
+        )
+
+    def print_traceback(self):
+        """Fake an output of an arbitrary traceback on sys.stderr"""
+        print >> sys.stderr, test_data.fake_traceback
+
+    def test_dispatch_handles_action_exceptions(self):
+        """Main: All unknown exceptions from actions are handled."""
+        action_name, fake_action, arguments = \
+            self.mock_out_dispatch(Exception, "something happened")
+
+        sys.argv = ["app_name"]
+
+        old_print_exc = traceback.print_exc
+        traceback.print_exc = self.print_traceback
+
+        self.m.StubOutWithMock(os.path, "basename")
+
+        os.path.basename(sys.argv[0])\
+            .AndReturn(sys.argv[0])
+
+        self.m.ReplayAll()
+
+        self.assertRaises(
+            SystemExit,
+            cli.dispatch, action_name, arguments
+        )
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.unhandled_action_exception_error_message + os.linesep,
+            sys.stderr.getvalue()
+        )
+
+        traceback.print_exc = old_print_exc
 
 class TestCore(BasicMocking):
     """Tests for general code.

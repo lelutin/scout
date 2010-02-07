@@ -59,27 +59,34 @@ version number. It uses dbus to get the information from Tomboy.
 import optparse
 
 from tomtom.core import Tomtom, tomtom_version
+from tomtom.plugins import ActionPlugin
 
-def perform_action(args):
-    """Display Tomboy's version information.
+desc = __doc__.splitlines()[0]
 
-    This action gets Tomboy's version via dbus and prints it out.
+class VersionAction(ActionPlugin):
+    """Action plugin that prints out Tomboy's version information."""
+    short_description = desc
 
-    Arguments:
-        args -- A list composed of action and file names
+    def perform_action(self, args, positional):
+        """Display Tomboy's version information.
 
-    """
-    parser = optparse.OptionParser(usage="%prog version [-h]")
+        This action gets Tomboy's version via dbus and prints it out.
 
-    (options, file_names) = parser.parse_args(args)
+        Arguments:
+            args -- A list composed of action and file names
 
-    tomboy_interface = Tomtom()
+        """
+        parser = optparse.OptionParser(usage="%prog version [-h]")
 
-    print (
-        """Tomtom version %s using Tomboy version %s""" % \
-            (
-                tomtom_version,
-                tomboy_interface.tomboy_communicator.comm.Version()
-            )
-        ).encode('utf-8')
+        (options, file_names) = parser.parse_args(args)
+
+        tomboy_interface = Tomtom()
+
+        print (
+            """Tomtom version %s using Tomboy version %s""" % \
+                (
+                    tomtom_version,
+                    tomboy_interface.tomboy_communicator.comm.Version()
+                )
+            ).encode('utf-8')
 

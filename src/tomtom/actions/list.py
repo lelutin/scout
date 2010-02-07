@@ -62,66 +62,74 @@ import optparse
 import sys
 
 from tomtom.core import Tomtom
+from tomtom.plugins import ActionPlugin
 
-def perform_action(args):
-    """Use the tomtom object to list notes.
+desc = __doc__.splitlines()[0]
 
-    This action prints modification date, title and tags of notes to the
-    screen.
+class ListAction(ActionPlugin):
+    """Plugin object for listing notes"""
+    short_description = desc
 
-    Arguments:
-        args -- A list composed of action and file names
+    def perform_action(self, args, positional):
+        """Use the tomtom object to list notes.
 
-    """
-    parser = optparse.OptionParser(
-        usage="%prog list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]"
-    )
+        This action prints modification date, title and tags of notes to the
+        screen.
 
-    parser.add_option(
-        "-n", type="int",
-        dest="max_notes", default=None,
-        help="Limit the number of notes listed."
-    )
-    parser.add_option(
-        "-b",
-        dest="books", action="append", default=[],
-        help="""List only notes belonging to specified notebooks. It is a """
-        """shortcut to option "-t" to specify notebooks more easily. For """
-        """example, use "-b HGTTG" instead of "-t system:notebook:HGTTG". """
-        """Use this option once for each desired book."""
-    )
-    parser.add_option(
-        "--with-templates",
-        dest="templates", action="store_true", default=False,
-        help="""Include template notes in the list. This option is """
-        """different from using "-t system:template" in that the latter """
-        """used alone will list only the templates, while using """
-        """"--with-templates" without specifying tags for selection will """
-        """list notes including templates."""
-    )
-    parser.add_option(
-        "-t",
-        dest="tags", action="append", default=[],
-        help="""List only notes with specified tags. Use this option once """
-        """for each desired tag. This option selects raw tags and could be """
-        """useful for user-assigned tags."""
-    )
+        Arguments:
+            args -- A list composed of action and file names
 
-    (options, file_names) = parser.parse_args(args)
+        """
+        parser = optparse.OptionParser(
+            usage="%prog list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]"
+        )
 
-    tomboy_interface = Tomtom()
+        parser.add_option(
+            "-n", type="int",
+            dest="max_notes", default=None,
+            help="Limit the number of notes listed."
+        )
+        parser.add_option(
+            "-b",
+            dest="books", action="append", default=[],
+            help="""List only notes belonging to specified notebooks. It """
+            """is a shortcut to option "-t" to specify notebooks more """
+            """easily. For example, use "-b HGTTG" instead of "-t """
+            """system:notebook:HGTTG". Use this option once for each """
+            """desired book."""
+        )
+        parser.add_option(
+            "--with-templates",
+            dest="templates", action="store_true", default=False,
+            help="""Include template notes in the list. This option is """
+            """different from using "-t system:template" in that the latter """
+            """used alone will list only the templates, while using """
+            """"--with-templates" without specifying tags for selection """
+            """will list notes including templates."""
+        )
+        parser.add_option(
+            "-t",
+            dest="tags", action="append", default=[],
+            help="""List only notes with specified tags. Use this option """
+            """once for each desired tag. This option selects raw tags and """
+            """could be useful for user-assigned tags."""
+        )
 
-    tags_to_select = options.tags
-    if options.templates:
-        tags_to_select.append("system:template")
+        (options, file_names) = parser.parse_args(args)
 
-    if options.books:
-        tags_to_select = tags_to_select + \
-            ["system:notebook:%s" % book for book in options.books]
+        tomboy_interface = Tomtom()
 
-    print tomboy_interface.list_notes(
-        count_limit=options.max_notes,
-        tags=tags_to_select,
-        non_exclusive=options.templates
-    ).encode('utf-8')
+        tags_to_select = options.tags
+        if options.templates:
+            tags_to_select.append("system:template")
+
+        if options.books:
+            tags_to_select = tags_to_select + \
+                ["system:notebook:%s" % book for book in options.books]
+
+        print tomboy_interface.list_notes(
+            count_limit=options.max_notes,
+            tags=tags_to_select,
+            non_exclusive=options.templates
+        ).encode('utf-8')
 

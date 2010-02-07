@@ -20,7 +20,7 @@ setup(
         """can be taken to interact with Tomboy. Actions are simple"""
         """to create, making the application easily extensible.""",
     license = "BSD",
-    keywords = "cli tomboy note",
+    keywords = "cli tomboy note dbus",
     url = "http://github.com/lelutin/tomtom",
 
     # Package structure information
@@ -30,6 +30,12 @@ setup(
         "console_scripts": [
             "tomtom = tomtom.cli:exception_wrapped_main",
         ],
+        "tomtom.actions": [
+            "list = tomtom.actions.list:ListAction",
+            "display = tomtom.actions.display:DisplayAction",
+            "search = tomtom.actions.search:SearchAction",
+            "version = tomtom.actions.version:VersionAction",
+        ],
     },
 
     # Dependencies
@@ -38,6 +44,7 @@ setup(
     #],
     tests_require = [
         "nose",
+        "mox >= 0.5.1",
     ],
 
     # To run tests via this file
