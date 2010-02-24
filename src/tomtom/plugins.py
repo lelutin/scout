@@ -80,9 +80,9 @@ class ActionPlugin(object):
 
         group = [g for g in self.option_groups if g.name == group_name][0]
 
-        group.add_option(
+        group.add_options([
             Option(*args, **kwargs)
-        )
+        ])
 
     def add_group(self, name, description=""):
         """Create an option group in the action's list of options.
@@ -106,6 +106,25 @@ class ActionPlugin(object):
             self.option_groups.append(
                 OptionGroup(name, description)
             )
+
+    def add_option_library(self, library):
+        """Add an option library to the option parser.
+
+        Add an option library (a group of predefined options) in the list of
+        groups of options. The library must of a subclass of
+        tomtom.plugins.OptionGroup. If the name of the library is already
+        present in option groups, no action is taken.
+
+        Arguments:
+            library -- An instance of a subclass of tomtom.plugins.OptionGroup
+
+        """
+        if not isinstance(library, OptionGroup):
+            msg = "Librairies must be of type tomtom.plugins.OptionGroup"
+            raise TypeError, msg
+
+        if library.name not in [g.name for g in self.option_groups]:
+            self.option_groups.append(library)
 
     def init_options(self):
         """Initialize this action's options.
@@ -143,16 +162,62 @@ class OptionGroup(object):
         self.description = description
         self.options = []
 
-    def add_option(self, option):
-        """Add an option to the group.
+    def add_options(self, options):
+        """Add a list of options to the group.
 
-        Add an option to the option group. The option must be of type
-        optparse.Option.
+        Add multiple options from a list to the option group. The options must
+        be of type optparse.Option or a TypeError exception is raised.
+
+        Arguments:
+            options -- A list that should contain only optparse.Option objects.
 
         """
-        if not isinstance(option, Option):
-            msg = "Options added to the group must be optparse.Option objects"
-            raise TypeError, msg
+        for option in options:
+            if not isinstance(option, Option):
+                msg = "Options added to the group must be " + \
+                    "optparse.Option objects."
+                raise TypeError, msg
 
-        self.options.append(option)
+            self.options.append(option)
+
+class FilteringGroup(OptionGroup):
+    """An option group with all options for filtering notes."""
+    def __init__(self, action_name):
+        super(FilteringGroup, self).__init__(
+            "Filtering",
+            "Filter notes by different criteria."
+        )
+
+        action_map = { "action": action_name }
+
+        options = [
+            Option(
+                "-b",
+                dest="books", action="append", default=[],
+                help="""%(action)s only notes belonging to """ % action_map + \
+                """specified notebooks. It is a shortcut to option "-t" to """
+                """specify notebooks more easily. For example, use"""
+                """ "-b HGTTG" instead of "-t system:notebook:HGTTG". Use """
+                """this option once for each desired book."""
+            ),
+            Option(
+                "--with-templates",
+                dest="templates", action="store_true", default=False,
+                help="""Include template notes. This option is """
+                """different from using "-t system:template" in that the """
+                """latter used alone will only include the templates, while """
+                """"using "--with-templates" without specifying tags for """
+                """selection will include all notes and templates."""
+            ),
+            Option(
+                "-t",
+                dest="tags", action="append", default=[],
+                help="""%(action)s only notes with """ % action_map + \
+                """specified tags. Use this option once for each desired """
+                """tag. This option selects raw tags and could be useful for """
+                """user-assigned tags."""
+            )
+        ]
+
+        self.add_options(options)
 

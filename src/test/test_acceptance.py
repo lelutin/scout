@@ -149,19 +149,20 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        # Test that usage comes from the script's docstring.
-        cli.main()
+        self.assertRaises(
+            SystemExit,
+            cli.main
+        )
 
         self.m.VerifyAll()
 
-        # This test is not very flexible. Change this if more lines are
-        # added to the usage description in the docstring.
+        # Test that usage comes from the script's docstring.
         self.assertEqual(
             (os.linesep * 2).join([
                 os.linesep.join( cli.__doc__.splitlines()[:3]),
                 test_data.help_more_details
             ]) + os.linesep,
-            sys.stdout.getvalue()
+            sys.stderr.getvalue()
         )
 
         cli.__doc__ = old_docstring

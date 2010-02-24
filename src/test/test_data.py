@@ -317,11 +317,11 @@ Options:
                       easily. For example, use "-b HGTTG" instead of "-t
                       system:notebook:HGTTG". Use this option once for each
                       desired book.
-    --with-templates  Include template notes in the list. This option is
-                      different from using "-t system:template" in that the
-                      latter used alone will list only the templates, while
-                      "using --with-templates" without specifying tags for
-                      selection will list notes including templates.
+    --with-templates  Include template notes. This option is different from
+                      using "-t system:template" in that the latter used alone
+                      will only include the templates, while "using "--with-
+                      templates" without specifying tags for selection will
+                      include all notes and templates.
     -t TAGS           List only notes with specified tags. Use this option
                       once for each desired tag. This option selects raw tags
                       and could be useful for user-assigned tags."""
@@ -341,20 +341,19 @@ Options:
   Filtering:
     Filter notes by different criteria.
 
-    -b BOOKS          Search only in notes belonging to specified notebooks.
-                      It is a shortcut to option "-t" to specify notebooks
-                      more easily. For example, use "-b HGTTG" "instead of -t
+    -b BOOKS          Search only notes belonging to specified notebooks. It
+                      is a shortcut to option "-t" to specify notebooks more
+                      easily. For example, use "-b HGTTG" instead of "-t
                       system:notebook:HGTTG". Use this option once for each
                       desired book.
-    --with-templates  Include template notes in the search. This option is
-                      different from using "-t system:template" in that the
-                      latter used alone will search only in the templates,
-                      "while using --with-templates" without specifying tags
-                      for selection will search in all notes including
-                      templates.
-    -t TAGS           Search only in notes with specified tags. Use this
-                      option once for each desired tag. This option selects
-                      raw tags and could be useful for user-assigned tags."""
+    --with-templates  Include template notes. This option is different from
+                      using "-t system:template" in that the latter used alone
+                      will only include the templates, while "using "--with-
+                      templates" without specifying tags for selection will
+                      include all notes and templates.
+    -t TAGS           Search only notes with specified tags. Use this option
+                      once for each desired tag. This option selects raw tags
+                      and could be useful for user-assigned tags."""
 
 help_details_version = \
 """Usage: app_name version [-h]

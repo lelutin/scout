@@ -61,11 +61,11 @@ will be limited in number to the value given as an argument.
 import optparse
 import sys
 
-from tomtom.plugins import ActionPlugin
+from tomtom import plugins
 
 desc = __doc__.splitlines()[0]
 
-class ListAction(ActionPlugin):
+class ListAction(plugins.ActionPlugin):
     """Plugin object for listing notes"""
     short_description = desc
     usage = "%prog list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]"
@@ -77,35 +77,7 @@ class ListAction(ActionPlugin):
             help="Limit the number of notes listed."
         )
 
-        self.add_group("Filtering", "Filter notes by different criteria.")
-        self.add_option(
-            "-b",
-            group="Filtering",
-            dest="books", action="append", default=[],
-            help="""List only notes belonging to specified notebooks. It """
-            """is a shortcut to option "-t" to specify notebooks more """
-            """easily. For example, use "-b HGTTG" instead of "-t """
-            """system:notebook:HGTTG". Use this option once for each """
-            """desired book."""
-        )
-        self.add_option(
-            "--with-templates",
-            group="Filtering",
-            dest="templates", action="store_true", default=False,
-            help="""Include template notes in the list. This option is """
-            """different from using "-t system:template" in that the """
-            """latter used alone will list only the templates, while """
-            """"using --with-templates" without specifying tags for """
-            """selection will list notes including templates."""
-        )
-        self.add_option(
-            "-t",
-            group="Filtering",
-            dest="tags", action="append", default=[],
-            help="""List only notes with specified tags. Use this option """
-            """once for each desired tag. This option selects raw tags """
-            """and could be useful for user-assigned tags."""
-        )
+        self.add_option_library( plugins.FilteringGroup("List") )
 
     def perform_action(self, options, positional):
         """Use the tomtom object to list notes.

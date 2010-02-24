@@ -63,11 +63,11 @@ import optparse
 import sys
 import os
 
-from tomtom.plugins import ActionPlugin
+from tomtom import plugins
 
 desc = __doc__.splitlines()[0]
 
-class SearchAction(ActionPlugin):
+class SearchAction(plugins.ActionPlugin):
     """Plugin object for searching text in notes"""
     short_description = desc
     usage = """%prog search -h""" + os.linesep + \
@@ -75,36 +75,7 @@ class SearchAction(ActionPlugin):
         """--with-templates] <search_pattern> [note_name ...]"""
 
     def init_options(self):
-        self.add_group("Filtering", "Filter notes by different criteria.")
-        self.add_option(
-            "-b",
-            group="Filtering",
-            dest="books", action="append", default=[],
-            help="""Search only in notes belonging to specified """
-            """notebooks. It is a shortcut to option "-t" to specify """
-            """notebooks more easily. For example, use "-b HGTTG" """
-            """"instead of -t system:notebook:HGTTG". Use this option """
-            """once for each desired book."""
-        )
-        self.add_option(
-            "--with-templates",
-            group="Filtering",
-            dest="templates", action="store_true", default=False,
-            help="""Include template notes in the search. This option is """
-            """different from using "-t system:template" in that the """
-            """latter used alone will search only in the templates, """
-            """"while using --with-templates" without specifying tags """
-            """for selection will search in all notes including """
-            """templates."""
-        )
-        self.add_option(
-            "-t",
-            group="Filtering",
-            dest="tags", action="append", default=[],
-            help="""Search only in notes with specified tags. Use this """
-            """option once for each desired tag. This option selects raw """
-            """tags and could be useful for user-assigned tags."""
-        )
+        self.add_option_library( plugins.FilteringGroup("Search") )
 
     def perform_action(self, options, positional):
         """Use the tomtom object to search for some text within notes.
