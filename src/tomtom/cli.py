@@ -31,9 +31,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ###############################################################################
-"""Usage: tomtom.py <action> [-h|--help] [options]
-       tomtom.py (-h|--help) [action]
-       tomtom.py (-v|--version)
+"""Usage: %(tomtom)s <action> [-h|--help] [options]
+       %(tomtom)s (-h|--help) [action]
+       %(tomtom)s (-v|--version)
 
 Tomtom is a command line interface to the Tomboy note taking application.
 
@@ -46,18 +46,21 @@ Here is a list of all the available actions:
 import sys
 import os
 import pkg_resources
+import optparse
 
+from tomtom import core
 from tomtom.core import tomtom_version, NoteNotFound, ConnectionError
 from tomtom.plugins import ActionPlugin
 
 # Return codes sent on errors.
 # Codes between 100 and 199 are fatal errors
-# Codes between 200 and 255 are minor errors
+# Codes between 200 and 254 are minor errors
 ACTION_NOT_FOUND_RETURN_CODE = 100
 MALFORMED_ACTION_RETURN_CODE = 101
 DBUS_CONNECTION_ERROR_RETURN_CODE = 102
-ACTION_SYNTAX_ERROR_RETURN_CODE = 102
-NOTE_NOT_FOUND_RETURN_CODE   = 200
+ACTION_OPTION_TYPE_ERROR_RETURN_CODE = 103
+TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE = 200
+NOTE_NOT_FOUND_RETURN_CODE   = 201
 
 def load_action(action_name):
     """Load the action named <action_name>.
@@ -85,6 +88,66 @@ def load_action(action_name):
 
     return action_class[0]()
 
+def retrieve_options(parser, action):
+    """Get a list of options from an action and append default options.
+
+    Get an action's list of options and groups. Flat out options from the
+    special "None" group and instantiate optparse.OptionGroup objects out of
+    tomtom.plugins.OptionGroup objects.
+
+    Arguments:
+        parser -- The optparse.OptionParser needed to instantiate groups
+        action -- A subclass of tomtom.plugins.ActionPlugin
+
+    """
+    options = []
+
+    # Retrieve the special "non-group" group and remove it from the list
+    no_group_list = [g for g in action.option_groups if g.name is None]
+    if len(no_group_list):
+        no_group = no_group_list[0]
+        for base_option in no_group.options:
+            options.append(base_option)
+
+    groups = [g for g in action.option_groups if g.name is not None]
+
+    for group in groups:
+        group_object = optparse.OptionGroup(
+            parser,
+            group.name,
+            group.description
+        )
+        for option in group.options:
+            group_object.add_option(option)
+
+        options.append(group_object)
+
+    return options
+
+def parse_options(action, arguments):
+    """Parse the command line arguments before launching an action.
+
+    Retrieve options from the action. Then, parse them. Finally, return the
+    resulting optparse.Values and list of positional arguments.
+
+    Arguments:
+        action -- A sub-class of tomtom.plugins.ActionPlugin
+        arguments -- The list of string arguments from the command line.
+
+    """
+    option_parser = optparse.OptionParser(usage=action.usage)
+
+    action.init_options()
+    action_options = retrieve_options(option_parser, action)
+
+    for option in action_options:
+        if isinstance(option, optparse.Option):
+            option_parser.add_option(option)
+        else:
+            option_parser.add_option_group(option)
+
+    return option_parser.parse_args(arguments)
+
 def dispatch(action_name, arguments):
     """Call upon a requested action.
 
@@ -98,18 +161,17 @@ def dispatch(action_name, arguments):
         arguments   -- A list of all the other arguments from the command line
 
     """
-    # Perform a dynamic `from actions import "action_name"`. This gives the
-    # functionality of adding actions by simply dropping a new python module
-    # that has a function "perform_action" in the actions package. Action
-    # modules in the actions package must have the same name as the action
-    # asked on the command line. For example, the command "tomtom list ..."
-    # will import the list.py module from the actions package.
     action = load_action(action_name)
 
     try:
-        #FIXME arguments to this function must be the parsed options and the
-        #positional args
-        action.perform_action(arguments, [])
+        options, positional_arguments = parse_options(action, arguments)
+    except TypeError, e:
+        print >> sys.stderr, e
+        exit(ACTION_OPTION_TYPE_ERROR_RETURN_CODE)
+
+    action.tomboy_interface = core.Tomtom()
+    try:
+        action.perform_action(options, positional_arguments)
 
     except (SystemExit, KeyboardInterrupt):
         # Let the application exit if it wants to, and KeyboardInterrupt is
@@ -201,13 +263,15 @@ def main():
 
     """
     if len(sys.argv) < 2:
+        app_name_map = { "tomtom": os.path.basename(sys.argv[0]) }
+
         # Use the docstring's first [significant] lines to display usage
         usage_output =  (os.linesep * 2).join([
-            os.linesep.join( __doc__.splitlines()[:3] ),
+            os.linesep.join( __doc__.splitlines()[:3] ) % app_name_map,
             "For more details, use option -h"
         ])
-        print usage_output
-        return
+        print >> sys.stderr, usage_output
+        sys.exit(TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE)
 
     action = sys.argv[1]
     # Convert the rest of the arguments to unicode objects so that they are
@@ -226,12 +290,14 @@ def main():
             print __doc__[:-1] + os.linesep.join( action_short_summaries() )
             return
     elif action in ["-v", "--version"]:
-        print """Tomtom version %s""" % tomtom_version + os.linesep + \
+        version_info =  """Tomtom version %s""" % tomtom_version + os.linesep + \
             """Copyright © 2010 Gabriel Filion""" + os.linesep + \
             """License: BSD""" + os.linesep + """This is free software: """ \
             """you are free to change and redistribute it.""" + os.linesep + \
             """There is NO WARRANTY, to the extent permitted by law."""
-        return
+
+        print version_info
+        sys.exit(0)
 
     dispatch(action, arguments)
 

@@ -63,7 +63,6 @@ import optparse
 import sys
 import os
 
-from tomtom.core import Tomtom
 from tomtom.plugins import ActionPlugin
 
 desc = __doc__.splitlines()[0]
@@ -71,60 +70,60 @@ desc = __doc__.splitlines()[0]
 class SearchAction(ActionPlugin):
     """Plugin object for searching text in notes"""
     short_description = desc
+    usage = """%prog search -h""" + os.linesep + \
+        """       %prog search [-b <book name>[,...]|-t <tag>[,...]|""" + \
+        """--with-templates] <search_pattern> [note_name ...]"""
 
-    def perform_action(self, args, positional):
-        """Use the tomtom object to search for some text within notes.
-
-        This action performs a textual search within notes and reports the
-        results to the screen.
-
-        Arguments:
-            args -- list of arguments decomposed into action and file names
-
-        """
-        parser = optparse.OptionParser(
-            usage="""%prog search -h""" + os.linesep + """       """
-                """%prog search [-b <book name>[,...]|-t <tag>[,...]|"""
-                """--with-templates] <search_pattern> [note_name ...]"""
-        )
-
-        parser.add_option(
+    def init_options(self):
+        self.add_group("Filtering", "Filter notes by different criteria.")
+        self.add_option(
             "-b",
+            group="Filtering",
             dest="books", action="append", default=[],
-            help="""Search only in notes belonging to specified notebooks. """
-            """It is a shortcut to option "-t" to specify notebooks more """
-            """easily. For example, use "-b HGTTG" instead of """
-            """"-t system:notebook:HGTTG". Use this option once for each """
-            """desired book."""
+            help="""Search only in notes belonging to specified """
+            """notebooks. It is a shortcut to option "-t" to specify """
+            """notebooks more easily. For example, use "-b HGTTG" """
+            """"instead of -t system:notebook:HGTTG". Use this option """
+            """once for each desired book."""
         )
-        parser.add_option(
+        self.add_option(
             "--with-templates",
+            group="Filtering",
             dest="templates", action="store_true", default=False,
             help="""Include template notes in the search. This option is """
-            """different from using "-t system:template" in that the latter """
-            """used alone will search only in the templates, while using """
-            """"--with-templates" without specifying tags for selection """
-            """will search in all notes including templates."""
+            """different from using "-t system:template" in that the """
+            """latter used alone will search only in the templates, """
+            """"while using --with-templates" without specifying tags """
+            """for selection will search in all notes including """
+            """templates."""
         )
-        parser.add_option(
+        self.add_option(
             "-t",
+            group="Filtering",
             dest="tags", action="append", default=[],
             help="""Search only in notes with specified tags. Use this """
             """option once for each desired tag. This option selects raw """
             """tags and could be useful for user-assigned tags."""
         )
 
-        (options, file_names) = parser.parse_args(args)
+    def perform_action(self, options, positional):
+        """Use the tomtom object to search for some text within notes.
 
-        if len(file_names) < 1:
+        This action performs a textual search within notes and reports the
+        results to the screen.
+
+        Arguments:
+            options -- an optparse.Values object containing the parsed options
+            positional -- a list of strings of positional arguments
+
+        """
+        if len(positional) < 1:
             print >> sys.stderr, \
                 "Error: You must specify a pattern to perform a search"
             return
 
-        tomboy_interface = Tomtom()
-
-        search_pattern = file_names[0]
-        note_names = file_names[1:]
+        search_pattern = positional[0]
+        note_names = positional[1:]
 
         tags_to_select = options.tags
         if options.templates:
@@ -134,7 +133,7 @@ class SearchAction(ActionPlugin):
             tags_to_select = tags_to_select + \
                 ["system:notebook:%s" % book for book in options.books]
 
-        results = tomboy_interface.search_for_text(
+        results = self.tomboy_interface.search_for_text(
             search_pattern=search_pattern,
             note_names=note_names,
             tags=tags_to_select,

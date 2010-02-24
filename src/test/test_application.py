@@ -49,10 +49,12 @@ import time
 import dbus
 import pkg_resources
 import traceback
+import optparse
 
+from tomtom import core
 from tomtom.core import *
 from tomtom import cli
-from tomtom.plugins import ActionPlugin
+from tomtom.plugins import ActionPlugin, OptionGroup
 
 import test_data
 from test_utils import *
@@ -82,6 +84,7 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_arguments_converted_to_unicode(self):
         """Main: Arguments to action are converted to unicode objects."""
+        """This is the default main() behaviour."""
         self.m.StubOutWithMock(cli, "dispatch")
 
         arguments = ["arg1", "arg2"]
@@ -94,6 +97,59 @@ class TestMain(BasicMocking, CLIMocking):
         cli.main()
 
         self.m.VerifyAll()
+
+    def verify_exit_from_main(self,
+            arguments, expected_text, output_stream):
+        sys.argv = ["app_name"] + arguments
+
+        self.m.ReplayAll()
+
+        self.assertRaises(
+            SystemExit,
+            cli.main
+        )
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            expected_text + os.linesep,
+            output_stream.getvalue()
+        )
+
+    def test_not_enough_arguments(self):
+        """Main: main() called with too few arguments gives an error."""
+        self.verify_exit_from_main(
+            [],
+            test_data.too_few_arguments_error,
+            output_stream=sys.stderr
+        )
+
+    def test_help_before_action(self):
+        """Main: -h before action gets switched to normal help call."""
+        self.m.StubOutWithMock(cli, "dispatch")
+
+        sys.argv = ["app_name", "-h", "action"]
+
+        processed_arguments = [ sys.argv[0], sys.argv[2], sys.argv[1] ]
+
+        cli.dispatch(
+            "action",
+            [unicode(arg) for arg in processed_arguments[1:] ]
+        )
+
+        self.m.ReplayAll()
+
+        cli.main()
+
+        self.m.VerifyAll()
+
+    def test_display_tomtom_version(self):
+        """Main: -v option displays Tomtom's version and license information."""
+        self.verify_exit_from_main(
+            ["-v"],
+            test_data.version_and_license_info,
+            output_stream=sys.stdout
+        )
 
     def test_list_of_actions(self):
         """Main: list_of_actions returns classes of action plugins."""
@@ -216,24 +272,35 @@ class TestMain(BasicMocking, CLIMocking):
 
     def mock_out_dispatch(self, exception_class, exception_argument):
         """Mock out calls in dispatch that we go through in all cases."""
+        fake_tomtom = self.m.CreateMock(core.Tomtom)
+
         self.m.StubOutWithMock(cli, "load_action")
+        self.m.StubOutWithMock(cli, "parse_options")
+        self.m.StubOutWithMock(core, "Tomtom", use_mock_anything=True)
 
         action_name = "some_action"
         fake_action = self.m.CreateMock(ActionPlugin)
-        arguments = [u"arg1", u"arg2"]
+        arguments = self.m.CreateMock(list)
+        positional_arguments = self.m.CreateMock(list)
+        options = self.m.CreateMock(optparse.Values)
 
         cli.load_action(action_name)\
             .AndReturn(fake_action)
 
+        cli.parse_options(fake_action, arguments)\
+            .AndReturn( (options, positional_arguments) )
+
+        core.Tomtom()\
+            .AndReturn( fake_tomtom )
+
         if exception_class:
-            fake_action.perform_action(arguments, [])\
+            fake_action.perform_action(options, positional_arguments)\
                 .AndRaise( exception_class(exception_argument) )
         else:
-            fake_action.perform_action(arguments, [])\
+            fake_action.perform_action(options, positional_arguments)\
                 .AndReturn(None)
 
         return (action_name, fake_action, arguments)
-
 
     def test_dispatch(self):
         """Main: Action calls are dispatched to the right action."""
@@ -352,6 +419,128 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
         traceback.print_exc = old_print_exc
+
+    def test_dispatch_handles_option_type_exceptions(self):
+        """Main: dispatch prints an error if an option is of the wrong type."""
+        self.m.StubOutWithMock(cli, "load_action")
+        self.m.StubOutWithMock(cli, "parse_options")
+
+        action_name = "some_action"
+        fake_action = self.m.CreateMock(ActionPlugin)
+        fake_action.name = action_name
+        arguments = self.m.CreateMock(list)
+
+        cli.load_action(action_name)\
+            .AndReturn(fake_action)
+
+        cli.parse_options(fake_action, arguments)\
+            .AndRaise( TypeError(test_data.option_type_error_message) )
+
+        self.m.ReplayAll()
+
+        self.assertRaises(
+            SystemExit,
+            cli.dispatch, action_name, arguments
+        )
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.option_type_error_message + os.linesep,
+            sys.stderr.getvalue()
+        )
+
+    def test_parse_options(self):
+        """Main: Parse an action's options and return them"""
+        self.m.StubOutWithMock(cli, "retrieve_options")
+
+        option_parser = self.m.CreateMock(optparse.OptionParser)
+        self.m.StubOutWithMock(
+            optparse, "OptionParser", use_mock_anything=True
+        )
+
+        fake_action = self.m.CreateMock(ActionPlugin)
+        fake_action.usage = "%prog [options]"
+        option_list = [
+            self.m.CreateMock(optparse.Option),
+            self.m.CreateMock(optparse.Option),
+            self.m.CreateMock(optparse.OptionGroup),
+        ]
+        fake_values = self.m.CreateMock(optparse.Values)
+        arguments = ["--meuh", "arg1"]
+        positional_arguments = ["arg1"]
+
+        cli.retrieve_options(option_parser, fake_action)\
+            .AndReturn(option_list)
+
+        optparse.OptionParser(usage="%prog [options]")\
+            .AndReturn( option_parser )
+
+        fake_action.init_options()
+
+        option_parser.add_option(option_list[0])
+        option_parser.add_option(option_list[1])
+        option_parser.add_option_group(option_list[2])
+
+        option_parser.parse_args(arguments)\
+            .AndReturn( (fake_values, positional_arguments) )
+
+        self.m.ReplayAll()
+
+        result = cli.parse_options(fake_action, arguments)
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            (fake_values, positional_arguments),
+            result
+        )
+
+    def test_retrieve_options(self):
+        """Main: Get a list of options from an action plugin."""
+        fake_group = self.m.CreateMock(optparse.OptionGroup)
+
+        self.m.StubOutWithMock(optparse, "OptionGroup", use_mock_anything=True)
+
+        fake_action = self.m.CreateMock(ActionPlugin)
+        fake_option_parser = self.m.CreateMock(optparse.OptionParser)
+
+        option1 = self.m.CreateMock(optparse.Option)
+        option2 = self.m.CreateMock(optparse.Option)
+        option3 = self.m.CreateMock(optparse.Option)
+
+        group1 = self.m.CreateMock(OptionGroup)
+        group1.name = None
+        group1.options = [option1]
+        group2 = self.m.CreateMock(OptionGroup)
+        group2.name = "Group2"
+        group2.description = "dummy"
+
+        group2.options = [option1, option2]
+
+        fake_action.option_groups = [group1, group2]
+
+        optparse.OptionGroup(
+            fake_option_parser,
+            "Group2",
+            "dummy"
+        ).AndReturn(fake_group)
+
+        fake_group.add_option(option1)
+        fake_group.add_option(option2)
+
+        list_of_options = [option1, fake_group]
+
+        self.m.ReplayAll()
+
+        result = cli.retrieve_options(fake_option_parser, fake_action)
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            list_of_options,
+            result
+        )
 
 class TestCore(BasicMocking):
     """Tests for general code.

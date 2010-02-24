@@ -61,7 +61,6 @@ will be limited in number to the value given as an argument.
 import optparse
 import sys
 
-from tomtom.core import Tomtom
 from tomtom.plugins import ActionPlugin
 
 desc = __doc__.splitlines()[0]
@@ -69,28 +68,19 @@ desc = __doc__.splitlines()[0]
 class ListAction(ActionPlugin):
     """Plugin object for listing notes"""
     short_description = desc
+    usage = "%prog list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]"
 
-    def perform_action(self, args, positional):
-        """Use the tomtom object to list notes.
-
-        This action prints modification date, title and tags of notes to the
-        screen.
-
-        Arguments:
-            args -- A list composed of action and file names
-
-        """
-        parser = optparse.OptionParser(
-            usage="%prog list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]"
-        )
-
-        parser.add_option(
+    def init_options(self):
+        self.add_option(
             "-n", type="int",
             dest="max_notes", default=None,
             help="Limit the number of notes listed."
         )
-        parser.add_option(
+
+        self.add_group("Filtering", "Filter notes by different criteria.")
+        self.add_option(
             "-b",
+            group="Filtering",
             dest="books", action="append", default=[],
             help="""List only notes belonging to specified notebooks. It """
             """is a shortcut to option "-t" to specify notebooks more """
@@ -98,27 +88,36 @@ class ListAction(ActionPlugin):
             """system:notebook:HGTTG". Use this option once for each """
             """desired book."""
         )
-        parser.add_option(
+        self.add_option(
             "--with-templates",
+            group="Filtering",
             dest="templates", action="store_true", default=False,
             help="""Include template notes in the list. This option is """
-            """different from using "-t system:template" in that the latter """
-            """used alone will list only the templates, while using """
-            """"--with-templates" without specifying tags for selection """
-            """will list notes including templates."""
+            """different from using "-t system:template" in that the """
+            """latter used alone will list only the templates, while """
+            """"using --with-templates" without specifying tags for """
+            """selection will list notes including templates."""
         )
-        parser.add_option(
+        self.add_option(
             "-t",
+            group="Filtering",
             dest="tags", action="append", default=[],
             help="""List only notes with specified tags. Use this option """
-            """once for each desired tag. This option selects raw tags and """
-            """could be useful for user-assigned tags."""
+            """once for each desired tag. This option selects raw tags """
+            """and could be useful for user-assigned tags."""
         )
 
-        (options, file_names) = parser.parse_args(args)
+    def perform_action(self, options, positional):
+        """Use the tomtom object to list notes.
 
-        tomboy_interface = Tomtom()
+        This action prints modification date, title and tags of notes to the
+        screen.
 
+        Arguments:
+            options -- an optparse.Values object containing the parsed options
+            positional -- a list of strings of positional arguments
+
+        """
         tags_to_select = options.tags
         if options.templates:
             tags_to_select.append("system:template")
@@ -127,7 +126,7 @@ class ListAction(ActionPlugin):
             tags_to_select = tags_to_select + \
                 ["system:notebook:%s" % book for book in options.books]
 
-        print tomboy_interface.list_notes(
+        print self.tomboy_interface.list_notes(
             count_limit=options.max_notes,
             tags=tags_to_select,
             non_exclusive=options.templates

@@ -275,13 +275,10 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_display_zero_argument(self):
         """Acceptance: Action "display" with no argument prints an error."""
-        # No dbus interaction for this test
-        self.m.ResetAll()
-        self.m.UnsetStubs()
+        sys.argv = ["app_name", "display"]
 
         self.m.ReplayAll()
 
-        sys.argv = ["app_name", "display"]
         cli.main()
 
         self.m.VerifyAll()
@@ -341,13 +338,10 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_search_zero_arguments(self):
         """Acceptance: Action "search" with no argument prints an error."""
-        # No dbus interaction for this test
-        self.m.ResetAll()
-        self.m.UnsetStubs()
+        sys.argv = ["unused_prog_name", "search"]
 
         self.m.ReplayAll()
 
-        sys.argv = ["unused_prog_name", "search"]
         cli.main()
 
         self.m.VerifyAll()

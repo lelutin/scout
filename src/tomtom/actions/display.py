@@ -62,7 +62,6 @@ will give an error message on the standard error stream.
 import optparse
 import sys
 
-from tomtom.core import Tomtom
 from tomtom.plugins import ActionPlugin
 
 desc = __doc__.splitlines()[0]
@@ -70,33 +69,24 @@ desc = __doc__.splitlines()[0]
 class DisplayAction(ActionPlugin):
     """Plugin object for displaying notes' contents"""
     short_description = desc
+    usage = "%prog display [-h] [note_name ...]"
 
-    def perform_action(self, args, positional):
+    def perform_action(self, options, positional):
         """Use the tomtom object to print the content of one or more notes.
 
         This action fetches note contents and displays them to the screen.
 
         Arguments:
-            args -- A list composed of action and file names
+            options -- an optparse.Values object containing the parsed options
+            positional -- a list of strings of positional arguments
 
         """
-        parser = optparse.OptionParser(
-            usage="%prog display [-h] [note_name ...]"
-        )
-        #parser.add_option("-a", "--all",
-        #    dest="full_list", default=False, action="store_true",
-        #    help="Display all the notes")
-
-        (options, file_names) = parser.parse_args(args)
-
-        if len(file_names) <= 0:
+        if len(positional) <= 0:
             print >> sys.stderr, \
                 "Error: You need to specify a note name to display it"
             return
 
-        tomboy_interface = Tomtom()
-
-        print tomboy_interface.get_display_for_notes(
-            file_names
+        print self.tomboy_interface.get_display_for_notes(
+            positional
         ).encode('utf-8')
 

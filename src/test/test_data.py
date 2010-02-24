@@ -306,21 +306,25 @@ help_details_list = \
 """Usage: app_name list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]
 
 Options:
-  -h, --help        show this help message and exit
-  -n MAX_NOTES      Limit the number of notes listed.
-  -b BOOKS          List only notes belonging to specified notebooks. It is a
-                    shortcut to option "-t" to specify notebooks more easily.
-                    For example, use "-b HGTTG" instead of "-t
-                    system:notebook:HGTTG". Use this option once for each
-                    desired book.
-  --with-templates  Include template notes in the list. This option is
-                    different from using "-t system:template" in that the
-                    latter used alone will list only the templates, while
-                    using "--with-templates" without specifying tags for
-                    selection will list notes including templates.
-  -t TAGS           List only notes with specified tags. Use this option once
-                    for each desired tag. This option selects raw tags and
-                    could be useful for user-assigned tags."""
+  -h, --help          show this help message and exit
+  -n MAX_NOTES        Limit the number of notes listed.
+
+  Filtering:
+    Filter notes by different criteria.
+
+    -b BOOKS          List only notes belonging to specified notebooks. It is
+                      a shortcut to option "-t" to specify notebooks more
+                      easily. For example, use "-b HGTTG" instead of "-t
+                      system:notebook:HGTTG". Use this option once for each
+                      desired book.
+    --with-templates  Include template notes in the list. This option is
+                      different from using "-t system:template" in that the
+                      latter used alone will list only the templates, while
+                      "using --with-templates" without specifying tags for
+                      selection will list notes including templates.
+    -t TAGS           List only notes with specified tags. Use this option
+                      once for each desired tag. This option selects raw tags
+                      and could be useful for user-assigned tags."""
 
 help_details_display = """Usage: app_name display [-h] [note_name ...]
 
@@ -332,26 +336,38 @@ help_details_search = \
        app_name search [-b <book name>[,...]|-t <tag>[,...]|--with-templates] <search_pattern> [note_name ...]
 
 Options:
-  -h, --help        show this help message and exit
-  -b BOOKS          Search only in notes belonging to specified notebooks. It
-                    is a shortcut to option "-t" to specify notebooks more
-                    easily. For example, use "-b HGTTG" instead of "-t
-                    system:notebook:HGTTG". Use this option once for each
-                    desired book.
-  --with-templates  Include template notes in the search. This option is
-                    different from using "-t system:template" in that the
-                    latter used alone will search only in the templates, while
-                    using "--with-templates" without specifying tags for
-                    selection will search in all notes including templates.
-  -t TAGS           Search only in notes with specified tags. Use this option
-                    once for each desired tag. This option selects raw tags
-                    and could be useful for user-assigned tags."""
+  -h, --help          show this help message and exit
+
+  Filtering:
+    Filter notes by different criteria.
+
+    -b BOOKS          Search only in notes belonging to specified notebooks.
+                      It is a shortcut to option "-t" to specify notebooks
+                      more easily. For example, use "-b HGTTG" "instead of -t
+                      system:notebook:HGTTG". Use this option once for each
+                      desired book.
+    --with-templates  Include template notes in the search. This option is
+                      different from using "-t system:template" in that the
+                      latter used alone will search only in the templates,
+                      "while using --with-templates" without specifying tags
+                      for selection will search in all notes including
+                      templates.
+    -t TAGS           Search only in notes with specified tags. Use this
+                      option once for each desired tag. This option selects
+                      raw tags and could be useful for user-assigned tags."""
 
 help_details_version = \
 """Usage: app_name version [-h]
 
 Options:
   -h, --help  show this help message and exit"""
+
+too_few_arguments_error = \
+"""Usage: app_name <action> [-h|--help] [options]
+       app_name (-h|--help) [action]
+       app_name (-v|--version)
+
+For more details, use option -h"""
 
 unexistant_note_error = \
     """app_name: Error: Note named "unexistant" was not found."""
@@ -381,6 +397,17 @@ dbus_session_exception_text = \
 dbus_interface_exception_text = \
     """Could not establish connection with Tomboy. """ + \
     """Is it running?: cosmos error"""
+
+option_type_error_message = \
+    """Option <list instance> in action some_action is not of one """ + \
+    """of the types optparse.Option or optparse.OptionGroup"""
+
+version_and_license_info = \
+"""Tomtom version %s
+Copyright © 2010 Gabriel Filion
+License: BSD
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.""" % tomtom_version
 
 module1_description = \
     """This is action1 and it does something."""
