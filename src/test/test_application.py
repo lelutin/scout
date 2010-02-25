@@ -1235,3 +1235,23 @@ class TestSearch(BasicMocking):
 
         self.m.VerifyAll()
 
+class TestPlugins(BasicMocking):
+    """Tests for the basis of plugins."""
+    def test_ActionPlugin_constructor(self):
+        """Plugins: ActionPlugin's constructor sets initial values."""
+        action = self.wrap_subject(ActionPlugin, "__init__")
+
+        action.add_group(None)
+
+        self.m.ReplayAll()
+
+        action.__init__()
+
+        self.m.VerifyAll()
+
+        # add_option has been mocked out: this list should still be empty
+        self.assertEqual(
+            [],
+            action.option_groups
+        )
+
