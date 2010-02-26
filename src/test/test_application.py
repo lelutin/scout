@@ -54,7 +54,7 @@ import optparse
 from tomtom import core
 from tomtom.core import *
 from tomtom import cli
-from tomtom.plugins import ActionPlugin, OptionGroup
+from tomtom import plugins
 
 import test_data
 from test_utils import *
@@ -169,9 +169,9 @@ class TestMain(BasicMocking, CLIMocking):
 
         # Plugin classes as returned by EntryPoint.load()
         plugin_classes = [
-            ActionPlugin,
-            ActionPlugin,
-            ActionPlugin,
+            plugins.ActionPlugin,
+            plugins.ActionPlugin,
+            plugins.ActionPlugin,
             # The last one on the list is not a subclass of ActionPlugin and
             # should get discarded
             Tomtom,
@@ -279,7 +279,7 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.StubOutWithMock(core, "Tomtom", use_mock_anything=True)
 
         action_name = "some_action"
-        fake_action = self.m.CreateMock(ActionPlugin)
+        fake_action = self.m.CreateMock(plugins.ActionPlugin)
         arguments = self.m.CreateMock(list)
         positional_arguments = self.m.CreateMock(list)
         options = self.m.CreateMock(optparse.Values)
@@ -426,7 +426,7 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.StubOutWithMock(cli, "parse_options")
 
         action_name = "some_action"
-        fake_action = self.m.CreateMock(ActionPlugin)
+        fake_action = self.m.CreateMock(plugins.ActionPlugin)
         fake_action.name = action_name
         arguments = self.m.CreateMock(list)
 
@@ -459,7 +459,7 @@ class TestMain(BasicMocking, CLIMocking):
             optparse, "OptionParser", use_mock_anything=True
         )
 
-        fake_action = self.m.CreateMock(ActionPlugin)
+        fake_action = self.m.CreateMock(plugins.ActionPlugin)
         fake_action.usage = "%prog [options]"
         option_list = [
             self.m.CreateMock(optparse.Option),
@@ -502,17 +502,17 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.StubOutWithMock(optparse, "OptionGroup", use_mock_anything=True)
 
-        fake_action = self.m.CreateMock(ActionPlugin)
+        fake_action = self.m.CreateMock(plugins.ActionPlugin)
         fake_option_parser = self.m.CreateMock(optparse.OptionParser)
 
         option1 = self.m.CreateMock(optparse.Option)
         option2 = self.m.CreateMock(optparse.Option)
         option3 = self.m.CreateMock(optparse.Option)
 
-        group1 = self.m.CreateMock(OptionGroup)
+        group1 = self.m.CreateMock(plugins.OptionGroup)
         group1.name = None
         group1.options = [option1]
-        group2 = self.m.CreateMock(OptionGroup)
+        group2 = self.m.CreateMock(plugins.OptionGroup)
         group2.name = "Group2"
         group2.description = "dummy"
 
@@ -1239,7 +1239,7 @@ class TestPlugins(BasicMocking):
     """Tests for the basis of plugins."""
     def test_ActionPlugin_constructor(self):
         """Plugins: ActionPlugin's constructor sets initial values."""
-        action = self.wrap_subject(ActionPlugin, "__init__")
+        action = self.wrap_subject(plugins.ActionPlugin, "__init__")
 
         action.add_group(None)
 
@@ -1257,10 +1257,10 @@ class TestPlugins(BasicMocking):
 
     def test_add_option(self):
         """Plugins: ActionPlugin.add_option inserts an option in a group."""
-        ap = self.wrap_subject(ActionPlugin, "add_option")
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_option")
         self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
 
-        fake_group = self.m.CreateMock(OptionGroup)
+        fake_group = self.m.CreateMock(plugins.OptionGroup)
         fake_group.name = None
 
         ap.option_groups = [fake_group]
@@ -1280,9 +1280,9 @@ class TestPlugins(BasicMocking):
 
     def test_add_option_unexistant_group(self):
         """Plugins: KeyError is raised if requested group does not exist."""
-        ap = self.wrap_subject(ActionPlugin, "add_option")
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_option")
 
-        fake_group = self.m.CreateMock(OptionGroup)
+        fake_group = self.m.CreateMock(plugins.OptionGroup)
         fake_group.name = None
 
         ap.option_groups = [fake_group]
@@ -1295,4 +1295,27 @@ class TestPlugins(BasicMocking):
         )
 
         self.m.VerifyAll()
+
+    def test_add_group(self):
+        """Plugins: A tomtom.plugins.OptionGroup object is inserted."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_group")
+        self.m.StubOutWithMock(plugins, "OptionGroup", use_mock_anything=True)
+
+        ap.option_groups = []
+
+        fake_opt_group = self.m.CreateMock(plugins.OptionGroup)
+
+        plugins.OptionGroup("group1", "describe group1")\
+            .AndReturn(fake_opt_group)
+
+        self.m.ReplayAll()
+
+        ap.add_group("group1", "describe group1")
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            [fake_opt_group],
+            ap.option_groups
+        )
 
