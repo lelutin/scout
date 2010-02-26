@@ -1339,3 +1339,23 @@ class TestPlugins(BasicMocking):
             ap.option_groups
         )
 
+    def test_add_option_library(self):
+        """Plugins: Option library is inserted in an action's groups."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_option_library")
+
+        ap.option_groups = []
+
+        group = self.m.CreateMock(plugins.OptionGroup)
+        group.name = "some_group"
+
+        self.m.ReplayAll()
+
+        ap.add_option_library(group)
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            [group],
+            ap.option_groups
+        )
+
