@@ -1359,3 +1359,73 @@ class TestPlugins(BasicMocking):
             ap.option_groups
         )
 
+    def test_option_library_already_inserted(self):
+        """Plugins: Group name of option library is already present."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_option_library")
+
+        group = self.m.CreateMock(plugins.OptionGroup)
+        group.name = "some_group"
+
+        ap.option_groups = [group]
+
+        self.m.ReplayAll()
+
+        ap.add_option_library(group)
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            [group],
+            ap.option_groups
+        )
+
+    def test_option_library_TypeError(self):
+        """Plugins: Option library is not a tomtom.plugins.OptionGroup."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_option_library")
+
+        wrong_object = self.m.CreateMock(optparse.OptionGroup)
+
+        self.m.ReplayAll()
+
+        self.assertRaises(
+            TypeError,
+            ap.add_option_library, wrong_object
+        )
+
+        self.m.VerifyAll()
+
+    def verify_method_does_nothing(self, cls, method_name, *args, **kwargs):
+        """Simple test to verify that a method does nothing.
+
+        Arguments:
+            cls -- object class that contains the method
+            method_name -- string, name of the method to stub out
+            *args -- passed on to verified method
+            **kwargs -- passed on to verified method
+
+        """
+        obj = self.wrap_subject(cls, method_name)
+        func = getattr(obj, method_name)
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            None,
+            func(*args, **kwargs)
+        )
+
+        self.m.VerifyAll()
+
+    def test_init_options(self):
+        """Plugins: Default init_options does nothing."""
+        self.verify_method_does_nothing(plugins.ActionPlugin, "init_options")
+
+    def test_perform_action(self):
+        """Plugins: Default perform_action does nothing."""
+        self.verify_method_does_nothing(
+            plugins.ActionPlugin,
+            "perform_action",
+            self.m.CreateMockAnything(),
+            self.m.CreateMockAnything()
+        )
+
