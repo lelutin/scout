@@ -1255,3 +1255,26 @@ class TestPlugins(BasicMocking):
             action.option_groups
         )
 
+    def test_add_option(self):
+        """Plugins: ActionPlugin.add_option inserts an option in a group."""
+        ap = self.wrap_subject(ActionPlugin, "add_option")
+        self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
+
+        fake_group = self.m.CreateMock(OptionGroup)
+        fake_group.name = None
+
+        ap.option_groups = [fake_group]
+
+        fake_option = self.m.CreateMock(optparse.Option)
+
+        optparse.Option("-e", type="int", dest="eeee", help="eeehhh")\
+            .AndReturn(fake_option)
+
+        fake_group.add_options( [fake_option] )
+
+        self.m.ReplayAll()
+
+        ap.add_option("-e", type="int", dest="eeee", help="eeehhh")
+
+        self.m.VerifyAll()
+

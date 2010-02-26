@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ###############################################################################
-from optparse import Option
+import optparse
 
 class ActionPlugin(object):
     """Base class for action plugins"""
@@ -81,7 +81,7 @@ class ActionPlugin(object):
         group = [g for g in self.option_groups if g.name == group_name][0]
 
         group.add_options([
-            Option(*args, **kwargs)
+            optparse.Option(*args, **kwargs)
         ])
 
     def add_group(self, name, description=""):
@@ -173,7 +173,7 @@ class OptionGroup(object):
 
         """
         for option in options:
-            if not isinstance(option, Option):
+            if not isinstance(option, optparse.Option):
                 msg = "Options added to the group must be " + \
                     "optparse.Option objects."
                 raise TypeError, msg
@@ -191,7 +191,7 @@ class FilteringGroup(OptionGroup):
         action_map = { "action": action_name }
 
         options = [
-            Option(
+            optparse.Option(
                 "-b",
                 dest="books", action="append", default=[],
                 help="""%(action)s only notes belonging to """ % action_map + \
@@ -200,7 +200,7 @@ class FilteringGroup(OptionGroup):
                 """ "-b HGTTG" instead of "-t system:notebook:HGTTG". Use """
                 """this option once for each desired book."""
             ),
-            Option(
+            optparse.Option(
                 "--with-templates",
                 dest="templates", action="store_true", default=False,
                 help="""Include template notes. This option is """
@@ -209,7 +209,7 @@ class FilteringGroup(OptionGroup):
                 """"using "--with-templates" without specifying tags for """
                 """selection will include all notes and templates."""
             ),
-            Option(
+            optparse.Option(
                 "-t",
                 dest="tags", action="append", default=[],
                 help="""%(action)s only notes with """ % action_map + \
