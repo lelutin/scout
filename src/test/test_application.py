@@ -1278,3 +1278,21 @@ class TestPlugins(BasicMocking):
 
         self.m.VerifyAll()
 
+    def test_add_option_unexistant_group(self):
+        """Plugins: KeyError is raised if requested group does not exist."""
+        ap = self.wrap_subject(ActionPlugin, "add_option")
+
+        fake_group = self.m.CreateMock(OptionGroup)
+        fake_group.name = None
+
+        ap.option_groups = [fake_group]
+
+        self.m.ReplayAll()
+
+        self.assertRaises(
+            KeyError,
+            ap.add_option, "-s", group="group1", dest="sss"
+        )
+
+        self.m.VerifyAll()
+

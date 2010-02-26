@@ -76,7 +76,7 @@ class ActionPlugin(object):
         group_names = [g.name for g in self.option_groups]
 
         if group_name not in group_names:
-            raise SyntaxError, "Option group '%s' does not exist yet."
+            raise KeyError, "Option group '%s' does not exist yet."
 
         group = [g for g in self.option_groups if g.name == group_name][0]
 
