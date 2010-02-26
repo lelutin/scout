@@ -1429,3 +1429,123 @@ class TestPlugins(BasicMocking):
             self.m.CreateMockAnything()
         )
 
+    def test_OptionGroup_constructor(self):
+        """Plugins: OptionGroup's constructor sets default values."""
+        group = self.wrap_subject(plugins.OptionGroup, "__init__")
+
+        self.m.ReplayAll()
+
+        group.__init__("some_group", "description")
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            "some_group",
+            group.name
+        )
+        self.assertEqual(
+            "description",
+            group.description
+        )
+        self.assertEqual(
+            [],
+            group.options
+        )
+
+    def test_group_add_options(self):
+        """Plugins: A group of options are added to an OptionGroup."""
+        group = self.wrap_subject(plugins.OptionGroup, "add_options")
+
+        some_option = self.m.CreateMock(optparse.Option)
+        group.options = [some_option]
+
+        option_list = [
+            self.m.CreateMock(optparse.Option),
+            self.m.CreateMock(optparse.Option)
+        ]
+
+        self.m.ReplayAll()
+
+        group.add_options(option_list)
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            [some_option] + option_list,
+            group.options
+        )
+
+    def test_group_add_options_TypeError(self):
+        """Plugins: Not all options added are optparse.Option objects."""
+        group = self.wrap_subject(plugins.OptionGroup, "add_options")
+
+        group.options = []
+
+        option_list = [
+            self.m.CreateMock(optparse.Option),
+            self.m.CreateMock(dict)
+        ]
+
+        self.m.ReplayAll()
+
+        self.assertRaises(
+            TypeError,
+            group.add_options, option_list
+        )
+
+        self.m.VerifyAll()
+
+    def test_FilteringGroup_initialization(self):
+        """Plugins: A new FilteringGroup contains all of its options."""
+        filter_group = self.wrap_subject(plugins.FilteringGroup, "__init__")
+        self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
+        self.m.StubOutWithMock(plugins.OptionGroup, "__init__")
+
+        plugins.OptionGroup.__init__(
+            "Filtering",
+            "Filter notes by different criteria."
+        )
+
+        option_list = [
+            self.m.CreateMock(optparse.Option),
+            self.m.CreateMock(optparse.Option),
+            self.m.CreateMock(optparse.Option),
+        ]
+
+        optparse.Option(
+            "-b",
+            dest="books", action="append", default=[],
+            help="""Murder only notes belonging to """ + \
+            """specified notebooks. It is a shortcut to option "-t" to """
+            """specify notebooks more easily. For example, use"""
+            """ "-b HGTTG" instead of "-t system:notebook:HGTTG". Use """
+            """this option once for each desired book."""
+        ).AndReturn( option_list[0] )
+
+        optparse.Option(
+            "--with-templates",
+            dest="templates", action="store_true", default=False,
+            help="""Include template notes. This option is """
+            """different from using "-t system:template" in that the """
+            """latter used alone will only include the templates, while """
+            """"using "--with-templates" without specifying tags for """
+            """selection will include all notes and templates."""
+        ).AndReturn( option_list[1] )
+
+        optparse.Option(
+            "-t",
+            dest="tags", action="append", default=[],
+            help="""Murder only notes with """ + \
+            """specified tags. Use this option once for each desired """
+            """tag. This option selects raw tags and could be useful for """
+            """user-assigned tags."""
+        ).AndReturn( option_list[2] )
+
+        filter_group.add_options(option_list)
+
+        self.m.ReplayAll()
+
+        filter_group.__init__("Murder")
+
+        self.m.VerifyAll()
+
