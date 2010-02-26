@@ -1319,3 +1319,23 @@ class TestPlugins(BasicMocking):
             ap.option_groups
         )
 
+    def test_add_group_already_exists(self):
+        """Plugins: Group added to a plugin already exists."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_group")
+
+        fake_opt_group = self.m.CreateMock(plugins.OptionGroup)
+        fake_opt_group.name = "group1"
+
+        ap.option_groups = [fake_opt_group]
+
+        self.m.ReplayAll()
+
+        ap.add_group("group1", "describe group1")
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            [fake_opt_group],
+            ap.option_groups
+        )
+
