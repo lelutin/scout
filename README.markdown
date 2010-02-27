@@ -3,7 +3,10 @@ tomtom : A CLI interface to Tomboy
 Installing
 ==========
 
-To install tomtom, use the setuptools installer:
+From source
+-----------
+
+To install tomtom from the source archive, use the setuptools installer:
 
     $ sudo python setup.py install
 
@@ -19,35 +22,57 @@ On Fedora or Centos, use the following:
 
     $ sudo yum install dbus-python
 
-For those who would like to work on tomtom's code, to be able to run unit
-tests, you will need to have pymox installed. On Debian or Ubuntu, use the
-following command:
-
-    $ apt-get install python-mox
-
 Use
 ===
 
-You can obtain help on how to execute tomtom by giving it a "-h" or "--help"
-argument. This will list the currently available actions you can use with
-tomtom. If you use "-h"/"--help" and specify an action name at the same time, a
-detailed help will be displayed for that action.
-
 To use tomtom the first argument must be an action name. For example, say you
-want to get a list of all notes. You can call the following:
+want to get a list of all non-template notes. You can call the following:
 
     $ tomtom list
 
-Arguments can be given to actions. The arguments available are dependant on the
-action. To obtain detail on what arguments can be used with an action, call the
-detailed help on this action as described above. For example, the "search"
-action requires an element to search for:
+Arguments can be given to actions. The arguments available differ from one
+action to the other. For example,
+the "search" action requires an element to search for:
 
     $ tomtom search "text to search"
+
+You can obtain help on how to execute tomtom by giving it a "-h" or "--help"
+argument. This will list the currently available actions you can use with
+tomtom. To obtain more detail on what arguments can be used with an action, use
+the option "-h" or "--help" and specify an action name at the same time. Both
+of the two following commands call the detailed help for the action "display":
+
+    $ tomtom --help display
+    $ tomtom display -h
+
+Contributing
+============
+
+All contributions to the code are welcome. Contributed code should come with
+unit tests for added functions and acceptance tests for command line interface
+modifications. The main repository is on
+[http://github.com/lelutin/tomtom](GitHub). Feel free to either fork the
+repository and send pull requests, or simply to generate patches and send them
+by e-mail to lelutin@gmail.com.
+
+To be able to run the unit or acceptance tests, you will need to have pymox
+and nose installed. On Debian or Ubuntu, use the following command to install
+them:
+
+    $ apt-get install python-mox python-nose
+
+The tests can be run by one of to methods. The first one is through setup.py
+like following:
+
+    tomtom$ python setup.py test
+
+The second method, being the fastest and most flexible one, is by calling
+nose's nosetests script in the base directory, like the following:
+
+    tomtom$ nostests src/test/test_{acceptance,application}.py
 
 License
 =======
 
-tomtom is licensed under the BSD license as mentioned in all source code files.
-A copy of the license note is available under the "legalese" directory in the
-source code.
+Tomtom is licensed under the BSD license as mentioned in all source code files.
+A copy of the license should be available with the source code.
