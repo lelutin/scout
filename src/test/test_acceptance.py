@@ -378,7 +378,10 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         sys.argv = ["app_name", "-h"]
-        cli.main()
+        self.assertRaises(
+            SystemExit,
+            cli.main
+        )
 
         self.m.VerifyAll()
 
