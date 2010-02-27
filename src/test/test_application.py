@@ -51,10 +51,11 @@ import pkg_resources
 import traceback
 import optparse
 
-from tomtom import core
+from tomtom import core, cli, plugins
 from tomtom.core import *
-from tomtom import cli
-from tomtom import plugins
+# Import the list action under a different name to avoid overwriting the list()
+# builtin function.
+from tomtom.actions import display, list as _list, search, version
 
 import test_data
 from test_utils import *
@@ -1147,6 +1148,101 @@ class TestList(BasicMocking):
             [],
             "_note doesn't have a name_",
             ""
+        )
+
+    def test_init_options(self):
+        """List: options are initialized correctly."""
+        lst_ap = self.wrap_subject(_list.ListAction, "init_options")
+        self.m.StubOutWithMock(
+            plugins,
+            "FilteringGroup",
+            use_mock_anything=True
+        )
+
+        lst_ap.add_option(
+            "-n", type="int",
+            dest="max_notes", default=None,
+            help="Limit the number of notes listed."
+        )
+
+        fake_filtering = self.m.CreateMock(plugins.FilteringGroup)
+
+        plugins.FilteringGroup("List")\
+            .AndReturn(fake_filtering)
+
+        lst_ap.add_option_library(fake_filtering)
+
+        self.m.ReplayAll()
+
+        lst_ap.init_options()
+
+        self.m.VerifyAll()
+
+    def verify_perform_action(self, with_templates, books):
+        """Verify execution of ListAction.perform_action
+
+        Verify that perform_action does what is expected given a set of options.
+
+        Arguments:
+            with_templates -- boolean, request templates in the listing
+            books -- list of book names
+
+        """
+        lst_ap = self.wrap_subject(_list.ListAction, "perform_action")
+        lst_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+
+        tags = ["whatever"]
+
+        fake_options = self.m.CreateMock(optparse.Values)
+        # Duplicate the list to avoid modification by later for loop
+        fake_options.tags = list(tags)
+        fake_options.templates = with_templates
+        fake_options.books = books
+        fake_options.max_notes = 5
+
+        if with_templates:
+            tags.append("system:template")
+
+        for book in books:
+            tags.append("system:notebook:" + book)
+
+        lst_ap.tomboy_interface.list_notes(
+            count_limit=5,
+            tags=tags,
+            non_exclusive=with_templates
+        ).AndReturn(test_data.expected_list)
+
+        self.m.ReplayAll()
+
+        lst_ap.perform_action(fake_options, [])
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.expected_list + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+    def test_perform_action(self):
+        """List: perform_action called without arguments."""
+        self.verify_perform_action(with_templates=False, books=[])
+
+    def test_perform_action_templates(self):
+        """List: perform_action called with a tag as filter."""
+        self.verify_perform_action(with_templates=True, books=[])
+
+    def test_perform_action_books(self):
+        """List: perform_action called with a list of books as filter."""
+        self.verify_perform_action(
+            with_templates=False,
+            books=["book1", "book2"]
+        )
+
+    def test_perform_action_templates_books(self):
+        """List: perform_action with templates included and book filter."""
+        self.verify_perform_action(
+            with_templates=True,
+            books=["book1", "book2"]
         )
 
 class TestDisplay(BasicMocking):

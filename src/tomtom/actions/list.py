@@ -85,12 +85,16 @@ class ListAction(plugins.ActionPlugin):
         This action prints modification date, title and tags of notes to the
         screen.
 
+        The perform_action method gets processes options and hands them down
+        appropriately to the list_notes method.
+
         Arguments:
             options -- an optparse.Values object containing the parsed options
-            positional -- a list of strings of positional arguments
+            positional -- a list of strings of positional arguments. not used
 
         """
         tags_to_select = options.tags
+
         if options.templates:
             tags_to_select.append("system:template")
 
