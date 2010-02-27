@@ -124,6 +124,31 @@ class TestMain(BasicMocking, CLIMocking):
             output_stream=sys.stderr
         )
 
+    def test_main_help(self):
+        """Main: using only -h prints help and list of actions."""
+        self.m.StubOutWithMock(cli, "action_short_summaries")
+
+        sys.argv = ["app_name", "-h"]
+
+        cli.action_short_summaries()\
+            .AndReturn(test_data.module_descriptions)
+
+        self.m.ReplayAll()
+
+        self.assertRaises(
+            SystemExit,
+            cli.main
+        )
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.main_help +
+                os.linesep.join(test_data.module_descriptions) +
+                os.linesep,
+            sys.stdout.getvalue()
+        )
+
     def test_help_before_action(self):
         """Main: -h before action gets switched to normal help call."""
         self.m.StubOutWithMock(cli, "dispatch")

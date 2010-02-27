@@ -302,6 +302,19 @@ tomboy_version_output = \
 # Help text and errors occuring in the main script
 help_more_details = """For more details, use option -h"""
 
+main_help = \
+"""Usage: app_name <action> [-h|--help] [options]
+       app_name (-h|--help) [action]
+       app_name (-v|--version)
+
+Tomtom is a command line interface to the Tomboy note taking application.
+
+Options depend on what action you are taking. To obtain details on options
+for a particular action, combine -h or --help and the action name.
+
+Here is a list of all the available actions:
+"""
+
 help_details_list = \
 """Usage: app_name list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]
 

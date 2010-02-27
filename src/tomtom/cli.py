@@ -286,11 +286,13 @@ def main():
         else:
             # Use the script's docstring for the basic help message. Also get a
             # list of available actions and display it.
-            print __doc__[:-1] + os.linesep.join( action_short_summaries() )
-            return
+            help_msg = __doc__[:-1] % {"tomtom": os.path.basename(sys.argv[0]) }
+            print help_msg + os.linesep.join( action_short_summaries() )
+            sys.exit(0)
+
     elif action in ["-v", "--version"]:
-        version_info =  """Tomtom version %s""" % tomtom_version + os.linesep + \
-            """Copyright © 2010 Gabriel Filion""" + os.linesep + \
+        version_info =  """Tomtom version %s""" % tomtom_version + \
+            os.linesep + """Copyright © 2010 Gabriel Filion""" + os.linesep + \
             """License: BSD""" + os.linesep + """This is free software: """ \
             """you are free to change and redistribute it.""" + os.linesep + \
             """There is NO WARRANTY, to the extent permitted by law."""
