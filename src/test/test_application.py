@@ -52,7 +52,6 @@ import traceback
 import optparse
 
 from tomtom import core, cli, plugins
-from tomtom.core import *
 # Import the list action under a different name to avoid overwriting the list()
 # builtin function.
 from tomtom.actions import display, list as _list, search, version
@@ -200,7 +199,7 @@ class TestMain(BasicMocking, CLIMocking):
             plugins.ActionPlugin,
             # The last one on the list is not a subclass of ActionPlugin and
             # should get discarded
-            Tomtom,
+            core.Tomtom,
         ]
 
         pkg_resources.iter_entry_points(group="tomtom.actions")\
@@ -395,7 +394,7 @@ class TestMain(BasicMocking, CLIMocking):
         """Main: ConnectionError should print an error message."""
         sys.argv = ["app_name"]
         self.verify_dispatch_exception(
-            ConnectionError,
+            core.ConnectionError,
             exception_out=SystemExit,
             exception_argument="there was a problem",
             expected_text=test_data.connection_error_message + os.linesep
@@ -405,7 +404,7 @@ class TestMain(BasicMocking, CLIMocking):
         """Main: NoteNotFound exceptions dont't go unhandled."""
         sys.argv = ["app_name"]
         self.verify_dispatch_exception(
-            NoteNotFound,
+            core.NoteNotFound,
             exception_out=SystemExit,
             exception_argument="unexistant",
             expected_text=test_data.unexistant_note_error + os.linesep
@@ -583,11 +582,11 @@ class TestCore(BasicMocking):
         be abstracted to testing purposes.
 
         """
-        tt = self.wrap_subject(Tomtom, "__init__")
+        tt = self.wrap_subject(core.Tomtom, "__init__")
 
-        self.m.StubOutWithMock(TomboyCommunicator, "__init__")
+        self.m.StubOutWithMock(core.TomboyCommunicator, "__init__")
 
-        TomboyCommunicator.__init__()\
+        core.TomboyCommunicator.__init__()\
             .AndReturn( None )
 
         self.m.ReplayAll()
@@ -597,7 +596,7 @@ class TestCore(BasicMocking):
         self.assertTrue(
             isinstance(
                 tt.tomboy_communicator,
-                TomboyCommunicator
+                core.TomboyCommunicator
             )
         )
 
@@ -605,7 +604,7 @@ class TestCore(BasicMocking):
 
     def test_TomboyCommunicator_constructor(self):
         """Core: TomboyCommunicator's dbus interface is initialized."""
-        tc = self.wrap_subject(TomboyCommunicator, "__init__")
+        tc = self.wrap_subject(core.TomboyCommunicator, "__init__")
 
         old_SessionBus = dbus.SessionBus
         old_Interface = dbus.Interface
@@ -638,7 +637,7 @@ class TestCore(BasicMocking):
 
     def mock_out_TomboyNote_and_verify_constructor(self, **kwargs):
         """Build a TomboyNote mock and make __init__ its test subject."""
-        tn = self.wrap_subject(TomboyNote, "__init__")
+        tn = self.wrap_subject(core.TomboyNote, "__init__")
 
         self.m.ReplayAll()
 
@@ -700,7 +699,7 @@ class TestCore(BasicMocking):
 
     def test_get_notes(self):
         """Core: Note fetching entry point builds and filters a list."""
-        tc = self.wrap_subject(TomboyCommunicator, "get_notes")
+        tc = self.wrap_subject(core.TomboyCommunicator, "get_notes")
 
         # Only verify calls here, results are tested separately
         tc.build_note_list()\
@@ -715,7 +714,7 @@ class TestCore(BasicMocking):
 
     def test_filter_notes(self):
         """Core: Note filtering."""
-        tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
+        tc = self.wrap_subject(core.TomboyCommunicator, "filter_notes")
 
         notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
         tags = [self.m.CreateMockAnything()]
@@ -740,7 +739,7 @@ class TestCore(BasicMocking):
         explicitly named. Thus, filtering should not happen in this case.
 
         """
-        tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
+        tc = self.wrap_subject(core.TomboyCommunicator, "filter_notes")
 
         notes = [
             test_data.full_list_of_notes[4],
@@ -761,7 +760,7 @@ class TestCore(BasicMocking):
 
     def test_fiter_notes_template_as_a_tag(self):
         """Core: Specifying templates as a tag should include them."""
-        tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
+        tc = self.wrap_subject(core.TomboyCommunicator, "filter_notes")
 
         notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
         tags = ["system:template", "someothertag"]
@@ -780,7 +779,7 @@ class TestCore(BasicMocking):
 
     def test_fiter_notes_with_templates(self):
         """Core: Non-exclusive inclusion of templates."""
-        tc = self.wrap_subject(TomboyCommunicator, "filter_notes")
+        tc = self.wrap_subject(core.TomboyCommunicator, "filter_notes")
 
         notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
         tags = ["system:template"]
@@ -795,7 +794,7 @@ class TestCore(BasicMocking):
 
     def test_filter_by_tags(self):
         """Core: Filter notes by tags."""
-        tc = self.wrap_subject(TomboyCommunicator, "filter_by_tags")
+        tc = self.wrap_subject(core.TomboyCommunicator, "filter_by_tags")
 
         notes = [
             test_data.full_list_of_notes[0],
@@ -819,7 +818,7 @@ class TestCore(BasicMocking):
 
     def test_filter_out_templates(self):
         """Core: Remove templates from a list of notes."""
-        tc = self.wrap_subject(TomboyCommunicator, "filter_out_templates")
+        tc = self.wrap_subject(core.TomboyCommunicator, "filter_out_templates")
 
         notes = [
             test_data.full_list_of_notes[9],
@@ -882,7 +881,7 @@ class TestCore(BasicMocking):
 
     def test_build_note_list_by_names(self):
         """Core: TomboyCommunicator gets a list of given named notes."""
-        tc = self.wrap_subject(TomboyCommunicator, "build_note_list")
+        tc = self.wrap_subject(core.TomboyCommunicator, "build_note_list")
 
         tc.comm = self.m.CreateMockAnything()
 
@@ -908,7 +907,7 @@ class TestCore(BasicMocking):
 
     def test_build_note_list(self):
         """Core: TomboyCommunicator gets a full list of notes."""
-        tc = self.wrap_subject(TomboyCommunicator, "build_note_list")
+        tc = self.wrap_subject(core.TomboyCommunicator, "build_note_list")
 
         tc.comm = self.m.CreateMockAnything()
 
@@ -935,7 +934,7 @@ class TestCore(BasicMocking):
 
     def test_get_uris_by_name(self):
         """Core: TomboyCommunicator determines uris by names."""
-        tc = self.wrap_subject(TomboyCommunicator, "get_uris_by_name")
+        tc = self.wrap_subject(core.TomboyCommunicator, "get_uris_by_name")
 
         tc.comm = self.m.CreateMockAnything()
 
@@ -959,7 +958,7 @@ class TestCore(BasicMocking):
 
     def test_get_uris_by_name_unexistant(self):
         """Core: TomboyCommunicator raises a NoteNotFound exception."""
-        tc = self.wrap_subject(TomboyCommunicator, "get_uris_by_name")
+        tc = self.wrap_subject(core.TomboyCommunicator, "get_uris_by_name")
 
         tc.comm = self.m.CreateMockAnything()
 
@@ -968,13 +967,17 @@ class TestCore(BasicMocking):
 
         self.m.ReplayAll()
 
-        self.assertRaises(NoteNotFound, tc.get_uris_by_name, ["unexistant"] )
+        self.assertRaises(
+            core.NoteNotFound,
+            tc.get_uris_by_name,
+            ["unexistant"]
+        )
 
         self.m.VerifyAll()
 
     def test_dbus_Tomboy_communication_problem(self):
         """Core: Raise an exception if linking dbus with Tomboy failed."""
-        tc = self.wrap_subject(TomboyCommunicator, "__init__")
+        tc = self.wrap_subject(core.TomboyCommunicator, "__init__")
 
         old_SessionBus = dbus.SessionBus
         old_Interface = dbus.Interface
@@ -998,7 +1001,7 @@ class TestCore(BasicMocking):
 
         self.m.ReplayAll()
 
-        self.assertRaises(ConnectionError, tc.__init__)
+        self.assertRaises(core.ConnectionError, tc.__init__)
 
         self.m.VerifyAll()
 
@@ -1009,9 +1012,9 @@ class TestList(BasicMocking):
     """Tests for code that handles the notes and lists them."""
     def test_list_all_notes(self):
         """List: Retrieve a list of all notes."""
-        tt = self.wrap_subject(Tomtom, "list_notes")
+        tt = self.wrap_subject(core.Tomtom, "list_notes")
 
-        tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
+        tt.tomboy_communicator = self.m.CreateMock(core.TomboyCommunicator)
         fake_list = self.m.CreateMock(list)
 
         tt.tomboy_communicator.get_notes(
@@ -1029,7 +1032,7 @@ class TestList(BasicMocking):
 
     def test_get_uris_for_n_notes_no_limit(self):
         """List: Given no limit, get all the notes' uris."""
-        tc = self.wrap_subject(TomboyCommunicator, "get_uris_for_n_notes")
+        tc = self.wrap_subject(core.TomboyCommunicator, "get_uris_for_n_notes")
 
         tc.comm = self.m.CreateMockAnything()
 
@@ -1051,7 +1054,7 @@ class TestList(BasicMocking):
 
     def test_get_uris_for_n_notes(self):
         """List: Given a numerical limit, get the n latest notes' uris."""
-        tc = self.wrap_subject(TomboyCommunicator, "get_uris_for_n_notes")
+        tc = self.wrap_subject(core.TomboyCommunicator, "get_uris_for_n_notes")
 
         tc.comm = self.m.CreateMockAnything()
 
@@ -1073,7 +1076,7 @@ class TestList(BasicMocking):
 
     def test_note_listing(self):
         """List: Get the information on a list of notes."""
-        tt = self.wrap_subject(Tomtom, "listing")
+        tt = self.wrap_subject(core.Tomtom, "listing")
 
         # Forget about last note (a template)
         for note in test_data.full_list_of_notes[:-1]:
@@ -1115,7 +1118,7 @@ class TestList(BasicMocking):
 
         """
         date_64 = dbus.Int64(1254553804L)
-        note = TomboyNote(
+        note = core.TomboyNote(
             uri="note://tomboy/fake-uri",
             title=title,
             date=date_64,
@@ -1249,9 +1252,9 @@ class TestDisplay(BasicMocking):
     """Tests for code that display notes' content."""
     def test_get_display_for_notes(self):
         """Display: Tomtom returns notes' contents, separated a marker."""
-        tt = self.wrap_subject(Tomtom, "get_display_for_notes")
+        tt = self.wrap_subject(core.Tomtom, "get_display_for_notes")
 
-        tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
+        tt.tomboy_communicator = self.m.CreateMock(core.TomboyCommunicator)
         notes = [
             test_data.full_list_of_notes[10],
             test_data.full_list_of_notes[8]
@@ -1282,7 +1285,7 @@ class TestDisplay(BasicMocking):
 
     def test_TomboyCommunicator_get_note_content(self):
         """Display: Using the communicator, get one note's content."""
-        tc = self.wrap_subject(TomboyCommunicator, "get_note_content")
+        tc = self.wrap_subject(core.TomboyCommunicator, "get_note_content")
 
         tc.comm = self.m.CreateMockAnything()
 
@@ -1308,9 +1311,9 @@ class TestSearch(BasicMocking):
     """Tests for code that perform a textual search within notes."""
     def test_search_for_text(self):
         """Search: Tomtom triggers a search through requested notes."""
-        tt = self.wrap_subject(Tomtom, "search_for_text")
+        tt = self.wrap_subject(core.Tomtom, "search_for_text")
 
-        tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
+        tt.tomboy_communicator = self.m.CreateMock(core.TomboyCommunicator)
 
         note_contents = {}
         # Forget about last note (a template)
