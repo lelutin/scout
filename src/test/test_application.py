@@ -1004,10 +1004,10 @@ class TestCore(BasicMocking):
         dbus.SessionBus = old_SessionBus
         dbus.Interface = old_Interface
 
-class TestListing(BasicMocking):
+class TestList(BasicMocking):
     """Tests for code that handles the notes and lists them."""
     def test_list_all_notes(self):
-        """Listing: Retrieve a list of all notes."""
+        """List: Retrieve a list of all notes."""
         tt = self.wrap_subject(Tomtom, "list_notes")
 
         tt.tomboy_communicator = self.m.CreateMock(TomboyCommunicator)
@@ -1027,7 +1027,7 @@ class TestListing(BasicMocking):
         self.m.VerifyAll()
 
     def test_get_uris_for_n_notes_no_limit(self):
-        """Listing: Given no limit, get all the notes' uris."""
+        """List: Given no limit, get all the notes' uris."""
         tc = self.wrap_subject(TomboyCommunicator, "get_uris_for_n_notes")
 
         tc.comm = self.m.CreateMockAnything()
@@ -1049,7 +1049,7 @@ class TestListing(BasicMocking):
         self.m.VerifyAll()
 
     def test_get_uris_for_n_notes(self):
-        """Listing: Given a numerical limit, get the n latest notes' uris."""
+        """List: Given a numerical limit, get the n latest notes' uris."""
         tc = self.wrap_subject(TomboyCommunicator, "get_uris_for_n_notes")
 
         tc.comm = self.m.CreateMockAnything()
@@ -1071,7 +1071,7 @@ class TestListing(BasicMocking):
         self.m.VerifyAll()
 
     def test_note_listing(self):
-        """Listing: Get the information on a list of notes."""
+        """List: Get the information on a list of notes."""
         tt = self.wrap_subject(Tomtom, "listing")
 
         # Forget about last note (a template)
@@ -1132,7 +1132,7 @@ class TestListing(BasicMocking):
         self.m.VerifyAll()
 
     def test_TomboyNote_listing(self):
-        """Listing: Print one note's information."""
+        """List: Print one note's information."""
         self.verify_note_listing(
             "Test",
             ["tag1", "tag2"],
@@ -1141,7 +1141,7 @@ class TestListing(BasicMocking):
         )
 
     def test_TomboyNote_listing_no_title_no_tags(self):
-        """Listing: Verify listing format with no title and no tags."""
+        """List: Verify listing format with no title and no tags."""
         self.verify_note_listing(
             "",
             [],
