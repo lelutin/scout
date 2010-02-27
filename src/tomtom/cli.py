@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ###############################################################################
 #
@@ -309,6 +308,3 @@ def exception_wrapped_main():
     # If it goes this far up, it probably means it is not such a big deal.
     except KeyboardInterrupt:
         pass
-
-if __name__ == "__main__":
-    exception_wrapped_main()

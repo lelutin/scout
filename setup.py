@@ -39,9 +39,9 @@ setup(
     },
 
     # Dependencies
-    #install_requires = [
-    #    "",
-    #],
+    install_requires = [
+        "setuptools",
+    ],
     tests_require = [
         "nose",
         "mox >= 0.5.1",
