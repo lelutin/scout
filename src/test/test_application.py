@@ -1490,6 +1490,34 @@ class TestSearch(BasicMocking, CLIMocking):
             sys.stderr.getvalue()
         )
 
+class TestVersion(BasicMocking, CLIMocking):
+    """Tests for code that show Tomboy's version."""
+    def test_perform_action(self):
+        """Version: perform_action prints out Tomboy's version."""
+        vrsn_ap = self.wrap_subject(version.VersionAction, "perform_action")
+        vrsn_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+        vrsn_ap.tomboy_interface.tomboy_communicator = self.m.CreateMock(
+            core.TomboyCommunicator
+        )
+        vrsn_ap.tomboy_interface.tomboy_communicator.comm = \
+            self.m.CreateMockAnything()
+
+        fake_options = self.m.CreateMock(optparse.Values)
+
+        vrsn_ap.tomboy_interface.tomboy_communicator.comm.Version()\
+            .AndReturn("1.0.1")
+
+        self.m.ReplayAll()
+
+        vrsn_ap.perform_action(fake_options, [])
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.tomboy_version_output + os.linesep,
+            sys.stdout.getvalue()
+        )
+
 class TestPlugins(BasicMocking):
     """Tests for the basis of plugins."""
     def test_ActionPlugin_constructor(self):
