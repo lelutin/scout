@@ -63,6 +63,7 @@ import optparse
 import sys
 
 from tomtom.plugins import ActionPlugin
+from tomtom.cli import TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE
 
 desc = __doc__.splitlines()[0]
 
@@ -84,7 +85,7 @@ class DisplayAction(ActionPlugin):
         if len(positional) <= 0:
             print >> sys.stderr, \
                 "Error: You need to specify a note name to display it"
-            return
+            sys.exit(TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE)
 
         print self.tomboy_interface.get_display_for_notes(
             positional

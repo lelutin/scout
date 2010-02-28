@@ -1248,7 +1248,7 @@ class TestList(BasicMocking):
             books=["book1", "book2"]
         )
 
-class TestDisplay(BasicMocking):
+class TestDisplay(BasicMocking, CLIMocking):
     """Tests for code that display notes' content."""
     def test_get_display_for_notes(self):
         """Display: Tomtom returns notes' contents, separated a marker."""
@@ -1306,6 +1306,47 @@ class TestDisplay(BasicMocking):
         self.assertEqual( expected_result, tc.get_note_content(note) )
 
         self.m.VerifyAll()
+
+    def test_perform_action(self):
+        """Display: perform_action executes successfully."""
+        dsp_ap = self.wrap_subject(display.DisplayAction, "perform_action")
+        dsp_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+
+        fake_options = self.m.CreateMock(optparse.Values)
+
+        dsp_ap.tomboy_interface.get_display_for_notes(["addressbook"])\
+            .AndReturn(
+                test_data.note_contents_from_dbus["addressbook"].decode("utf-8")
+            )
+
+        self.m.ReplayAll()
+
+        dsp_ap.perform_action(fake_options, ["addressbook"])
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.note_contents_from_dbus["addressbook"] + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+    def test_perform_action_too_few_arguments(self):
+        """Display: perform_action without any argument displays an error."""
+        dsp_ap = self.wrap_subject(display.DisplayAction, "perform_action")
+
+        fake_options = self.m.CreateMock(optparse.Values)
+
+        self.m.ReplayAll()
+        self.assertRaises(
+            SystemExit,
+            dsp_ap.perform_action, fake_options, []
+        )
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.display_no_note_name_error + os.linesep,
+            sys.stderr.getvalue()
+        )
 
 class TestSearch(BasicMocking):
     """Tests for code that perform a textual search within notes."""
