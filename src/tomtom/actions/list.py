@@ -98,10 +98,6 @@ class ListAction(plugins.ActionPlugin):
         if options.templates:
             tags_to_select.append("system:template")
 
-        if options.books:
-            tags_to_select = tags_to_select + \
-                ["system:notebook:%s" % book for book in options.books]
-
         print self.tomboy_interface.list_notes(
             count_limit=options.max_notes,
             tags=tags_to_select,

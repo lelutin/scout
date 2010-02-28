@@ -1181,7 +1181,7 @@ class TestList(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-    def verify_perform_action(self, with_templates, books):
+    def verify_perform_action(self, with_templates):
         """Verify execution of ListAction.perform_action
 
         Verify that perform_action does what is expected given a set of options.
@@ -1200,14 +1200,10 @@ class TestList(BasicMocking, CLIMocking):
         # Duplicate the list to avoid modification by later for loop
         fake_options.tags = list(tags)
         fake_options.templates = with_templates
-        fake_options.books = books
         fake_options.max_notes = 5
 
         if with_templates:
             tags.append("system:template")
-
-        for book in books:
-            tags.append("system:notebook:" + book)
 
         lst_ap.tomboy_interface.list_notes(
             count_limit=5,
@@ -1228,25 +1224,11 @@ class TestList(BasicMocking, CLIMocking):
 
     def test_perform_action(self):
         """List: perform_action called without arguments."""
-        self.verify_perform_action(with_templates=False, books=[])
+        self.verify_perform_action(with_templates=False)
 
     def test_perform_action_templates(self):
         """List: perform_action called with a tag as filter."""
-        self.verify_perform_action(with_templates=True, books=[])
-
-    def test_perform_action_books(self):
-        """List: perform_action called with a list of books as filter."""
-        self.verify_perform_action(
-            with_templates=False,
-            books=["book1", "book2"]
-        )
-
-    def test_perform_action_templates_books(self):
-        """List: perform_action with templates included and book filter."""
-        self.verify_perform_action(
-            with_templates=True,
-            books=["book1", "book2"]
-        )
+        self.verify_perform_action(with_templates=True)
 
 class TestDisplay(BasicMocking, CLIMocking):
     """Tests for code that display notes' content."""
@@ -1411,7 +1393,7 @@ class TestSearch(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-    def verify_perform_action(self, with_templates, books):
+    def verify_perform_action(self, with_templates):
         """Test output from SearchAction.perform_action.
 
         Arguments:
@@ -1428,13 +1410,9 @@ class TestSearch(BasicMocking, CLIMocking):
         fake_options = self.m.CreateMock(optparse.Values)
         fake_options.tags = list(tags)
         fake_options.templates = with_templates
-        fake_options.books = books
 
         if with_templates:
             tags.append("system:template")
-
-        for book in books:
-            tags.append("system:notebook:" + book)
 
         srch_ap.tomboy_interface.search_for_text(
             search_pattern="findme",
@@ -1456,19 +1434,11 @@ class TestSearch(BasicMocking, CLIMocking):
 
     def test_perform_action(self):
         """Search: perform_action without filters."""
-        self.verify_perform_action(False, [])
+        self.verify_perform_action(with_templates=False)
 
     def test_perform_action_templates(self):
         """Search: perform_action with templates included."""
-        self.verify_perform_action(True, [])
-
-    def test_perform_action_books(self):
-        """Search: perform_action, books filtered out."""
-        self.verify_perform_action(False, ["book1", "book2"])
-
-    def test_perform_action_templates_books(self):
-        """Search: perform_action, templates included and books filtered."""
-        self.verify_perform_action(True, ["book1", "book2"])
+        self.verify_perform_action(with_templates=True)
 
     def test_perform_action_too_few_arguments(self):
         """Search: perform_action, without any arguments."""
@@ -1781,6 +1751,8 @@ class TestPlugins(BasicMocking):
     def test_FilteringGroup_initialization(self):
         """Plugins: A new FilteringGroup contains all of its options."""
         filter_group = self.wrap_subject(plugins.FilteringGroup, "__init__")
+        book_callback = filter_group.book_callback
+
         self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
         self.m.StubOutWithMock(plugins.OptionGroup, "__init__")
 
@@ -1796,8 +1768,8 @@ class TestPlugins(BasicMocking):
         ]
 
         optparse.Option(
-            "-b",
-            dest="books", action="append", default=[],
+            "-b", action="callback", dest="books",
+            callback=book_callback, type="string",
             help="""Murder only notes belonging to """ + \
             """specified notebooks. It is a shortcut to option "-t" to """
             """specify notebooks more easily. For example, use"""
@@ -1832,3 +1804,25 @@ class TestPlugins(BasicMocking):
 
         self.m.VerifyAll()
 
+    def test_book_callback(self):
+        """Plugins: callback for book option adds an entry in tags."""
+        filter_group = self.wrap_subject(
+            plugins.FilteringGroup,
+            "book_callback"
+        )
+
+        fake_option = self.m.CreateMock(optparse.Option)
+        fake_parser = self.m.CreateMock(optparse.OptionParser)
+        fake_parser.values = self.m.CreateMock(optparse.Values)
+        fake_parser.values.tags = ["already_here"]
+
+        self.m.ReplayAll()
+
+        filter_group.book_callback(fake_option, "-b", "book1", fake_parser)
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            ["already_here", "system:notebook:book1"],
+            fake_parser.values.tags
+        )

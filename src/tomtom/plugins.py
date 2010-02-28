@@ -192,8 +192,8 @@ class FilteringGroup(OptionGroup):
 
         options = [
             optparse.Option(
-                "-b",
-                dest="books", action="append", default=[],
+                "-b", action="callback", dest="books",
+                callback=self.book_callback, type="string",
                 help="""%(action)s only notes belonging to """ % action_map + \
                 """specified notebooks. It is a shortcut to option "-t" to """
                 """specify notebooks more easily. For example, use"""
@@ -221,3 +221,8 @@ class FilteringGroup(OptionGroup):
 
         self.add_options(options)
 
+    def book_callback(self, option, opt_string, value, parser):
+        """Add a book to the requested tags to filter by."""
+        tags = parser.values.tags
+
+        tags.append("system:notebook:" + value)

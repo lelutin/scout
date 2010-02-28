@@ -101,10 +101,6 @@ class SearchAction(plugins.ActionPlugin):
         if options.templates:
             tags_to_select.append("system:template")
 
-        if options.books:
-            tags_to_select = tags_to_select + \
-                ["system:notebook:%s" % book for book in options.books]
-
         results = self.tomboy_interface.search_for_text(
             search_pattern=search_pattern,
             note_names=note_names,
@@ -117,4 +113,3 @@ class SearchAction(plugins.ActionPlugin):
                 "%s : %s : %s" % \
                 ( result["title"], result["line"], result["text"] )
             ).encode('utf-8')
-
