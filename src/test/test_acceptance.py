@@ -346,7 +346,10 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        cli.main()
+        self.assertRaises(
+            SystemExit,
+            cli.main
+        )
 
         self.m.VerifyAll()
 

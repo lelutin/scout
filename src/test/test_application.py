@@ -1008,7 +1008,7 @@ class TestCore(BasicMocking):
         dbus.SessionBus = old_SessionBus
         dbus.Interface = old_Interface
 
-class TestList(BasicMocking):
+class TestList(BasicMocking, CLIMocking):
     """Tests for code that handles the notes and lists them."""
     def test_list_all_notes(self):
         """List: Retrieve a list of all notes."""
@@ -1348,7 +1348,7 @@ class TestDisplay(BasicMocking, CLIMocking):
             sys.stderr.getvalue()
         )
 
-class TestSearch(BasicMocking):
+class TestSearch(BasicMocking, CLIMocking):
     """Tests for code that perform a textual search within notes."""
     def test_search_for_text(self):
         """Search: Tomtom triggers a search through requested notes."""
@@ -1368,18 +1368,7 @@ class TestSearch(BasicMocking):
 
             note_contents[note.title] = content
 
-        expected_result = [
-            {
-                "title": "addressbook",
-                "line": 5,
-                "text": "John Doe (cell) - 555-5512",
-            },
-            {
-                "title": "business contacts",
-                "line": 7,
-                "text": "John Doe Sr. (office) - 555-5534",
-            },
-        ]
+        expected_result = test_data.search_structure
 
         tt.tomboy_communicator.get_notes(
             names=[],
@@ -1399,6 +1388,107 @@ class TestSearch(BasicMocking):
         )
 
         self.m.VerifyAll()
+
+    def test_init_options(self):
+        """Search: Search options are initialized correctly."""
+        fake_filtering_group = self.m.CreateMock(plugins.FilteringGroup)
+
+        srch_ap = self.wrap_subject(search.SearchAction, "init_options")
+        self.m.StubOutWithMock(
+            plugins,
+            "FilteringGroup",
+            use_mock_anything=True
+        )
+
+        plugins.FilteringGroup("Search")\
+            .AndReturn(fake_filtering_group)
+
+        srch_ap.add_option_library(fake_filtering_group)
+
+        self.m.ReplayAll()
+
+        srch_ap.init_options()
+
+        self.m.VerifyAll()
+
+    def verify_perform_action(self, with_templates, books):
+        """Test output from SearchAction.perform_action.
+
+        Arguments:
+            with_templates -- boolean, whether or not to include templates.
+            books -- list of book names to filter by.
+
+        """
+        pass
+        srch_ap = self.wrap_subject(search.SearchAction, "perform_action")
+        srch_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+
+        tags = ["something"]
+
+        fake_options = self.m.CreateMock(optparse.Values)
+        fake_options.tags = list(tags)
+        fake_options.templates = with_templates
+        fake_options.books = books
+
+        if with_templates:
+            tags.append("system:template")
+
+        for book in books:
+            tags.append("system:notebook:" + book)
+
+        srch_ap.tomboy_interface.search_for_text(
+            search_pattern="findme",
+            note_names=["note1", "note2"],
+            tags=tags,
+            non_exclusive=with_templates
+        ).AndReturn(test_data.search_structure)
+
+        self.m.ReplayAll()
+
+        srch_ap.perform_action(fake_options, ["findme", "note1", "note2"])
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.search_results + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+    def test_perform_action(self):
+        """Search: perform_action without filters."""
+        self.verify_perform_action(False, [])
+
+    def test_perform_action_templates(self):
+        """Search: perform_action with templates included."""
+        self.verify_perform_action(True, [])
+
+    def test_perform_action_books(self):
+        """Search: perform_action, books filtered out."""
+        self.verify_perform_action(False, ["book1", "book2"])
+
+    def test_perform_action_templates_books(self):
+        """Search: perform_action, templates included and books filtered."""
+        self.verify_perform_action(True, ["book1", "book2"])
+
+    def test_perform_action_too_few_arguments(self):
+        """Search: perform_action, without any arguments."""
+        srch_ap = self.wrap_subject(search.SearchAction, "perform_action")
+
+        fake_options = self.m.CreateMock(optparse.Values)
+
+        self.m.ReplayAll()
+
+        self.assertRaises(
+            SystemExit,
+            srch_ap.perform_action, fake_options, []
+        )
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.search_no_argument_error + os.linesep,
+            sys.stderr.getvalue()
+        )
 
 class TestPlugins(BasicMocking):
     """Tests for the basis of plugins."""

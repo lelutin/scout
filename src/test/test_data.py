@@ -92,6 +92,20 @@ OpenSource Conference X : 15 : oops, and don't forget to talk about python"""
 search_no_argument_error = \
     "Error: You must specify a pattern to perform a search"
 
+# This is a structure returned by the search_for_text method
+search_structure = [
+    {
+        "title": "addressbook",
+        "line": 5,
+        "text": "John Doe (cell) - 555-5512",
+    },
+    {
+        "title": "business contacts",
+        "line": 7,
+        "text": "John Doe Sr. (office) - 555-5534",
+    },
+]
+
 # Those are values to test the "display" feature.
 note_contents_from_dbus = {
     "addressbook": """addressbook
