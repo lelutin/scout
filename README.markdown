@@ -71,6 +71,16 @@ nose's nosetests script in the base directory, like the following:
 
     tomtom$ nostests src/test/test_{acceptance,application}.py
 
+One useful trick with git to make running tests with nosetests and coverage is
+to set an alias in the following manner (make sure to use single quotes, the !
+character is interpreted by bash if it is inside double quotes):
+
+    $ git config --global alias.test '!nosetests --with-coverage --cover-erase'
+
+You can then run tests in the following manner:
+
+    $ git test --cover-package=tomtom src/test/test_application.py
+
 License
 =======
 
