@@ -76,7 +76,7 @@ class Tomtom(object):
         super(Tomtom, self).__init__()
         self.tomboy_communicator = TomboyCommunicator()
 
-    def list_notes(self, count_limit=None, tags=[], non_exclusive=False):
+    def list_notes(self, count_limit=None, tags=[], exclude_templates=True):
         """Entry point to listing notes.
 
         If specified, it can limit the number of displayed notes. By default,
@@ -85,14 +85,14 @@ class Tomtom(object):
         Arguments:
             count_limit   -- Integer limit of notes listed (default: None)
             tags          -- List of tags that should be listed (default: [])
-            non_exclusive -- Boolean to include templates inclusively
+            exclude_templates -- Boolean, exclude templates (default: True)
 
         """
         return self.listing(
             self.tomboy_communicator.get_notes(
                 count_limit=count_limit,
                 tags=tags,
-                templates_non_exclusive=non_exclusive
+                exclude_templates=exclude_templates
             )
         )
 
@@ -126,7 +126,7 @@ class Tomtom(object):
         )
 
     def search_for_text(self, search_pattern, note_names=[], tags=[],
-            non_exclusive=False):
+            exclude_templates=True):
         """Get specified notes and search for a pattern in them.
 
         This function performs a case-independant text search within notes. If
@@ -136,13 +136,13 @@ class Tomtom(object):
             search_pattern -- Pattern to seach for
             note_names     -- List of note names (default: [])
             tags           -- List of tags to restrict search (default: [])
-            non_exclusive  -- Boolean to include templates inclusively
+            exclude_templates -- Boolean, exclude templates (default: True)
 
         """
         notes = self.tomboy_communicator.get_notes(
             names=note_names,
             tags=tags,
-            templates_non_exclusive=non_exclusive
+            exclude_templates=exclude_templates
         )
         search_results = []
 
@@ -266,29 +266,32 @@ class TomboyCommunicator(object):
 
         return list_of_notes
 
-    def filter_notes(self, notes, **kwargs):
+    def filter_notes(self, notes, tags=[], names=[],
+            exclude_templates=True):
         """Filter a list of notes according to some criteria.
 
         Filter a list of TomboyNote objects according to a list of filtering
-        options.
-        `count_limit` can limit the number of notes returned. By default, it
-        gets all notes.
-        `names` will filter out any notes but those whose names are in the
-        list.
+        options. "count_limit" can limit the number of notes returned. By
+        default, it gets all notes. "names" will filter out any notes but those
+        whose names are in the list.
+
+        Arguments:
+            notes -- list of note objects
+            tags -- list of tag strings to filter by
+            names -- list of the only names to include
+            exclude_templates -- Boolean, exclude templates (default: True)
 
         """
-        tags = kwargs.pop("tags", [])
-        names = kwargs.pop("names", [])
-        inclusive = \
-            kwargs.pop("templates_non_exclusive", False) and \
-            tags == ["system:template"]
-
-        if tags and not inclusive:
+        if tags:
             notes = self.filter_by_tags(notes, tags)
+
+        # Force templates to be included in listing if the tag is requested.
+        if "system:template" in tags:
+            exclude_templates = False
 
         # Avoid filtering if names are specified. This makes it possible to
         # select a template by name. Also avoid if template tag is specified.
-        if not names and "system:template" not in tags:
+        if not names and exclude_templates:
             return self.filter_out_templates(notes)
 
         return notes
@@ -302,11 +305,13 @@ class TomboyCommunicator(object):
         according to the other options.
 
         Arguments:
-            kwargs -- Map of arguments used for getting and filtering notes.
+            **kwargs -- Map of arguments used for getting and filtering notes.
 
         """
         # Consumes "names" and "count_limit" arguments
         notes = self.build_note_list(**kwargs)
+        kwargs.pop("names", [])
+        kwargs.pop("count_limit", 0)
 
         return self.filter_notes(notes, **kwargs)
 

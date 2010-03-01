@@ -204,6 +204,8 @@ def dispatch(action_name, arguments):
             """executing its "perform_action" function:""" + os.linesep
         traceback.print_exc()
 
+        # This is pretty annoying when running acceptance tests. Comment it out
+        # if you have a failing test that shows this as being the error.
         sys.exit(MALFORMED_ACTION_RETURN_CODE)
 
 def list_of_actions():

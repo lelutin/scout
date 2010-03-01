@@ -778,17 +778,17 @@ class TestCore(BasicMocking):
         self.m.VerifyAll()
 
     def test_fiter_notes_with_templates(self):
-        """Core: Non-exclusive inclusion of templates."""
+        """Core: Do not exclude templates."""
         tc = self.wrap_subject(core.TomboyCommunicator, "filter_notes")
 
         notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
-        tags = ["system:template"]
+        tags = []
 
         fake_filtered_list = self.m.CreateMockAnything()
 
         self.m.ReplayAll()
 
-        tc.filter_notes(notes, tags=tags, templates_non_exclusive=True)
+        tc.filter_notes(notes, tags=tags, exclude_templates=False)
 
         self.m.VerifyAll()
 
@@ -1020,7 +1020,7 @@ class TestList(BasicMocking, CLIMocking):
         tt.tomboy_communicator.get_notes(
             count_limit=None,
             tags=[],
-            templates_non_exclusive=False
+            exclude_templates=True
         ).AndReturn(fake_list)
         tt.listing(fake_list)
 
@@ -1188,7 +1188,6 @@ class TestList(BasicMocking, CLIMocking):
 
         Arguments:
             with_templates -- boolean, request templates in the listing
-            books -- list of book names
 
         """
         lst_ap = self.wrap_subject(_list.ListAction, "perform_action")
@@ -1202,13 +1201,10 @@ class TestList(BasicMocking, CLIMocking):
         fake_options.templates = with_templates
         fake_options.max_notes = 5
 
-        if with_templates:
-            tags.append("system:template")
-
         lst_ap.tomboy_interface.list_notes(
             count_limit=5,
             tags=tags,
-            non_exclusive=with_templates
+            exclude_templates=not with_templates
         ).AndReturn(test_data.expected_list)
 
         self.m.ReplayAll()
@@ -1355,7 +1351,7 @@ class TestSearch(BasicMocking, CLIMocking):
         tt.tomboy_communicator.get_notes(
             names=[],
             tags=[],
-            templates_non_exclusive=False
+            exclude_templates=True
         ).AndReturn(test_data.full_list_of_notes[:-1])
 
         for note in test_data.full_list_of_notes[:-1]:
@@ -1398,7 +1394,6 @@ class TestSearch(BasicMocking, CLIMocking):
 
         Arguments:
             with_templates -- boolean, whether or not to include templates.
-            books -- list of book names to filter by.
 
         """
         pass
@@ -1411,14 +1406,11 @@ class TestSearch(BasicMocking, CLIMocking):
         fake_options.tags = list(tags)
         fake_options.templates = with_templates
 
-        if with_templates:
-            tags.append("system:template")
-
         srch_ap.tomboy_interface.search_for_text(
             search_pattern="findme",
             note_names=["note1", "note2"],
             tags=tags,
-            non_exclusive=with_templates
+            exclude_templates=not with_templates
         ).AndReturn(test_data.search_structure)
 
         self.m.ReplayAll()

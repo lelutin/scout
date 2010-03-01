@@ -95,12 +95,9 @@ class ListAction(plugins.ActionPlugin):
         """
         tags_to_select = options.tags
 
-        if options.templates:
-            tags_to_select.append("system:template")
-
         print self.tomboy_interface.list_notes(
             count_limit=options.max_notes,
             tags=tags_to_select,
-            non_exclusive=options.templates
+            exclude_templates=not options.templates
         ).encode('utf-8')
 

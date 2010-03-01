@@ -97,15 +97,11 @@ class SearchAction(plugins.ActionPlugin):
         search_pattern = positional[0]
         note_names = positional[1:]
 
-        tags_to_select = options.tags
-        if options.templates:
-            tags_to_select.append("system:template")
-
         results = self.tomboy_interface.search_for_text(
             search_pattern=search_pattern,
             note_names=note_names,
-            tags=tags_to_select,
-            non_exclusive=options.templates
+            tags=options.tags,
+            exclude_templates=not options.templates
         )
 
         for result in results:
