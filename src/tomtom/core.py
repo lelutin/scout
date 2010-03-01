@@ -38,7 +38,6 @@ Exceptions:
 
 Classes:
     Tomtom             -- Takes user input and calls the appropriate methods.
-    TomboyCommunicator -- Communicates with dbus to fetch information on notes.
     TomboyNote         -- Object representation of a Tomboy note.
 
 """
@@ -68,28 +67,8 @@ class Tomtom(object):
 
     """
     def __init__(self):
-        """Constructor.
-
-        This method makes sure the communicator is instantiated.
-
-        """
-        super(Tomtom, self).__init__()
-        self.tomboy_communicator = TomboyCommunicator()
-
-    def get_notes(self, *args, **kwargs):
-        """Get a list of notes"""
-        # XXX temporary mapping method
-        return self.tomboy_communicator.get_notes(*args, **kwargs)
-
-    def get_note_content(self, note):
-        """Get the contents of one note."""
-        # XXX temporary mapping method
-        return self.tomboy_communicator.get_note_content(note)
-
-class TomboyCommunicator(object):
-    """Interface between the application and Tomboy's dbus link."""
-    def __init__(self):
         """Create a link to the Tomboy application upon instanciation."""
+        super(Tomtom, self).__init__()
         try:
             tb_bus = dbus.SessionBus()
             tb_object = tb_bus.get_object(
@@ -105,6 +84,44 @@ class TomboyCommunicator(object):
                 """Could not establish connection with Tomboy. """ + \
                 """Is it running?: %s""" % (e, )
             )
+
+    def get_notes(self, **kwargs):
+        """Get a list of notes from Tomboy.
+
+        This function is the single point of entry to get a list of notes that
+        will match the given selection options. The first step is to build a
+        list of TomboyNote objects and the last step is to filter out this list
+        according to the other options.
+
+        Arguments:
+            **kwargs -- Map of arguments used for getting and filtering notes.
+
+        """
+        # Consumes "names" and "count_limit" arguments
+        notes = self.build_note_list(**kwargs)
+        kwargs.pop("names", [])
+        kwargs.pop("count_limit", 0)
+
+        return self.filter_notes(notes, **kwargs)
+
+    def get_note_content(self, note):
+        """Get the content of a note.
+
+        This method returns the content of one note. The note must be a
+        TomboyNote object. Tags are added after the note name in the returned
+        content.
+
+        Arguments:
+            note -- A TomboyNote object
+
+        """
+        lines = self.comm.GetNoteContents(note.uri).splitlines()
+        #TODO Oddly (but it is good), splitting the lines makes the indentation
+        # bullets appear.. come up with a test for this to stay
+        if note.tags:
+            lines[0] = "%s  (%s)" % ( lines[0], ", ".join(note.tags) )
+
+        return os.linesep.join(lines)
 
     def get_uris_for_n_notes(self, count_max):
         """Find the URIs for the `count_max` latest notes.
@@ -220,44 +237,6 @@ class TomboyCommunicator(object):
             return self.filter_out_templates(notes)
 
         return notes
-
-    def get_notes(self, **kwargs):
-        """Get a list of notes from Tomboy.
-
-        This function is the single point of entry to get a list of notes that
-        will match the given selection options. The first step is to build a
-        list of TomboyNote objects and the last step is to filter out this list
-        according to the other options.
-
-        Arguments:
-            **kwargs -- Map of arguments used for getting and filtering notes.
-
-        """
-        # Consumes "names" and "count_limit" arguments
-        notes = self.build_note_list(**kwargs)
-        kwargs.pop("names", [])
-        kwargs.pop("count_limit", 0)
-
-        return self.filter_notes(notes, **kwargs)
-
-    def get_note_content(self, note):
-        """Get the content of a note.
-
-        This method returns the content of one note. The note must be a
-        TomboyNote object. Tags are added after the note name in the returned
-        content.
-
-        Arguments:
-            note -- A TomboyNote object
-
-        """
-        lines = self.comm.GetNoteContents(note.uri).splitlines()
-        #TODO Oddly (but it is good), splitting the lines makes the indentation
-        # bullets appear.. come up with a test for this to stay
-        if note.tags:
-            lines[0] = "%s  (%s)" % ( lines[0], ", ".join(note.tags) )
-
-        return os.linesep.join(lines)
 
 class TomboyNote(object):
     """Object corresponding to a Tomboy note coming from dbus."""

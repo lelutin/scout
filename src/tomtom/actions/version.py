@@ -78,7 +78,7 @@ class VersionAction(ActionPlugin):
 
         """
         msg = """Tomtom version %s using Tomboy version %s"""
-        dbus_communicator = self.tomboy_interface.tomboy_communicator.comm
+        dbus_communicator = self.tomboy_interface.comm
         version_map = (
             tomtom_version,
             dbus_communicator.Version()
