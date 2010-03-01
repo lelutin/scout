@@ -670,10 +670,12 @@ class TestCore(BasicMocking):
         """Core: Note fetching entry point builds and filters a list."""
         tt = self.wrap_subject(core.Tomtom, "get_notes")
 
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
         # Only verify calls here, results are tested separately
         tt.build_note_list()\
-            .AndReturn(test_data.full_list_of_notes)
-        tt.filter_notes(test_data.full_list_of_notes)
+            .AndReturn(list_of_notes)
+        tt.filter_notes(list_of_notes)
 
         self.m.ReplayAll()
 
@@ -710,10 +712,12 @@ class TestCore(BasicMocking):
         """
         tt = self.wrap_subject(core.Tomtom, "filter_notes")
 
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
         notes = [
-            test_data.full_list_of_notes[4],
+            list_of_notes[4],
             # A template is requested: it should be returned
-            test_data.full_list_of_notes[13],
+            list_of_notes[13],
         ]
 
         names = ["python-work", "New note template"]
@@ -765,12 +769,14 @@ class TestCore(BasicMocking):
         """Core: Filter notes by tags."""
         tt = self.wrap_subject(core.Tomtom, "filter_by_tags")
 
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
         notes = [
-            test_data.full_list_of_notes[0],
-            test_data.full_list_of_notes[1],
-            test_data.full_list_of_notes[10],
+            list_of_notes[0],
+            list_of_notes[1],
+            list_of_notes[10],
             # Doesn't have the tags
-            test_data.full_list_of_notes[12],
+            list_of_notes[12],
         ]
         tag_list = ["system:notebook:pim", "projects"]
 
@@ -789,11 +795,13 @@ class TestCore(BasicMocking):
         """Core: Remove templates from a list of notes."""
         tt = self.wrap_subject(core.Tomtom, "filter_out_templates")
 
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
         notes = [
-            test_data.full_list_of_notes[9],
-            test_data.full_list_of_notes[10],
+            list_of_notes[9],
+            list_of_notes[10],
             # This one is a template
-            test_data.full_list_of_notes[13],
+            list_of_notes[13],
         ]
 
         expected_result = notes[:-1]
@@ -854,8 +862,10 @@ class TestCore(BasicMocking):
 
         tt.comm = self.m.CreateMockAnything()
 
-        todo = test_data.full_list_of_notes[1]
-        recipes = test_data.full_list_of_notes[11]
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        todo = list_of_notes[1]
+        recipes = list_of_notes[11]
         notes = [todo, recipes]
         names = [n.title for n in notes]
 
@@ -880,14 +890,16 @@ class TestCore(BasicMocking):
 
         tt.comm = self.m.CreateMockAnything()
 
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
         list_of_uris = dbus.Array(
-            [note.uri for note in test_data.full_list_of_notes]
+            [note.uri for note in list_of_notes]
         )
 
         tt.get_uris_for_n_notes(None)\
             .AndReturn( [(u, None) for u in list_of_uris] )
 
-        for note in test_data.full_list_of_notes:
+        for note in list_of_notes:
             tt.comm.GetNoteTitle(note.uri)\
                 .AndReturn(note.title)
             tt.comm.GetNoteChangeDate(note.uri)\
@@ -897,7 +909,7 @@ class TestCore(BasicMocking):
 
         self.m.ReplayAll()
 
-        self.verify_note_list(tt, test_data.full_list_of_notes)
+        self.verify_note_list(tt, list_of_notes)
 
         self.m.VerifyAll()
 
@@ -907,8 +919,10 @@ class TestCore(BasicMocking):
 
         tt.comm = self.m.CreateMockAnything()
 
-        r_n_d = test_data.full_list_of_notes[12]
-        webpidgin = test_data.full_list_of_notes[9]
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        r_n_d = list_of_notes[12]
+        webpidgin = list_of_notes[9]
         names = [r_n_d.title, webpidgin.title]
 
         tt.comm.FindNote(r_n_d.title)\
@@ -985,8 +999,10 @@ class TestList(BasicMocking, CLIMocking):
 
         tt.comm = self.m.CreateMockAnything()
 
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
         list_of_uris = dbus.Array(
-            [note.uri for note in test_data.full_list_of_notes]
+            [note.uri for note in list_of_notes]
         )
 
         tt.comm.ListAllNotes()\
@@ -1007,8 +1023,10 @@ class TestList(BasicMocking, CLIMocking):
 
         tt.comm = self.m.CreateMockAnything()
 
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
         list_of_uris = dbus.Array(
-            [note.uri for note in test_data.full_list_of_notes]
+            [note.uri for note in list_of_notes]
         )
 
         tt.comm.ListAllNotes()\
@@ -1027,12 +1045,11 @@ class TestList(BasicMocking, CLIMocking):
         """List: Format information of a list of notes."""
         lst_ap = self.wrap_subject(_list.ListAction, "listing")
 
+        list_of_notes = test_data.full_list_of_notes(self.m)
         # Forget about the last note (a template)
-        list_of_notes = test_data.full_list_of_notes[:-1]
+        list_of_notes = list_of_notes[:-1]
 
         for note in list_of_notes:
-            # XXX transform the list into mocks to avoid this
-            self.m.StubOutWithMock(note, "listing")
             tag_text = ""
             if len(note.tags):
                 tag_text = "  (" + ", ".join(note.tags) + ")"
@@ -1154,13 +1171,15 @@ class TestList(BasicMocking, CLIMocking):
         fake_options.templates = with_templates
         fake_options.max_notes = 5
 
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
         lst_ap.tomboy_interface.get_notes(
             count_limit=5,
             tags=tags,
             exclude_templates=not with_templates
-        ).AndReturn(test_data.full_list_of_notes)
+        ).AndReturn(list_of_notes)
 
-        lst_ap.listing(test_data.full_list_of_notes)\
+        lst_ap.listing(list_of_notes)\
             .AndReturn(test_data.expected_list)
 
         self.m.ReplayAll()
@@ -1192,9 +1211,11 @@ class TestDisplay(BasicMocking, CLIMocking):
         )
         dsp_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
 
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
         notes = [
-            test_data.full_list_of_notes[10],
-            test_data.full_list_of_notes[8]
+            list_of_notes[10],
+            list_of_notes[8]
         ]
         note_names = [n.title for n in notes]
         note1_content = test_data.note_contents_from_dbus[ notes[0].title ]
@@ -1224,7 +1245,9 @@ class TestDisplay(BasicMocking, CLIMocking):
 
         tt.comm = self.m.CreateMockAnything()
 
-        note = test_data.full_list_of_notes[12]
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        note = list_of_notes[12]
         raw_content = test_data.note_contents_from_dbus[note.title]
         lines = raw_content.splitlines()
         lines[0] = "%s%s" % (
@@ -1295,8 +1318,10 @@ class TestSearch(BasicMocking, CLIMocking):
         srch_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
 
         note_contents = {}
-        # Forget about last note (a template)
-        list_of_notes = test_data.full_list_of_notes[:-1]
+
+        list_of_notes = test_data.full_list_of_notes(self.m)
+        # Forget about the last note (a template)
+        list_of_notes = list_of_notes[:-1]
 
         for note in list_of_notes:
             content = test_data.note_contents_from_dbus[note.title]
@@ -1357,7 +1382,10 @@ class TestSearch(BasicMocking, CLIMocking):
         srch_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
 
         tags = ["something"]
-        list_of_notes = test_data.full_list_of_notes[:-1]
+
+        list_of_notes = test_data.full_list_of_notes(self.m)
+        # Forget about the last note (a template)
+        list_of_notes = list_of_notes[:-1]
 
         fake_options = self.m.CreateMock(optparse.Values)
         fake_options.tags = list(tags)

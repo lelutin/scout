@@ -187,7 +187,9 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_action_list(self):
         """Acceptance: Action "list -n" prints a list of the last n notes."""
-        self.mock_out_listing(test_data.full_list_of_notes[:10])
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        self.mock_out_listing(list_of_notes[:10])
 
         self.m.ReplayAll()
 
@@ -203,7 +205,9 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_full_list(self):
         """Acceptance: Action "list" alone produces a list of all notes."""
-        self.mock_out_listing(test_data.full_list_of_notes)
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        self.mock_out_listing(list_of_notes)
 
         self.m.ReplayAll()
 
@@ -222,8 +226,10 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_notes_displaying(self):
         """Acceptance: Action "display" prints the content given note names."""
-        todo = test_data.full_list_of_notes[1]
-        python_work = test_data.full_list_of_notes[4]
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        todo = list_of_notes[1]
+        python_work = list_of_notes[4]
         separator = os.linesep + "==========================" + os.linesep
         note_lines = test_data.note_contents_from_dbus["TODO-list"]\
                         .splitlines()
@@ -294,10 +300,12 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_search(self):
         """Acceptance: Action "search" searches in all notes, case-indep."""
-        self.mock_out_listing(test_data.full_list_of_notes)
+        list_of_notes = test_data.full_list_of_notes(self.m)
 
-        # Forget about last note (a template)
-        for note in test_data.full_list_of_notes[:-1]:
+        self.mock_out_listing(list_of_notes)
+
+        # Forget about the last note (a template)
+        for note in list_of_notes[:-1]:
             self.dbus_interface.GetNoteContents(note.uri)\
                 .AndReturn(test_data.note_contents_from_dbus[note.title])
 
@@ -315,10 +323,12 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_search_specific_notes(self):
         """Acceptance: Action "search" restricts the search to given notes."""
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
         requested_notes = [
-            test_data.full_list_of_notes[3],
-            test_data.full_list_of_notes[4],
-            test_data.full_list_of_notes[6],
+            list_of_notes[3],
+            list_of_notes[4],
+            list_of_notes[6],
         ]
 
         self.mock_out_get_notes_by_names(requested_notes)
@@ -401,7 +411,9 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_filter_notes_with_templates(self):
         """Acceptance: Using "--with-templates" lists notes and templates."""
-        self.mock_out_listing(test_data.full_list_of_notes)
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        self.mock_out_listing(list_of_notes)
 
         self.m.ReplayAll()
 
@@ -422,7 +434,9 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_filter_notes_by_tags(self):
         """Acceptance: Using "-t" limits the notes by tags."""
-        self.mock_out_listing(test_data.full_list_of_notes)
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        self.mock_out_listing(list_of_notes)
 
         self.m.ReplayAll()
 
@@ -442,7 +456,9 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_filter_notes_by_books(self):
         """Acceptance: Using "-b" limits the notes by notebooks."""
-        self.mock_out_listing(test_data.full_list_of_notes)
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        self.mock_out_listing(list_of_notes)
 
         self.m.ReplayAll()
 
