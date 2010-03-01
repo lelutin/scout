@@ -1010,26 +1010,6 @@ class TestCore(BasicMocking):
 
 class TestList(BasicMocking, CLIMocking):
     """Tests for code that handles the notes and lists them."""
-    def test_list_all_notes(self):
-        """List: Retrieve a list of all notes."""
-        tt = self.wrap_subject(core.Tomtom, "list_notes")
-
-        tt.tomboy_communicator = self.m.CreateMock(core.TomboyCommunicator)
-        fake_list = self.m.CreateMock(list)
-
-        tt.tomboy_communicator.get_notes(
-            count_limit=None,
-            tags=[],
-            exclude_templates=True
-        ).AndReturn(fake_list)
-        tt.listing(fake_list)
-
-        self.m.ReplayAll()
-
-        tt.list_notes()
-
-        self.m.VerifyAll()
-
     def test_get_uris_for_n_notes_no_limit(self):
         """List: Given no limit, get all the notes' uris."""
         tc = self.wrap_subject(core.TomboyCommunicator, "get_uris_for_n_notes")
@@ -1074,12 +1054,15 @@ class TestList(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-    def test_note_listing(self):
-        """List: Get the information on a list of notes."""
-        tt = self.wrap_subject(core.Tomtom, "listing")
+    def test_listing(self):
+        """List: Format information of a list of notes."""
+        lst_ap = self.wrap_subject(_list.ListAction, "listing")
 
-        # Forget about last note (a template)
-        for note in test_data.full_list_of_notes[:-1]:
+        # Forget about the last note (a template)
+        list_of_notes = test_data.full_list_of_notes[:-1]
+
+        for note in list_of_notes:
+            # XXX transform the list into mocks to avoid this
             self.m.StubOutWithMock(note, "listing")
             tag_text = ""
             if len(note.tags):
@@ -1099,7 +1082,7 @@ class TestList(BasicMocking, CLIMocking):
 
         self.assertEqual(
             test_data.expected_list + os.linesep + test_data.list_appendix,
-            tt.listing(test_data.full_list_of_notes[:-1])
+            lst_ap.listing(list_of_notes)
         )
 
         self.m.VerifyAll()
@@ -1117,13 +1100,14 @@ class TestList(BasicMocking, CLIMocking):
             expected_tag_text -- The expected format of tags from get_notes
 
         """
+        note = self.wrap_subject(core.TomboyNote, "listing")
+
         date_64 = dbus.Int64(1254553804L)
-        note = core.TomboyNote(
-            uri="note://tomboy/fake-uri",
-            title=title,
-            date=date_64,
-            tags=tags
-        )
+
+        note.title = title
+        note.date = date_64
+        note.tags = tags
+
         expected_listing = "2009-10-03 | %(title)s%(tags)s" % {
             "title": new_title,
             "tags": expected_tag_text
@@ -1201,11 +1185,14 @@ class TestList(BasicMocking, CLIMocking):
         fake_options.templates = with_templates
         fake_options.max_notes = 5
 
-        lst_ap.tomboy_interface.list_notes(
+        lst_ap.tomboy_interface.get_notes(
             count_limit=5,
             tags=tags,
             exclude_templates=not with_templates
-        ).AndReturn(test_data.expected_list)
+        ).AndReturn(test_data.full_list_of_notes)
+
+        lst_ap.listing(test_data.full_list_of_notes)\
+            .AndReturn(test_data.expected_list)
 
         self.m.ReplayAll()
 
@@ -1230,9 +1217,12 @@ class TestDisplay(BasicMocking, CLIMocking):
     """Tests for code that display notes' content."""
     def test_get_display_for_notes(self):
         """Display: Tomtom returns notes' contents, separated a marker."""
-        tt = self.wrap_subject(core.Tomtom, "get_display_for_notes")
+        dsp_ap = self.wrap_subject(
+            display.DisplayAction,
+            "format_display_for_notes"
+        )
+        dsp_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
 
-        tt.tomboy_communicator = self.m.CreateMock(core.TomboyCommunicator)
         notes = [
             test_data.full_list_of_notes[10],
             test_data.full_list_of_notes[8]
@@ -1241,11 +1231,9 @@ class TestDisplay(BasicMocking, CLIMocking):
         note1_content = test_data.note_contents_from_dbus[ notes[0].title ]
         note2_content = test_data.note_contents_from_dbus[ notes[1].title ]
 
-        tt.tomboy_communicator.get_notes(names=note_names)\
-            .AndReturn(notes)
-        tt.tomboy_communicator.get_note_content(notes[0])\
+        dsp_ap.tomboy_interface.get_note_content(notes[0])\
             .AndReturn(note1_content)
-        tt.tomboy_communicator.get_note_content(notes[1])\
+        dsp_ap.tomboy_interface.get_note_content(notes[1])\
             .AndReturn(note2_content)
 
         self.m.ReplayAll()
@@ -1256,7 +1244,7 @@ class TestDisplay(BasicMocking, CLIMocking):
                 test_data.display_separator,
                 note2_content,
             ]),
-            tt.get_display_for_notes(note_names)
+            dsp_ap.format_display_for_notes(notes)
         )
 
         self.m.VerifyAll()
@@ -1291,8 +1279,12 @@ class TestDisplay(BasicMocking, CLIMocking):
         dsp_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
 
         fake_options = self.m.CreateMock(optparse.Values)
+        notes = [ self.m.CreateMock(core.TomboyNote) ]
 
-        dsp_ap.tomboy_interface.get_display_for_notes(["addressbook"])\
+        dsp_ap.tomboy_interface.get_notes(names=["addressbook"])\
+            .AndReturn(notes)
+
+        dsp_ap.format_display_for_notes(notes)\
             .AndReturn(
                 test_data.note_contents_from_dbus["addressbook"].decode("utf-8")
             )
@@ -1330,13 +1322,14 @@ class TestSearch(BasicMocking, CLIMocking):
     """Tests for code that perform a textual search within notes."""
     def test_search_for_text(self):
         """Search: Tomtom triggers a search through requested notes."""
-        tt = self.wrap_subject(core.Tomtom, "search_for_text")
-
-        tt.tomboy_communicator = self.m.CreateMock(core.TomboyCommunicator)
+        srch_ap = self.wrap_subject(search.SearchAction, "search_for_text")
+        srch_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
 
         note_contents = {}
         # Forget about last note (a template)
-        for note in test_data.full_list_of_notes[:-1]:
+        list_of_notes = test_data.full_list_of_notes[:-1]
+
+        for note in list_of_notes:
             content = test_data.note_contents_from_dbus[note.title]
 
             if note.tags:
@@ -1348,21 +1341,15 @@ class TestSearch(BasicMocking, CLIMocking):
 
         expected_result = test_data.search_structure
 
-        tt.tomboy_communicator.get_notes(
-            names=[],
-            tags=[],
-            exclude_templates=True
-        ).AndReturn(test_data.full_list_of_notes[:-1])
-
-        for note in test_data.full_list_of_notes[:-1]:
-            tt.tomboy_communicator.get_note_content(note)\
+        for note in list_of_notes:
+            srch_ap.tomboy_interface.get_note_content(note)\
                 .AndReturn(note_contents[note.title])
 
         self.m.ReplayAll()
 
         self.assertEqual(
             expected_result,
-            tt.search_for_text(search_pattern="john doe")
+            srch_ap.search_for_text("john doe", list_of_notes)
         )
 
         self.m.VerifyAll()
@@ -1401,17 +1388,20 @@ class TestSearch(BasicMocking, CLIMocking):
         srch_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
 
         tags = ["something"]
+        list_of_notes = test_data.full_list_of_notes[:-1]
 
         fake_options = self.m.CreateMock(optparse.Values)
         fake_options.tags = list(tags)
         fake_options.templates = with_templates
 
-        srch_ap.tomboy_interface.search_for_text(
-            search_pattern="findme",
-            note_names=["note1", "note2"],
-            tags=tags,
+        srch_ap.tomboy_interface.get_notes(
+            names=["note1", "note2"],
+            tags=["something"],
             exclude_templates=not with_templates
-        ).AndReturn(test_data.search_structure)
+        ).AndReturn(list_of_notes)
+
+        srch_ap.search_for_text("findme", list_of_notes)\
+            .AndReturn(test_data.search_structure)
 
         self.m.ReplayAll()
 

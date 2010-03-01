@@ -60,6 +60,7 @@ will be limited in number to the value given as an argument.
 """
 import optparse
 import sys
+import os
 
 from tomtom import plugins
 
@@ -95,9 +96,22 @@ class ListAction(plugins.ActionPlugin):
         """
         tags_to_select = options.tags
 
-        print self.tomboy_interface.list_notes(
+        list_of_notes = self.tomboy_interface.get_notes(
             count_limit=options.max_notes,
             tags=tags_to_select,
             exclude_templates=not options.templates
-        ).encode('utf-8')
+        )
 
+        print self.listing(list_of_notes).encode('utf-8')
+
+    def listing(self, notes):
+        """Format listing for a list of note objects.
+
+        Given a list of notes, this method collects listing information for
+        those notes and returns a global listing.
+
+        Arguments:
+            notes -- a list of TomboyNote objects
+
+        """
+        return os.linesep.join( [note.listing() for note in notes] )

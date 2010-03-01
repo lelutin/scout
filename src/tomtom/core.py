@@ -76,90 +76,15 @@ class Tomtom(object):
         super(Tomtom, self).__init__()
         self.tomboy_communicator = TomboyCommunicator()
 
-    def list_notes(self, count_limit=None, tags=[], exclude_templates=True):
-        """Entry point to listing notes.
+    def get_notes(self, *args, **kwargs):
+        """Get a list of notes"""
+        # XXX temporary mapping method
+        return self.tomboy_communicator.get_notes(*args, **kwargs)
 
-        If specified, it can limit the number of displayed notes. By default,
-        it lists all notes.
-
-        Arguments:
-            count_limit   -- Integer limit of notes listed (default: None)
-            tags          -- List of tags that should be listed (default: [])
-            exclude_templates -- Boolean, exclude templates (default: True)
-
-        """
-        return self.listing(
-            self.tomboy_communicator.get_notes(
-                count_limit=count_limit,
-                tags=tags,
-                exclude_templates=exclude_templates
-            )
-        )
-
-    def listing(self, notes):
-        """Get information about notes.
-
-        Given a list of notes, this method collects listing information for
-        those notes and returns the list.
-
-        Arguments:
-            notes -- a list of TomboyNote objects
-
-        """
-        return os.linesep.join( [note.listing() for note in notes] )
-
-    def get_display_for_notes(self, names):
-        """Get contents of a list of notes.
-
-        Given a list of note names, this method retrieves the notes' contents
-        and returns them.
-
-        Arguments:
-            names -- a list of note names
-
-        """
-        notes = self.tomboy_communicator.get_notes(names=names)
-
-        separator = os.linesep + "==========================" + os.linesep
-        return separator.join(
-            [self.tomboy_communicator.get_note_content(note) for note in notes]
-        )
-
-    def search_for_text(self, search_pattern, note_names=[], tags=[],
-            exclude_templates=True):
-        """Get specified notes and search for a pattern in them.
-
-        This function performs a case-independant text search within notes. If
-        note names are specified, it restricts its search to those notes.
-
-        Arguments:
-            search_pattern -- Pattern to seach for
-            note_names     -- List of note names (default: [])
-            tags           -- List of tags to restrict search (default: [])
-            exclude_templates -- Boolean, exclude templates (default: True)
-
-        """
-        notes = self.tomboy_communicator.get_notes(
-            names=note_names,
-            tags=tags,
-            exclude_templates=exclude_templates
-        )
-        search_results = []
-
-        import re
-        for note in notes:
-            content = self.tomboy_communicator.get_note_content(note)
-            lines = content.splitlines()[1:]
-            for index, line in enumerate(lines):
-                # Perform case-independant search of each word on each line
-                if re.search("(?i)%s" % (search_pattern, ), line):
-                    search_results.append({
-                        "title": note.title,
-                        "line": index,
-                        "text": line,
-                    })
-
-        return search_results
+    def get_note_content(self, note):
+        """Get the contents of one note."""
+        # XXX temporary mapping method
+        return self.tomboy_communicator.get_note_content(note)
 
 class TomboyCommunicator(object):
     """Interface between the application and Tomboy's dbus link."""

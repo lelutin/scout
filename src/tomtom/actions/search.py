@@ -62,6 +62,7 @@ the content of the line on which the text is appearing.
 import optparse
 import sys
 import os
+import re
 
 from tomtom import plugins
 from tomtom.cli import TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE
@@ -97,15 +98,42 @@ class SearchAction(plugins.ActionPlugin):
         search_pattern = positional[0]
         note_names = positional[1:]
 
-        results = self.tomboy_interface.search_for_text(
-            search_pattern=search_pattern,
-            note_names=note_names,
+        notes = self.tomboy_interface.get_notes(
+            names=note_names,
             tags=options.tags,
             exclude_templates=not options.templates
         )
 
+        results = self.search_for_text(search_pattern, notes)
+
         for result in results:
-            print (
-                "%s : %s : %s" % \
-                ( result["title"], result["line"], result["text"] )
-            ).encode('utf-8')
+            result_map = ( result["title"], result["line"], result["text"] )
+
+            print ("%s : %s : %s" % result_map).encode('utf-8')
+
+    def search_for_text(self, search_pattern, notes):
+        """Get specified notes and search for a pattern in them.
+
+        This function performs a case-independant text search on the contents
+        of a list of notes.
+
+        Arguments:
+            search_pattern -- String, pattern to seach for
+            notes -- List of notes to search on
+
+        """
+        search_results = []
+
+        for note in notes:
+            content = self.tomboy_interface.get_note_content(note)
+            lines = content.splitlines()[1:]
+            for index, line in enumerate(lines):
+                # Perform case-independant search of each word on each line
+                if re.search("(?i)%s" % (search_pattern, ), line):
+                    search_results.append({
+                        "title": note.title,
+                        "line": index,
+                        "text": line,
+                    })
+
+        return search_results
