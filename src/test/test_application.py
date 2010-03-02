@@ -68,16 +68,26 @@ class TestMain(BasicMocking, CLIMocking):
     """
     def test_KeyboardInterrupt_is_handled(self):
         """Main: KeyboardInterrupt doesn't come out of the application."""
-        self.m.StubOutWithMock(cli, "main")
+        cli_mock = self.m.CreateMock(cli.CommandLineInterface)
 
-        cli.main().AndRaise(KeyboardInterrupt)
+        self.m.StubOutWithMock(
+            cli,
+            "CommandLineInterface",
+            use_mock_anything=True
+        )
+
+        cli.CommandLineInterface()\
+            .AndReturn( cli_mock )
+
+        cli_mock.main().AndRaise(KeyboardInterrupt)
 
         self.m.ReplayAll()
 
-        # No output is expected, simply check if an exception goes through.
+        # Catch the exception manually, else it will make the test runner exit.
         try:
             cli.exception_wrapped_main()
         except KeyboardInterrupt:
+            # No output is expected, simply check if an exception goes through.
             self.fail("KeyboardInterrupt got out of the program")
 
         self.m.VerifyAll()
@@ -85,28 +95,31 @@ class TestMain(BasicMocking, CLIMocking):
     def test_arguments_converted_to_unicode(self):
         """Main: Arguments to action are converted to unicode objects."""
         """This is the default main() behaviour."""
-        self.m.StubOutWithMock(cli, "dispatch")
+        command_line = self.wrap_subject(cli.CommandLineInterface, "main")
 
         arguments = ["arg1", "arg2"]
         sys.argv = ["app_name", "action"] + arguments
 
-        cli.dispatch("action", [unicode(arg) for arg in arguments] )
+        command_line.dispatch("action", [unicode(arg) for arg in arguments] )
 
         self.m.ReplayAll()
 
-        cli.main()
+        command_line.main()
 
         self.m.VerifyAll()
 
     def verify_exit_from_main(self,
             arguments, expected_text, output_stream):
+
+        command_line = self.wrap_subject(cli.CommandLineInterface, "main")
+
         sys.argv = ["app_name"] + arguments
 
         self.m.ReplayAll()
 
         self.assertRaises(
             SystemExit,
-            cli.main
+            command_line.main
         )
 
         self.m.VerifyAll()
@@ -126,18 +139,18 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_main_help(self):
         """Main: using only -h prints help and list of actions."""
-        self.m.StubOutWithMock(cli, "action_short_summaries")
+        command_line = self.wrap_subject(cli.CommandLineInterface, "main")
 
         sys.argv = ["app_name", "-h"]
 
-        cli.action_short_summaries()\
+        command_line.action_short_summaries()\
             .AndReturn(test_data.module_descriptions)
 
         self.m.ReplayAll()
 
         self.assertRaises(
             SystemExit,
-            cli.main
+            command_line.main
         )
 
         self.m.VerifyAll()
@@ -151,20 +164,20 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_help_before_action(self):
         """Main: -h before action gets switched to normal help call."""
-        self.m.StubOutWithMock(cli, "dispatch")
+        command_line = self.wrap_subject(cli.CommandLineInterface, "main")
 
         sys.argv = ["app_name", "-h", "action"]
 
         processed_arguments = [ sys.argv[0], sys.argv[2], sys.argv[1] ]
 
-        cli.dispatch(
+        command_line.dispatch(
             "action",
             [unicode(arg) for arg in processed_arguments[1:] ]
         )
 
         self.m.ReplayAll()
 
-        cli.main()
+        command_line.main()
 
         self.m.VerifyAll()
 
@@ -178,6 +191,10 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_list_of_actions(self):
         """Main: list_of_actions returns classes of action plugins."""
+        command_line = self.wrap_subject(
+            cli.CommandLineInterface,
+            "list_of_actions"
+        )
         self.m.StubOutWithMock(pkg_resources, "iter_entry_points")
 
         # Entry points as returned by pkg_resources
@@ -214,14 +231,17 @@ class TestMain(BasicMocking, CLIMocking):
         # "name" attributes are irrelevant here as 3 classes are the same
         self.assertEqual(
             plugin_classes[:-1],
-            cli.list_of_actions()
+            command_line.list_of_actions()
         )
 
         self.m.VerifyAll()
 
     def test_load_action(self):
         """Main: Initialize an action plugin instance."""
-        self.m.StubOutWithMock(cli, "list_of_actions")
+        command_line = self.wrap_subject(
+            cli.CommandLineInterface,
+            "load_action"
+        )
 
         action1 = self.m.CreateMockAnything()
         action1.name = "action1"
@@ -230,7 +250,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         mock_class = self.m.CreateMockAnything()
 
-        cli.list_of_actions()\
+        command_line.list_of_actions()\
             .AndReturn( [action1, action2] )
 
         action2()\
@@ -240,19 +260,23 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.assertEqual(
             mock_class,
-            cli.load_action("action2")
+            command_line.load_action("action2")
         )
 
         self.m.VerifyAll()
 
     def test_load_unknown_action(self):
         """Main: Requested action name is invalid."""
-        self.m.StubOutWithMock(cli, "list_of_actions")
+        command_line = self.wrap_subject(
+            cli.CommandLineInterface,
+            "load_action"
+        )
+
         self.m.StubOutWithMock(os.path, "basename")
 
         sys.argv = ["app_name"]
 
-        cli.list_of_actions()\
+        command_line.list_of_actions()\
             .AndReturn( [] )
 
         os.path.basename("app_name")\
@@ -262,7 +286,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.assertRaises(
             SystemExit,
-            cli.load_action, "unexistant_action"
+            command_line.load_action, "unexistant_action"
         )
 
         self.assertEqual(
@@ -274,7 +298,10 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_action_short_summaries(self):
         """Main: Extract short summaries from action plugins."""
-        self.m.StubOutWithMock(cli, "list_of_actions")
+        command_line = self.wrap_subject(
+            cli.CommandLineInterface,
+            "action_short_summaries"
+        )
 
         action1 = self.m.CreateMockAnything()
         action1.name = "action1"
@@ -283,24 +310,24 @@ class TestMain(BasicMocking, CLIMocking):
         action2.name = "otheraction"
         action2.short_description = None
 
-        cli.list_of_actions()\
+        command_line.list_of_actions()\
             .AndReturn( [action1, action2] )
 
         self.m.ReplayAll()
 
         self.assertEqual(
             test_data.module_descriptions,
-            cli.action_short_summaries()
+            command_line.action_short_summaries()
         )
 
         self.m.VerifyAll()
 
     def mock_out_dispatch(self, exception_class, exception_argument):
         """Mock out calls in dispatch that we go through in all cases."""
+        command_line = self.wrap_subject(cli.CommandLineInterface, "dispatch")
+
         fake_tomtom = self.m.CreateMock(core.Tomtom)
 
-        self.m.StubOutWithMock(cli, "load_action")
-        self.m.StubOutWithMock(cli, "parse_options")
         self.m.StubOutWithMock(core, "Tomtom", use_mock_anything=True)
 
         action_name = "some_action"
@@ -309,10 +336,10 @@ class TestMain(BasicMocking, CLIMocking):
         positional_arguments = self.m.CreateMock(list)
         options = self.m.CreateMock(optparse.Values)
 
-        cli.load_action(action_name)\
+        command_line.load_action(action_name)\
             .AndReturn(fake_action)
 
-        cli.parse_options(fake_action, arguments)\
+        command_line.parse_options(fake_action, arguments)\
             .AndReturn( (options, positional_arguments) )
 
         core.Tomtom()\
@@ -325,16 +352,16 @@ class TestMain(BasicMocking, CLIMocking):
             fake_action.perform_action(options, positional_arguments)\
                 .AndReturn(None)
 
-        return (action_name, fake_action, arguments)
+        return (command_line, action_name, fake_action, arguments)
 
     def test_dispatch(self):
         """Main: Action calls are dispatched to the right action."""
-        action_name, fake_action, arguments = \
+        command_line, action_name, fake_action, arguments = \
             self.mock_out_dispatch(None, None)
 
         self.m.ReplayAll()
 
-        cli.dispatch(action_name, arguments)
+        command_line.dispatch(action_name, arguments)
 
         self.m.VerifyAll()
 
@@ -366,14 +393,14 @@ class TestMain(BasicMocking, CLIMocking):
         if not exception_out:
             exception_out = exception_class
 
-        action_name, fake_action, arguments = \
+        command_line, action_name, fake_action, arguments = \
             self.mock_out_dispatch(exception_class, exception_argument)
 
         self.m.ReplayAll()
 
         self.assertRaises(
             exception_out,
-            cli.dispatch, action_name, arguments
+            command_line.dispatch, action_name, arguments
         )
         self.assertEqual(
             expected_text,
@@ -416,7 +443,7 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_dispatch_handles_action_exceptions(self):
         """Main: All unknown exceptions from actions are handled."""
-        action_name, fake_action, arguments = \
+        command_line, action_name, fake_action, arguments = \
             self.mock_out_dispatch(Exception, "something happened")
 
         sys.argv = ["app_name"]
@@ -433,7 +460,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.assertRaises(
             SystemExit,
-            cli.dispatch, action_name, arguments
+            command_line.dispatch, action_name, arguments
         )
 
         self.m.VerifyAll()
@@ -447,25 +474,24 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_dispatch_handles_option_type_exceptions(self):
         """Main: dispatch prints an error if an option is of the wrong type."""
-        self.m.StubOutWithMock(cli, "load_action")
-        self.m.StubOutWithMock(cli, "parse_options")
+        command_line = self.wrap_subject(cli.CommandLineInterface, "dispatch")
 
         action_name = "some_action"
         fake_action = self.m.CreateMock(plugins.ActionPlugin)
         fake_action.name = action_name
         arguments = self.m.CreateMock(list)
 
-        cli.load_action(action_name)\
+        command_line.load_action(action_name)\
             .AndReturn(fake_action)
 
-        cli.parse_options(fake_action, arguments)\
+        command_line.parse_options(fake_action, arguments)\
             .AndRaise( TypeError(test_data.option_type_error_message) )
 
         self.m.ReplayAll()
 
         self.assertRaises(
             SystemExit,
-            cli.dispatch, action_name, arguments
+            command_line.dispatch, action_name, arguments
         )
 
         self.m.VerifyAll()
@@ -477,7 +503,10 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_parse_options(self):
         """Main: Parse an action's options and return them"""
-        self.m.StubOutWithMock(cli, "retrieve_options")
+        command_line = self.wrap_subject(
+            cli.CommandLineInterface,
+            "parse_options"
+        )
 
         option_parser = self.m.CreateMock(optparse.OptionParser)
         self.m.StubOutWithMock(
@@ -495,7 +524,7 @@ class TestMain(BasicMocking, CLIMocking):
         arguments = ["--meuh", "arg1"]
         positional_arguments = ["arg1"]
 
-        cli.retrieve_options(option_parser, fake_action)\
+        command_line.retrieve_options(option_parser, fake_action)\
             .AndReturn(option_list)
 
         optparse.OptionParser(usage="%prog [options]")\
@@ -512,7 +541,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        result = cli.parse_options(fake_action, arguments)
+        result = command_line.parse_options(fake_action, arguments)
 
         self.m.VerifyAll()
 
@@ -523,6 +552,11 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_retrieve_options(self):
         """Main: Get a list of options from an action plugin."""
+        command_line = self.wrap_subject(
+            cli.CommandLineInterface,
+            "retrieve_options"
+        )
+
         fake_group = self.m.CreateMock(optparse.OptionGroup)
 
         self.m.StubOutWithMock(optparse, "OptionGroup", use_mock_anything=True)
@@ -558,7 +592,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        result = cli.retrieve_options(fake_option_parser, fake_action)
+        result = command_line.retrieve_options(fake_option_parser, fake_action)
 
         self.m.VerifyAll()
 
@@ -568,7 +602,6 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
 class TestCore(BasicMocking):
-
     """Tests for general code."""
 
     def test_Tomtom_constructor(self):
