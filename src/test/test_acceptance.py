@@ -380,8 +380,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             sys.stderr.getvalue()
         )
 
-    def test_help_on_base_level(self):
-        """Acceptance: Using "-h" or "--help" alone prints basic help."""
+    def verify_main_help(self, argument):
+        """Test that we actually get the main help."""
         # Remove stubs and reset mocks for dbus that the setUp method
         # constructed as there will be no dbus interaction.
         self.m.UnsetStubs()
@@ -433,7 +433,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        sys.argv = ["app_name", "-h"]
+        sys.argv = ["app_name", argument]
         tomtom_cli = cli.CommandLineInterface()
         self.assertRaises(
             SystemExit,
@@ -449,6 +449,14 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         )
 
         cli.__doc__ = old_docstring
+
+    def test_help_on_base_level(self):
+        """Acceptance: Using "-h" or "--help" alone prints basic help."""
+        self.verify_main_help("-h")
+
+    def test_help_action(self):
+        """Acceptance: "help" as an action name."""
+        self.verify_main_help("help")
 
     def test_filter_notes_with_templates(self):
         """Acceptance: Using "--with-templates" lists notes and templates."""
@@ -557,6 +565,17 @@ class AcceptanceTests(BasicMocking, CLIMocking):
                 "list"
             ],
             test_data.help_details_list
+        )
+
+    def test_help_pseudo_action_before_action_name(self):
+        """Acceptance: Using "-h" before an action displays detailed help."""
+        self.verify_help_text(
+            [
+                "app_name",
+                "help",
+                "version"
+            ],
+            test_data.help_details_version
         )
 
     def test_help_display_specific(self):

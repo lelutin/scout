@@ -36,8 +36,9 @@
 
 Tomtom is a command line interface to the Tomboy note taking application.
 
-Options depend on what action you are taking. To obtain details on options
-for a particular action, combine -h or --help and the action name.
+Options depend on what action you are taking. To obtain details on options for
+a particular action, combine one of "-h" or "--help" with the action name or
+use "help" before the action name.
 
 Here is a list of all the available actions:
 
@@ -285,10 +286,15 @@ class CommandLineInterface(object):
         # UTF-8 format from the command line.
         arguments = [arg.decode("utf-8") for arg in sys.argv[2:] ]
 
-        if action in ["-h", "--help"]:
+        if action in ["-h", "--help", "help"]:
             if sys.argv[2:]:
-                # Switch -h and action name and continue as normal
-                arguments = [sys.argv[2], action] + sys.argv[3:]
+                # Convert "help" into "-h" to fall into the same case.
+                second_argument = action
+                if action == "help":
+                    second_argument = "-h"
+
+                # Switch -h and action name and continue as normal.
+                arguments = [sys.argv[2], second_argument] + sys.argv[3:]
                 action = sys.argv[2]
             else:
                 # Use the script's docstring for the basic help message. Also

@@ -137,11 +137,11 @@ class TestMain(BasicMocking, CLIMocking):
             output_stream=sys.stderr
         )
 
-    def test_main_help(self):
-        """Main: using only -h prints help and list of actions."""
+    def verify_main_help(self, argument):
+        """Test that help exits and displays the main help."""
         command_line = self.wrap_subject(cli.CommandLineInterface, "main")
 
-        sys.argv = ["app_name", "-h"]
+        sys.argv = ["app_name", argument]
 
         command_line.action_short_summaries()\
             .AndReturn(test_data.module_descriptions)
@@ -162,13 +162,21 @@ class TestMain(BasicMocking, CLIMocking):
             sys.stdout.getvalue()
         )
 
-    def test_help_before_action(self):
-        """Main: -h before action gets switched to normal help call."""
+    def test_main_help(self):
+        """Main: using only -h prints help and list of actions."""
+        self.verify_main_help("-h")
+
+    def test_main_help_from_help_pseudo_action(self):
+        """Main: "help" pseudo-action alone should display main help."""
+        self.verify_main_help("help")
+
+    def verify_help_argument_reversing(self, argument):
+        """Test reversal of arguments and conversion of "help" to "-h"."""
         command_line = self.wrap_subject(cli.CommandLineInterface, "main")
 
-        sys.argv = ["app_name", "-h", "action"]
+        sys.argv = ["app_name", argument, "action"]
 
-        processed_arguments = [ sys.argv[0], sys.argv[2], sys.argv[1] ]
+        processed_arguments = [ sys.argv[0], sys.argv[2], "-h" ]
 
         command_line.dispatch(
             "action",
@@ -180,6 +188,14 @@ class TestMain(BasicMocking, CLIMocking):
         command_line.main()
 
         self.m.VerifyAll()
+
+    def test_help_before_action(self):
+        """Main: -h before action gets switched to normal help call."""
+        self.verify_help_argument_reversing("-h")
+
+    def test_help_pseudo_action_before_action(self):
+        """Main: "help" pseudo-action displays details about an action."""
+        self.verify_help_argument_reversing("help")
 
     def test_display_tomtom_version(self):
         """Main: -v option displays Tomtom's version and license information."""

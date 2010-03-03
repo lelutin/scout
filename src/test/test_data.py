@@ -348,8 +348,9 @@ main_help = \
 
 Tomtom is a command line interface to the Tomboy note taking application.
 
-Options depend on what action you are taking. To obtain details on options
-for a particular action, combine -h or --help and the action name.
+Options depend on what action you are taking. To obtain details on options for
+a particular action, combine one of "-h" or "--help" with the action name or
+use "help" before the action name.
 
 Here is a list of all the available actions:
 """
