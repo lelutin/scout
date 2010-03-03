@@ -339,11 +339,11 @@ tomboy_version_output = \
     """Tomtom version %s using Tomboy version 1.0.1""" % tomtom_version
 
 # Help text and errors occuring in the main script
-help_more_details = """For more details, use option -h"""
+help_more_details = """For more details, use one of "-h", "--help" or "help"."""
 
 main_help = \
 """Usage: app_name <action> [-h|--help] [options]
-       app_name (-h|--help) [action]
+       app_name (-h|--help|help) [action]
        app_name (-v|--version)
 
 Tomtom is a command line interface to the Tomboy note taking application.
@@ -415,11 +415,12 @@ Options:
   -h, --help  show this help message and exit"""
 
 too_few_arguments_error = \
+(os.linesep * 2).join([
 """Usage: app_name <action> [-h|--help] [options]
-       app_name (-h|--help) [action]
-       app_name (-v|--version)
-
-For more details, use option -h"""
+       app_name (-h|--help|help) [action]
+       app_name (-v|--version)""",
+help_more_details
+])
 
 unexistant_note_error = \
     """app_name: Error: Note named "unexistant" was not found."""

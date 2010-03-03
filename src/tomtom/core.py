@@ -80,10 +80,13 @@ class Tomtom(object):
                 "org.gnome.Tomboy.RemoteControl"
             )
         except dbus.DBusException, e:
-            raise ConnectionError(
-                """Could not establish connection with Tomboy. """ + \
-                """Is it running?: %s""" % (e, )
-            )
+            msg = os.linesep.join([
+                """Could not establish connection with Tomboy:""" + os.linesep,
+                """%s""" % (e, ),
+                """If you are not in an X session, did you forget to set """,
+                """the DISLAY environment variable?"""
+            ])
+            raise ConnectionError(msg)
 
     def get_notes(self, **kwargs):
         """Get a list of notes from Tomboy.

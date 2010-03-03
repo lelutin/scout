@@ -358,8 +358,13 @@ class TestMain(BasicMocking, CLIMocking):
         command_line.parse_options(fake_action, arguments)\
             .AndReturn( (options, positional_arguments) )
 
-        core.Tomtom()\
-            .AndReturn( fake_tomtom )
+        if exception_class == core.ConnectionError:
+            core.Tomtom()\
+                .AndRaise( exception_class(exception_argument) )
+            return (command_line, action_name, fake_action, arguments)
+        else:
+            core.Tomtom()\
+                .AndReturn( fake_tomtom )
 
         if exception_class:
             fake_action.perform_action(options, positional_arguments)\

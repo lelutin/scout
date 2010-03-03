@@ -175,16 +175,8 @@ class CommandLineInterface(object):
             print >> sys.stderr, e
             exit(ACTION_OPTION_TYPE_ERROR_RETURN_CODE)
 
-        action.tomboy_interface = core.Tomtom()
         try:
-            action.perform_action(options, positional_arguments)
-
-        except (SystemExit, KeyboardInterrupt):
-            # Let the application exit if it wants to, and KeyboardInterrupt is
-            # handled on an upper level so that interrupting execution with
-            # Ctrl-C always exits cleanly.
-            raise
-
+            action.tomboy_interface = core.Tomtom()
         except ConnectionError, e:
             print >> sys.stderr, "%s: Error: %s" % (
                 os.path.basename(sys.argv[0]),
@@ -192,12 +184,18 @@ class CommandLineInterface(object):
             )
             sys.exit(DBUS_CONNECTION_ERROR_RETURN_CODE)
 
+        try:
+            action.perform_action(options, positional_arguments)
+        except (SystemExit, KeyboardInterrupt):
+            # Let the application exit if it wants to, and KeyboardInterrupt is
+            # handled on an upper level so that interrupting execution with
+            # Ctrl-C always exits cleanly.
+            raise
         except NoteNotFound, e:
             msg = """%s: Error: Note named "%s" was not found."""
             error_map = ( os.path.basename( sys.argv[0] ), e )
             print >> sys.stderr, msg % error_map
             sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
-
         except:
             import traceback
 
