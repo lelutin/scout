@@ -59,6 +59,10 @@ class BasicMocking(unittest.TestCase):
         """Remove stubs so that they don't interfere with other tests."""
         super(BasicMocking, self).tearDown()
 
+        self.remove_mocks()
+
+    def remove_mocks(self):
+        """Remove stubs and reset mocks."""
         self.m.UnsetStubs()
         self.m.ResetAll()
 

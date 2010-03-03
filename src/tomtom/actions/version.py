@@ -77,10 +77,11 @@ class VersionAction(ActionPlugin):
             args -- A list composed of action and file names
 
         """
-        msg = """Tomtom version %s using Tomboy version %s"""
+        msg = """Tomtom version %s using %s version %s"""
         dbus_communicator = self.tomboy_interface.comm
         version_map = (
             tomtom_version,
+            self.tomboy_interface.application,
             dbus_communicator.Version()
         )
 

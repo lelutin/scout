@@ -12,15 +12,15 @@ setup(
     version = tomtom_version,
     author = "Gabriel Filion",
     author_email = "lelutin@gmail.com",
-    description = "A CLI interface to Tomboy via dbus",
+    description = "A CLI interface to Tomboy or Gnote via dbus",
     long_description = \
-        """Tomtom is an interface to Tomboy notes that uses dbus to """
+        """Tomtom is an interface to Tomboy notes or Gnote that uses dbus to """
         """communicate. It presents a command-line interface and """
         """tries to be as simple to use as possible. Different actions"""
-        """can be taken to interact with Tomboy. Actions are simple"""
+        """can be taken to interact with Tomboy or Gnote. Actions are simple"""
         """to create, making the application easily extensible.""",
     license = "BSD",
-    keywords = "cli tomboy note dbus",
+    keywords = "cli tomboy gnote note dbus",
     url = "http://github.com/lelutin/tomtom",
 
     # Package structure information

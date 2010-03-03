@@ -65,26 +65,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         """
         super(AcceptanceTests, self).setUp()
 
-        # Mock out the entire dbus interaction so that acceptance tests don't
-        # depend on external code.
-        self.old_SessionBus = dbus.SessionBus
-        self.old_Interface = dbus.Interface
-        dbus.SessionBus = self.m.CreateMockAnything()
-        dbus.Interface = self.m.CreateMockAnything()
-        session_bus = self.m.CreateMockAnything()
-        dbus_object = self.m.CreateMockAnything()
-        self.dbus_interface = self.m.CreateMockAnything()
-
-        dbus.SessionBus()\
-            .AndReturn(session_bus)
-        session_bus.get_object(
-            "org.gnome.Tomboy",
-            "/org/gnome/Tomboy/RemoteControl"
-        ).AndReturn(dbus_object)
-        dbus.Interface(
-            dbus_object,
-            "org.gnome.Tomboy.RemoteControl"
-        ).AndReturn(self.dbus_interface)
+        # By default, mock out Tomboy interaction.
+        self.mock_out_dbus("Tomboy")
 
     def tearDown(self):
         """Unit test breakdown.
@@ -97,6 +79,27 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         dbus.SessionBus = self.old_SessionBus
         dbus.Interface = self.old_Interface
+
+    def mock_out_dbus(self, application):
+        """Mock out dbus interaction with the specified application."""
+        self.old_SessionBus = dbus.SessionBus
+        self.old_Interface = dbus.Interface
+        dbus.SessionBus = self.m.CreateMockAnything()
+        dbus.Interface = self.m.CreateMockAnything()
+        session_bus = self.m.CreateMockAnything()
+        dbus_object = self.m.CreateMockAnything()
+        self.dbus_interface = self.m.CreateMockAnything()
+
+        dbus.SessionBus()\
+            .AndReturn(session_bus)
+        session_bus.get_object(
+            "org.gnome.%s" % application,
+            "/org/gnome/%s/RemoteControl" % application
+        ).AndReturn(dbus_object)
+        dbus.Interface(
+            dbus_object,
+            "org.gnome.%s.RemoteControl" % application
+        ).AndReturn(self.dbus_interface)
 
     def mock_out_listing(self, notes):
         """Create mocks for note listing via dbus.
@@ -135,8 +138,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_no_argument(self):
         """Acceptance: tomtom called without arguments must print usage."""
         # No dbus interaction for this test
-        self.m.ResetAll()
-        self.m.UnsetStubs()
+        self.remove_mocks()
 
         sys.argv = ["app_name", ]
         old_docstring = cli.__doc__
@@ -173,8 +175,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_unknown_action(self):
         """Acceptance: Giving an unknown action name must print an error."""
         # No dbus interaction for this test
-        self.m.ResetAll()
-        self.m.UnsetStubs()
+        self.remove_mocks()
 
         self.m.ReplayAll()
 
@@ -384,8 +385,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         """Test that we actually get the main help."""
         # Remove stubs and reset mocks for dbus that the setUp method
         # constructed as there will be no dbus interaction.
-        self.m.UnsetStubs()
-        self.m.ResetAll()
+        self.remove_mocks()
 
         self.m.StubOutWithMock(pkg_resources, "iter_entry_points")
 
@@ -536,8 +536,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         """
         # No dbus interaction should occur if we get a help text.
-        self.m.ResetAll()
-        self.m.UnsetStubs()
+        self.remove_mocks()
 
         sys.argv = args
 
@@ -626,7 +625,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            test_data.tomboy_version_output + os.linesep,
+            test_data.tomboy_version_output % "Tomboy" + os.linesep,
             sys.stdout.getvalue()
         )
 
@@ -639,4 +638,28 @@ class AcceptanceTests(BasicMocking, CLIMocking):
                 "--help"
             ],
             test_data.help_details_version
+        )
+
+    def test_list_using_gnote(self):
+        """Acceptance: Specifying --gnote connects to Gnote."""
+        # Reset stubs and mocks. We need to mock out dbus differently.
+        self.remove_mocks()
+
+        self.mock_out_dbus("Gnote")
+
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        self.mock_out_listing(list_of_notes[:10])
+
+        self.m.ReplayAll()
+
+        sys.argv = ["unused_prog_name", "list", "-n", "10", "--gnote"]
+        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli.main()
+
+        self.m.VerifyAll()
+
+        self.assertEquals(
+            test_data.expected_list + os.linesep,
+            sys.stdout.getvalue()
         )

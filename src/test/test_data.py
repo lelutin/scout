@@ -336,7 +336,8 @@ def full_list_of_notes(mock_factory):
 
 # This value is the output of the "version" action
 tomboy_version_output = \
-    """Tomtom version %s using Tomboy version 1.0.1""" % tomtom_version
+    """Tomtom version %s """ % tomtom_version + \
+    """using %s version 1.0.1"""
 
 # Help text and errors occuring in the main script
 help_more_details = """For more details, use one of "-h", "--help" or "help"."""
@@ -346,7 +347,8 @@ main_help = \
        app_name (-h|--help|help) [action]
        app_name (-v|--version)
 
-Tomtom is a command line interface to the Tomboy note taking application.
+Tomtom is a command line interface to the Tomboy note taking application. It
+also supports Gnote.
 
 Options depend on what action you are taking. To obtain details on options for
 a particular action, combine one of "-h" or "--help" with the action name or
@@ -360,6 +362,7 @@ help_details_list = \
 
 Options:
   -h, --help          show this help message and exit
+  --gnote             Make tomtom connect to Gnote via DBus instead of Tomboy.
   -n MAX_NOTES        Limit the number of notes listed.
 
   Filtering:
@@ -382,7 +385,8 @@ Options:
 help_details_display = """Usage: app_name display [-h] [note_name ...]
 
 Options:
-  -h, --help  show this help message and exit"""
+  -h, --help  show this help message and exit
+  --gnote     Make tomtom connect to Gnote via DBus instead of Tomboy."""
 
 help_details_search = \
 """Usage: app_name search -h
@@ -390,6 +394,7 @@ help_details_search = \
 
 Options:
   -h, --help          show this help message and exit
+  --gnote             Make tomtom connect to Gnote via DBus instead of Tomboy.
 
   Filtering:
     Filter notes by different criteria.
@@ -412,7 +417,8 @@ help_details_version = \
 """Usage: app_name version [-h]
 
 Options:
-  -h, --help  show this help message and exit"""
+  -h, --help  show this help message and exit
+  --gnote     Make tomtom connect to Gnote via DBus instead of Tomboy."""
 
 too_few_arguments_error = \
 (os.linesep * 2).join([

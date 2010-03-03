@@ -34,7 +34,8 @@
        %(tomtom)s (-h|--help|help) [action]
        %(tomtom)s (-v|--version)
 
-Tomtom is a command line interface to the Tomboy note taking application.
+Tomtom is a command line interface to the Tomboy note taking application. It
+also supports Gnote.
 
 Options depend on what action you are taking. To obtain details on options for
 a particular action, combine one of "-h" or "--help" with the action name or
@@ -92,7 +93,7 @@ class CommandLineInterface(object):
         return action_class[0]()
 
     def retrieve_options(self, parser, action):
-        """Get a list of options from an action and append default options.
+        """Get a list of options from an action and prepend default options.
 
         Get an action's list of options and groups. Flat out options from the
         special "None" group and instantiate optparse.OptionGroup objects out of
@@ -103,7 +104,7 @@ class CommandLineInterface(object):
             action -- A subclass of tomtom.plugins.ActionPlugin
 
         """
-        options = []
+        options = self.default_options()
 
         # Retrieve the special "non-group" group and remove it from the list
         no_group_list = [g for g in action.option_groups if g.name is None]
@@ -126,6 +127,15 @@ class CommandLineInterface(object):
             options.append(group_object)
 
         return options
+
+    def default_options(self):
+        """Return a list of options common to all actions."""
+        return [
+            optparse.Option(
+                "--gnote", dest="gnote", action="store_true",
+                help="Make tomtom connect to Gnote via DBus instead of Tomboy."
+            )
+        ]
 
     def parse_options(self, action, arguments):
         """Parse the command line arguments before launching an action.
@@ -175,8 +185,13 @@ class CommandLineInterface(object):
             print >> sys.stderr, e
             exit(ACTION_OPTION_TYPE_ERROR_RETURN_CODE)
 
+        # By default, connect to Tomboy, if --gnote is used, connect to Gnote.
+        application = "Tomboy"
+        if options.gnote:
+            application = "Gnote"
+
         try:
-            action.tomboy_interface = core.Tomtom()
+            action.tomboy_interface = core.Tomtom(application)
         except ConnectionError, e:
             print >> sys.stderr, "%s: Error: %s" % (
                 os.path.basename(sys.argv[0]),

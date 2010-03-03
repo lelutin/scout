@@ -30,15 +30,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ###############################################################################
-"""Utility classes for communicating with Tomboy over dbus.
+"""Utility classes for communicating with Tomboy or Gnote over dbus.
 
 Exceptions:
     ConnectionError -- A dbus connection problem occured.
     NoteNotFound    -- A note searched by name was not found.
 
 Classes:
-    Tomtom             -- Takes user input and calls the appropriate methods.
-    TomboyNote         -- Object representation of a Tomboy note.
+    Tomtom             -- Communication object to Tomboy or Gnote
+    TomboyNote         -- Object representation of a Tomboy or Gnote note.
 
 """
 import dbus
@@ -51,7 +51,7 @@ import os
 tomtom_version = "0.2"
 
 class ConnectionError(Exception):
-    """Simple exception raised when contacting Tomboy via dbus fails."""
+    """Simple exception raised dbus connection fails."""
     pass
 
 class NoteNotFound(Exception):
@@ -61,40 +61,49 @@ class NoteNotFound(Exception):
 class Tomtom(object):
     """Application class for Tomtom.
 
-    Returns listings, note content or search results. Tomtom is the application
-    entry point. It receives user input and calls the approriate methods to do
-    the requested work.
+    This class holds the dbus contact object and the methods to fetch
+    information from it. The most useful methods are get_notes and
+    get_note_contents which get a list of notes according to a series of
+    criteria, and get the contents of one note, respectively.
 
     """
-    def __init__(self):
-        """Create a link to the Tomboy application upon instanciation."""
-        super(Tomtom, self).__init__()
+    def __init__(self, application):
+        """Create a link to Tomboy or Gnote upon instantiation.
+
+        Arguments:
+            application -- string name of either Tomboy or Gnote.
+
+        """
+        super(Tomtom, self).__init__(application)
+        self.application = application
+
         try:
             tb_bus = dbus.SessionBus()
             tb_object = tb_bus.get_object(
-                "org.gnome.Tomboy",
-                "/org/gnome/Tomboy/RemoteControl"
+                "org.gnome.%s" % application,
+                "/org/gnome/%s/RemoteControl" % application
             )
             self.comm = dbus.Interface(
                 tb_object,
-                "org.gnome.Tomboy.RemoteControl"
+                "org.gnome.%s.RemoteControl" % application
             )
         except dbus.DBusException, e:
             msg = os.linesep.join([
-                """Could not establish connection with Tomboy:""" + os.linesep,
-                """%s""" % (e, ),
+                """Could not establish connection with %s""" + os.linesep,
+                """%s""",
                 """If you are not in an X session, did you forget to set """,
                 """the DISLAY environment variable?"""
             ])
-            raise ConnectionError(msg)
+            msg_map = (application, e)
+            raise ConnectionError(msg % msg_map)
 
     def get_notes(self, **kwargs):
-        """Get a list of notes from Tomboy.
+        """Get a list of notes from the application.
 
-        This function is the single point of entry to get a list of notes that
-        will match the given selection options. The first step is to build a
-        list of TomboyNote objects and the last step is to filter out this list
-        according to the other options.
+        This function gets a list of notes that match the given selection
+        options. Notes are automatically filtered. Keyword arguments used in
+        the note building part are "names" and  "count_limit". The rest of the
+        arguments will be useful to the filtering method.
 
         Arguments:
             **kwargs -- Map of arguments used for getting and filtering notes.
@@ -180,8 +189,8 @@ class Tomtom(object):
     def build_note_list(self, **kwargs):
         """Find notes and build a list of TomboyNote objects.
 
-        This method gets a list of notes from Tomboy and converts them to
-        TomboyNote objects. It then returns the notes in a list.
+        This method gets a list of notes from the application and converts them
+        to TomboyNote objects. It then returns the notes in a list.
 
         """
         names = kwargs.pop("names", [])
@@ -216,9 +225,8 @@ class Tomtom(object):
         """Filter a list of notes according to some criteria.
 
         Filter a list of TomboyNote objects according to a list of filtering
-        options. "count_limit" can limit the number of notes returned. By
-        default, it gets all notes. "names" will filter out any notes but those
-        whose names are in the list.
+        options. "names" will filter out any notes but those whose names are in
+        the list.
 
         Arguments:
             notes -- list of note objects
@@ -242,7 +250,7 @@ class Tomtom(object):
         return notes
 
 class TomboyNote(object):
-    """Object corresponding to a Tomboy note coming from dbus."""
+    """Object corresponding to a Tomboy or Gnote note coming from dbus."""
     def __init__(self, uri, title="", date=dbus.Int64(), tags=[]):
         """Constructor.
 

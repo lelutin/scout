@@ -338,7 +338,8 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-    def mock_out_dispatch(self, exception_class, exception_argument):
+    def mock_out_dispatch(self, exception_class, exception_argument,
+            app_name="Tomboy"):
         """Mock out calls in dispatch that we go through in all cases."""
         command_line = self.wrap_subject(cli.CommandLineInterface, "dispatch")
 
@@ -351,6 +352,9 @@ class TestMain(BasicMocking, CLIMocking):
         arguments = self.m.CreateMock(list)
         positional_arguments = self.m.CreateMock(list)
         options = self.m.CreateMock(optparse.Values)
+        options.gnote = False
+        if app_name == "Gnote":
+            options.gnote = True
 
         command_line.load_action(action_name)\
             .AndReturn(fake_action)
@@ -359,11 +363,11 @@ class TestMain(BasicMocking, CLIMocking):
             .AndReturn( (options, positional_arguments) )
 
         if exception_class == core.ConnectionError:
-            core.Tomtom()\
+            core.Tomtom(app_name)\
                 .AndRaise( exception_class(exception_argument) )
             return (command_line, action_name, fake_action, arguments)
         else:
-            core.Tomtom()\
+            core.Tomtom(app_name)\
                 .AndReturn( fake_tomtom )
 
         if exception_class:
@@ -379,6 +383,17 @@ class TestMain(BasicMocking, CLIMocking):
         """Main: Action calls are dispatched to the right action."""
         command_line, action_name, fake_action, arguments = \
             self.mock_out_dispatch(None, None)
+
+        self.m.ReplayAll()
+
+        command_line.dispatch(action_name, arguments)
+
+        self.m.VerifyAll()
+
+    def test_dispatch_with_gnote(self):
+        """Main: Dispatch instantiates Tomtom for Gnote."""
+        command_line, action_name, fake_action, arguments = \
+            self.mock_out_dispatch(None, None, "Gnote")
 
         self.m.ReplayAll()
 
@@ -530,9 +545,7 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
         option_parser = self.m.CreateMock(optparse.OptionParser)
-        self.m.StubOutWithMock(
-            optparse, "OptionParser", use_mock_anything=True
-        )
+        self.m.StubOutWithMock(optparse, "OptionParser", use_mock_anything=True)
 
         fake_action = self.m.CreateMock(plugins.ActionPlugin)
         fake_action.usage = "%prog [options]"
@@ -600,6 +613,9 @@ class TestMain(BasicMocking, CLIMocking):
 
         fake_action.option_groups = [group1, group2]
 
+        command_line.default_options()\
+            .AndReturn([])
+
         optparse.OptionGroup(
             fake_option_parser,
             "Group2",
@@ -622,6 +638,34 @@ class TestMain(BasicMocking, CLIMocking):
             result
         )
 
+    def test_default_options(self):
+        """Main: List of default options."""
+        command_line = self.wrap_subject(
+            cli.CommandLineInterface,
+            "default_options"
+        )
+        self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
+
+        gnote_option = self.m.CreateMock(optparse.Option)
+
+        options = [
+            gnote_option,
+        ]
+
+        optparse.Option(
+            "--gnote", dest="gnote", action="store_true",
+            help="Make tomtom connect to Gnote via DBus instead of Tomboy."
+        ).AndReturn(gnote_option)
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            options,
+            command_line.default_options()
+        )
+
+        self.m.VerifyAll()
+
 class TestCore(BasicMocking):
     """Tests for general code."""
 
@@ -641,20 +685,23 @@ class TestCore(BasicMocking):
         dbus.SessionBus()\
             .AndReturn(session_bus)
         session_bus.get_object(
-            "org.gnome.Tomboy",
-            "/org/gnome/Tomboy/RemoteControl"
+            "org.gnome.the_application",
+            "/org/gnome/the_application/RemoteControl"
         ).AndReturn(dbus_object)
         dbus.Interface(
             dbus_object,
-            "org.gnome.Tomboy.RemoteControl"
+            "org.gnome.the_application.RemoteControl"
         ).AndReturn(dbus_interface)
 
         self.m.ReplayAll()
 
-        tt.__init__()
-        self.assertEqual( dbus_interface, tt.comm )
+        tt.__init__("the_application")
 
         self.m.VerifyAll()
+
+        self.assertEqual( dbus_interface, tt.comm )
+        self.assertEqual( "the_application", tt.application )
+
         dbus.SessionBus = old_SessionBus
         dbus.Interface = old_Interface
 
@@ -1038,7 +1085,7 @@ class TestCore(BasicMocking):
 
         self.m.ReplayAll()
 
-        self.assertRaises(core.ConnectionError, tt.__init__)
+        self.assertRaises(core.ConnectionError, tt.__init__, "Tomboy")
 
         self.m.VerifyAll()
 
@@ -1500,6 +1547,7 @@ class TestVersion(BasicMocking, CLIMocking):
         vrsn_ap = self.wrap_subject(version.VersionAction, "perform_action")
         vrsn_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
         vrsn_ap.tomboy_interface.comm = self.m.CreateMockAnything()
+        vrsn_ap.tomboy_interface.application = "some_app"
 
         fake_options = self.m.CreateMock(optparse.Values)
 
@@ -1513,7 +1561,7 @@ class TestVersion(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            test_data.tomboy_version_output + os.linesep,
+            test_data.tomboy_version_output % "some_app" + os.linesep,
             sys.stdout.getvalue()
         )
 
