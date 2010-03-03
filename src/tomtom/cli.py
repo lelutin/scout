@@ -31,7 +31,7 @@
 #
 ###############################################################################
 """Usage: %(tomtom)s <action> [-h|--help] [options]
-       %(tomtom)s (-h|--help) [action]
+       %(tomtom)s (-h|--help|help) [action]
        %(tomtom)s (-v|--version)
 
 Tomtom is a command line interface to the Tomboy note taking application.
@@ -275,7 +275,7 @@ class CommandLineInterface(object):
             # Use the docstring's first [significant] lines to display usage
             usage_output =  (os.linesep * 2).join([
                 os.linesep.join( __doc__.splitlines()[:3] ) % app_name_map,
-                "For more details, use option -h"
+                """For more details, use one of "-h", "--help" or "help"."""
             ])
             print >> sys.stderr, usage_output
             sys.exit(TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE)
