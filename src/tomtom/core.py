@@ -109,11 +109,11 @@ class Tomtom(object):
             **kwargs -- Map of arguments used for getting and filtering notes.
 
         """
-        # Consumes "names" and "count_limit" arguments
+        # Consumes "count_limit" and uses "names".
         notes = self.build_note_list(**kwargs)
-        kwargs.pop("names", [])
         kwargs.pop("count_limit", 0)
 
+        # "names" is still needed for filter_notes
         return self.filter_notes(notes, **kwargs)
 
     def get_note_content(self, note):
