@@ -50,10 +50,12 @@ Contributing
 
 All contributions to the code are welcome. Contributed code should come with
 unit tests for added functions and acceptance tests for command line interface
-modifications. The main repository is on
-[http://github.com/lelutin/tomtom](GitHub). Feel free to either fork the
+modifications. The main repository is on [GitHub]. Feel free to either fork the
 repository and send pull requests, or simply to generate patches and send them
 by e-mail to lelutin@gmail.com.
+
+Tests
+-----
 
 To be able to run the unit or acceptance tests, you will need to have pymox
 and nose installed. On Debian or Ubuntu, use the following command to install
@@ -67,22 +69,32 @@ like following:
     tomtom$ python setup.py test
 
 The second method, being the fastest and most flexible one, is by calling
-nose's nosetests script in the base directory, like the following:
+nose's nosetests script. A configuration file is included in the base directory
+to make running the unit tests easier. From the base directory:
 
-    tomtom$ nostests src/test/test_{acceptance,application}.py
+    tomtom$ nostests -c nose.cfg
 
-One useful trick with git to make running tests with nosetests and coverage is
-to set an alias in the following manner (make sure to use single quotes, the !
-character is interpreted by bash if it is inside double quotes):
+See the configuration file for some configuration lines that can be uncommented.
 
-    $ git config --global alias.test '!nosetests --with-coverage --cover-erase'
+One useful trick with git to make running tests easier is to set an alias in
+the following manner (make sure to use single quotes, the !  and $ characters
+are interpreted by bash if it is inside double quotes):
+
+    $ git config --global alias.test '!nosetests -c $(git rev-parse --show-toplevel)/nose.cfg'
 
 You can then run tests in the following manner:
 
-    $ git test --cover-package=tomtom src/test/test_application.py
+    $ git test
+
+And finally, to rerun only the tests that failed during the last run, you can
+use the following:
+
+    $ git test --failed
 
 License
 =======
 
 Tomtom is licensed under the BSD license as mentioned in all source code files.
 A copy of the license should be available with the source code.
+
+[Github]: http://github.com/lelutin/tomtom
