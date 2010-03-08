@@ -59,7 +59,6 @@ occurence by citing the note's name, the line number of the occurrence and
 the content of the line on which the text is appearing.
 
 """
-import optparse
 import sys
 import os
 import re
@@ -67,16 +66,17 @@ import re
 from tomtom import plugins
 from tomtom.cli import TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE
 
-desc = __doc__.splitlines()[0]
+DESC = __doc__.splitlines()[0]
 
 class SearchAction(plugins.ActionPlugin):
     """Plugin object for searching text in notes"""
-    short_description = desc
+    short_description = DESC
     usage = """%prog search -h""" + os.linesep + \
         """       %prog search [-b <book name>[,...]|-t <tag>[,...]|""" + \
         """--with-templates] <search_pattern> [note_name ...]"""
 
     def init_options(self):
+        """Set action's options."""
         self.add_option_library( plugins.FilteringGroup("Search") )
 
     def perform_action(self, options, positional):

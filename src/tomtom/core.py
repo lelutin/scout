@@ -44,11 +44,10 @@ Classes:
 import dbus
 import datetime
 import time
-import sys
 import os
 
 # This must be modified with all version bumps!
-tomtom_version = "0.2"
+TOMTOM_VERSION = "0.2"
 
 class ConnectionError(Exception):
     """Simple exception raised dbus connection fails."""
@@ -87,14 +86,14 @@ class Tomtom(object):
                 tb_object,
                 "org.gnome.%s.RemoteControl" % application
             )
-        except dbus.DBusException, e:
+        except dbus.DBusException, exc:
             msg = os.linesep.join([
                 """Could not establish connection with %s""" + os.linesep,
                 """%s""",
                 """If you are not in an X session, did you forget to set """,
                 """the DISLAY environment variable?"""
             ])
-            msg_map = (application, e)
+            msg_map = (application, exc)
             raise ConnectionError(msg % msg_map)
 
     def get_notes(self, **kwargs):

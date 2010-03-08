@@ -59,18 +59,17 @@ with a special separator line. If one of the specified notes does not exist, it
 will give an error message on the standard error stream.
 
 """
-import optparse
 import sys
 import os
 
 from tomtom.plugins import ActionPlugin
 from tomtom.cli import TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE
 
-desc = __doc__.splitlines()[0]
+DESC = __doc__.splitlines()[0]
 
 class DisplayAction(ActionPlugin):
     """Plugin object for displaying notes' contents"""
-    short_description = desc
+    short_description = DESC
     usage = "%prog display [-h] [note_name ...]"
     note_separator = "=========================="
 

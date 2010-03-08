@@ -68,15 +68,15 @@ class TestMain(BasicMocking, CLIMocking):
     """
     def test_KeyboardInterrupt_is_handled(self):
         """Main: KeyboardInterrupt doesn't come out of the application."""
-        cli_mock = self.m.CreateMock(cli.CommandLineInterface)
+        cli_mock = self.m.CreateMock(cli.CommandLine)
 
         self.m.StubOutWithMock(
             cli,
-            "CommandLineInterface",
+            "CommandLine",
             use_mock_anything=True
         )
 
-        cli.CommandLineInterface()\
+        cli.CommandLine()\
             .AndReturn( cli_mock )
 
         cli_mock.main().AndRaise(KeyboardInterrupt)
@@ -95,7 +95,7 @@ class TestMain(BasicMocking, CLIMocking):
     def test_arguments_converted_to_unicode(self):
         """Main: Arguments to action are converted to unicode objects."""
         """This is the default main() behaviour."""
-        command_line = self.wrap_subject(cli.CommandLineInterface, "main")
+        command_line = self.wrap_subject(cli.CommandLine, "main")
 
         arguments = ["arg1", "arg2"]
         sys.argv = ["app_name", "action"] + arguments
@@ -111,7 +111,7 @@ class TestMain(BasicMocking, CLIMocking):
     def verify_exit_from_main(self,
             arguments, expected_text, output_stream):
 
-        command_line = self.wrap_subject(cli.CommandLineInterface, "main")
+        command_line = self.wrap_subject(cli.CommandLine, "main")
 
         sys.argv = ["app_name"] + arguments
 
@@ -139,7 +139,7 @@ class TestMain(BasicMocking, CLIMocking):
 
     def verify_main_help(self, argument):
         """Test that help exits and displays the main help."""
-        command_line = self.wrap_subject(cli.CommandLineInterface, "main")
+        command_line = self.wrap_subject(cli.CommandLine, "main")
 
         sys.argv = ["app_name", argument]
 
@@ -172,7 +172,7 @@ class TestMain(BasicMocking, CLIMocking):
 
     def verify_help_argument_reversing(self, argument):
         """Test reversal of arguments and conversion of "help" to "-h"."""
-        command_line = self.wrap_subject(cli.CommandLineInterface, "main")
+        command_line = self.wrap_subject(cli.CommandLine, "main")
 
         sys.argv = ["app_name", argument, "action"]
 
@@ -208,7 +208,7 @@ class TestMain(BasicMocking, CLIMocking):
     def test_list_of_actions(self):
         """Main: list_of_actions returns classes of action plugins."""
         command_line = self.wrap_subject(
-            cli.CommandLineInterface,
+            cli.CommandLine,
             "list_of_actions"
         )
         self.m.StubOutWithMock(pkg_resources, "iter_entry_points")
@@ -255,7 +255,7 @@ class TestMain(BasicMocking, CLIMocking):
     def test_load_action(self):
         """Main: Initialize an action plugin instance."""
         command_line = self.wrap_subject(
-            cli.CommandLineInterface,
+            cli.CommandLine,
             "load_action"
         )
 
@@ -284,7 +284,7 @@ class TestMain(BasicMocking, CLIMocking):
     def test_load_unknown_action(self):
         """Main: Requested action name is invalid."""
         command_line = self.wrap_subject(
-            cli.CommandLineInterface,
+            cli.CommandLine,
             "load_action"
         )
 
@@ -315,7 +315,7 @@ class TestMain(BasicMocking, CLIMocking):
     def test_action_short_summaries(self):
         """Main: Extract short summaries from action plugins."""
         command_line = self.wrap_subject(
-            cli.CommandLineInterface,
+            cli.CommandLine,
             "action_short_summaries"
         )
 
@@ -341,7 +341,7 @@ class TestMain(BasicMocking, CLIMocking):
     def mock_out_dispatch(self, exception_class, exception_argument,
             app_name="Tomboy"):
         """Mock out calls in dispatch that we go through in all cases."""
-        command_line = self.wrap_subject(cli.CommandLineInterface, "dispatch")
+        command_line = self.wrap_subject(cli.CommandLine, "dispatch")
 
         fake_tomtom = self.m.CreateMock(core.Tomtom)
 
@@ -510,7 +510,7 @@ class TestMain(BasicMocking, CLIMocking):
 
     def test_dispatch_handles_option_type_exceptions(self):
         """Main: dispatch prints an error if an option is of the wrong type."""
-        command_line = self.wrap_subject(cli.CommandLineInterface, "dispatch")
+        command_line = self.wrap_subject(cli.CommandLine, "dispatch")
 
         action_name = "some_action"
         fake_action = self.m.CreateMock(plugins.ActionPlugin)
@@ -540,7 +540,7 @@ class TestMain(BasicMocking, CLIMocking):
     def test_parse_options(self):
         """Main: Parse an action's options and return them"""
         command_line = self.wrap_subject(
-            cli.CommandLineInterface,
+            cli.CommandLine,
             "parse_options"
         )
 
@@ -587,7 +587,7 @@ class TestMain(BasicMocking, CLIMocking):
     def test_retrieve_options(self):
         """Main: Get a list of options from an action plugin."""
         command_line = self.wrap_subject(
-            cli.CommandLineInterface,
+            cli.CommandLine,
             "retrieve_options"
         )
 
@@ -641,7 +641,7 @@ class TestMain(BasicMocking, CLIMocking):
     def test_default_options(self):
         """Main: List of default options."""
         command_line = self.wrap_subject(
-            cli.CommandLineInterface,
+            cli.CommandLine,
             "default_options"
         )
         self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)

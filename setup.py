@@ -4,12 +4,12 @@ use_setuptools()
 
 from setuptools import setup, find_packages
 
-from src.tomtom.core import tomtom_version
+from src.tomtom.core import TOMTOM_VERSION
 
 setup(
     # General information
     name = "Tomtom",
-    version = tomtom_version,
+    version = TOMTOM_VERSION,
     author = "Gabriel Filion",
     author_email = "lelutin@gmail.com",
     description = "A CLI interface to Tomboy or Gnote via dbus",

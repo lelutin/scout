@@ -56,16 +56,14 @@ This is the "version" action. Its role is very simple: to display Tomboy's
 version number. It uses dbus to get the information from Tomboy.
 
 """
-import optparse
-
-from tomtom.core import tomtom_version
+from tomtom.core import TOMTOM_VERSION
 from tomtom.plugins import ActionPlugin
 
-desc = __doc__.splitlines()[0]
+DESC = __doc__.splitlines()[0]
 
 class VersionAction(ActionPlugin):
     """Action plugin that prints out Tomboy's version information."""
-    short_description = desc
+    short_description = DESC
     usage = "%prog version [-h]"
 
     def perform_action(self, options, positional):
@@ -80,7 +78,7 @@ class VersionAction(ActionPlugin):
         msg = """Tomtom version %s using %s version %s"""
         dbus_communicator = self.tomboy_interface.comm
         version_map = (
-            tomtom_version,
+            TOMTOM_VERSION,
             self.tomboy_interface.application,
             dbus_communicator.Version()
         )

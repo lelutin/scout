@@ -30,6 +30,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ###############################################################################
+"""Plugin library for Tomtom.
+
+This module defines base code for Tomtom plugins. The actions use the classes
+present here to simplify their work.
+
+Classes:
+    ActionPlugin -- base class for plugins. defines basic functionality
+    OptionGroup -- a group containing options, a name and a description.
+    FilteringGroup -- OptionGroup library. defines common options for filtering.
+
+"""
 import optparse
 
 class ActionPlugin(object):
@@ -221,7 +232,7 @@ class FilteringGroup(OptionGroup):
 
         self.add_options(options)
 
-    def book_callback(self, option, opt_string, value, parser):
+    def book_callback(self, dummy1, dummy2, value, parser):
         """Add a book to the requested tags to filter by."""
         tags = parser.values.tags
 

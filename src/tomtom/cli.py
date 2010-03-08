@@ -50,7 +50,7 @@ import pkg_resources
 import optparse
 
 from tomtom import core
-from tomtom.core import tomtom_version, NoteNotFound, ConnectionError
+from tomtom.core import TOMTOM_VERSION, NoteNotFound, ConnectionError
 from tomtom.plugins import ActionPlugin
 
 # Return codes sent on errors.
@@ -63,7 +63,7 @@ ACTION_OPTION_TYPE_ERROR_RETURN_CODE = 103
 TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE = 200
 NOTE_NOT_FOUND_RETURN_CODE   = 201
 
-class CommandLineInterface(object):
+class CommandLine(object):
     """Main entry point for Tomtom."""
 
     def load_action(self, action_name):
@@ -181,8 +181,8 @@ class CommandLineInterface(object):
                 action,
                 arguments
             )
-        except TypeError, e:
-            print >> sys.stderr, e
+        except TypeError, exc:
+            print >> sys.stderr, exc
             exit(ACTION_OPTION_TYPE_ERROR_RETURN_CODE)
 
         # By default, connect to Tomboy, if --gnote is used, connect to Gnote.
@@ -192,10 +192,10 @@ class CommandLineInterface(object):
 
         try:
             action.tomboy_interface = core.Tomtom(application)
-        except ConnectionError, e:
+        except ConnectionError, exc:
             print >> sys.stderr, "%s: Error: %s" % (
                 os.path.basename(sys.argv[0]),
-                e
+                exc
             )
             sys.exit(DBUS_CONNECTION_ERROR_RETURN_CODE)
 
@@ -206,9 +206,9 @@ class CommandLineInterface(object):
             # handled on an upper level so that interrupting execution with
             # Ctrl-C always exits cleanly.
             raise
-        except NoteNotFound, e:
+        except NoteNotFound, exc:
             msg = """%s: Error: Note named "%s" was not found."""
-            error_map = ( os.path.basename( sys.argv[0] ), e )
+            error_map = ( os.path.basename( sys.argv[0] ), exc )
             print >> sys.stderr, msg % error_map
             sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
         except:
@@ -256,7 +256,7 @@ class CommandLineInterface(object):
 
         # Get longest name's length. We'll use this value to align descriptions.
         pad_up_to = reduce(
-            lambda x,y : max(x, y),
+            max,
             [len(a.name) for a in actions]
         )
 
@@ -322,7 +322,7 @@ class CommandLineInterface(object):
 
         elif action in ["-v", "--version"]:
             version_info =  os.linesep.join([
-                """Tomtom version %s""" % tomtom_version,
+                """Tomtom version %s""" % TOMTOM_VERSION,
                 """Copyright © 2010 Gabriel Filion""",
                 """License: BSD""",
                 """This is free software: you are free to change and """
@@ -337,7 +337,7 @@ class CommandLineInterface(object):
 
 def exception_wrapped_main():
     """Wrap around main function to handle general exceptions."""
-    tomtom_cli = CommandLineInterface()
+    tomtom_cli = CommandLine()
 
     try:
         tomtom_cli.main()

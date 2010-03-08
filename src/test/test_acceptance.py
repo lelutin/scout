@@ -153,7 +153,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         self.assertRaises(
             SystemExit,
             tomtom_cli.main
@@ -180,7 +180,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         sys.argv = ["app_name", "unexistant_action"]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         self.assertRaises( SystemExit, tomtom_cli.main )
 
         self.m.VerifyAll()
@@ -199,7 +199,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "list", "-n", "10"]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 
         self.m.VerifyAll()
@@ -218,7 +218,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "list"]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 
         self.m.VerifyAll()
@@ -261,7 +261,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "display", "TODO-list", "python-work"]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 
         self.m.VerifyAll()
@@ -279,7 +279,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         sys.argv = ["app_name", "display", "unexistant"]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         self.assertRaises(SystemExit, tomtom_cli.main)
 
         self.assertEquals(
@@ -295,7 +295,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         self.assertRaises(
             SystemExit,
             tomtom_cli.main
@@ -322,7 +322,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "search", "john doe"]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 
         self.m.VerifyAll()
@@ -352,7 +352,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         sys.argv = ["unused_prog_name", "search", "python"] + \
                 [n.title for n in requested_notes]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 
         self.m.VerifyAll()
@@ -368,7 +368,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         self.assertRaises(
             SystemExit,
             tomtom_cli.main
@@ -434,7 +434,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         sys.argv = ["app_name", argument]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         self.assertRaises(
             SystemExit,
             tomtom_cli.main
@@ -470,7 +470,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             "app_name", "list",
             "--with-templates"
         ]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 
         self.m.VerifyAll()
@@ -495,7 +495,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             "-t", "system:notebook:pim",
             "-t", "projects"
         ]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 
         self.m.VerifyAll()
@@ -514,7 +514,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         sys.argv = ["app_name", "list", "-b", "pim", "-b", "reminders"]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 
         self.m.VerifyAll()
@@ -546,7 +546,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         self.assertRaises(SystemExit, tomtom_cli.main)
         self.assertEquals(
             text + os.linesep,
@@ -619,7 +619,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         # Call function and make assertions here
         sys.argv = ["app_name", "version"]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 
         self.m.VerifyAll()
@@ -654,7 +654,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         sys.argv = ["unused_prog_name", "list", "-n", "10", "--gnote"]
-        tomtom_cli = cli.CommandLineInterface()
+        tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 
         self.m.VerifyAll()

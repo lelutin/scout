@@ -58,20 +58,19 @@ list all the notes. With the "-n" argument and an integer value, listed notes
 will be limited in number to the value given as an argument.
 
 """
-import optparse
-import sys
 import os
 
 from tomtom import plugins
 
-desc = __doc__.splitlines()[0]
+DESC = __doc__.splitlines()[0]
 
 class ListAction(plugins.ActionPlugin):
     """Plugin object for listing notes"""
-    short_description = desc
+    short_description = DESC
     usage = "%prog list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]"
 
     def init_options(self):
+        """Set the action's options."""
         self.add_option(
             "-n", type="int",
             dest="max_notes", default=None,

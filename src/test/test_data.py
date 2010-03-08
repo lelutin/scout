@@ -40,7 +40,7 @@ to look at.
 """
 import os
 import dbus
-from tomtom.core import TomboyNote, tomtom_version
+from tomtom.core import TomboyNote, TOMTOM_VERSION
 
 # The following few values are for testing the "list" feature.
 expected_list = \
@@ -336,7 +336,7 @@ def full_list_of_notes(mock_factory):
 
 # This value is the output of the "version" action
 tomboy_version_output = \
-    """Tomtom version %s """ % tomtom_version + \
+    """Tomtom version %s """ % TOMTOM_VERSION + \
     """using %s version 1.0.1"""
 
 # Help text and errors occuring in the main script
@@ -466,7 +466,7 @@ version_and_license_info = \
 Copyright © 2010 Gabriel Filion
 License: BSD
 This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.""" % tomtom_version
+There is NO WARRANTY, to the extent permitted by law.""" % TOMTOM_VERSION
 
 module1_description = \
     """This is action1 and it does something."""
