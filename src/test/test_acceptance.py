@@ -641,7 +641,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         )
 
     def test_list_using_gnote(self):
-        """Acceptance: Specifying --gnote connects to Gnote."""
+        """Acceptance: Specifying --application forces connection."""
         # Reset stubs and mocks. We need to mock out dbus differently.
         self.remove_mocks()
 
@@ -653,7 +653,12 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        sys.argv = ["unused_prog_name", "list", "-n", "10", "--gnote"]
+        sys.argv = [
+            "unused_prog_name",
+            "list",
+            "-n", "10",
+            "--application", "Gnote"
+        ]
         tomtom_cli = cli.CommandLine()
         tomtom_cli.main()
 

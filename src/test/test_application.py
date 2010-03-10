@@ -353,14 +353,15 @@ class TestMain(BasicMocking, CLIMocking):
         positional_arguments = self.m.CreateMock(list)
         options = self.m.CreateMock(optparse.Values)
         options.gnote = False
-        if app_name == "Gnote":
-            options.gnote = True
 
         command_line.load_action(action_name)\
             .AndReturn(fake_action)
 
         command_line.parse_options(fake_action, arguments)\
             .AndReturn( (options, positional_arguments) )
+
+        command_line.determine_connection_app(options)\
+            .AndReturn(app_name)
 
         if exception_class == core.ConnectionError:
             core.Tomtom(app_name)\
@@ -653,8 +654,9 @@ class TestMain(BasicMocking, CLIMocking):
         ]
 
         optparse.Option(
-            "--gnote", dest="gnote", action="store_true",
-            help="Make tomtom connect to Gnote via DBus instead of Tomboy."
+            "--application", dest="application", choices=["Tomboy", "Gnote"],
+            help="""Choose the application to connect to. """
+                """APPLICATION must be one of Tomboy or Gnote."""
         ).AndReturn(gnote_option)
 
         self.m.ReplayAll()
@@ -662,6 +664,44 @@ class TestMain(BasicMocking, CLIMocking):
         self.assertEqual(
             options,
             command_line.default_options()
+        )
+
+        self.m.VerifyAll()
+
+    def test_determine_connection_app(self):
+        """Main: Application specified on command line."""
+        command_line = self.wrap_subject(
+            cli.CommandLine,
+            "determine_connection_app"
+        )
+
+        fake_opt_values = self.m.CreateMock(optparse.Values)
+        fake_opt_values.application = "Gnote"
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            "Gnote",
+            command_line.determine_connection_app(fake_opt_values)
+        )
+
+        self.m.VerifyAll()
+
+    def test_determine_connection_app_default_value(self):
+        """Main: Default application to Tomboy."""
+        command_line = self.wrap_subject(
+            cli.CommandLine,
+            "determine_connection_app"
+        )
+
+        fake_opt_values = self.m.CreateMock(optparse.Values)
+        fake_opt_values.application = None
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            "Tomboy",
+            command_line.determine_connection_app(fake_opt_values)
         )
 
         self.m.VerifyAll()

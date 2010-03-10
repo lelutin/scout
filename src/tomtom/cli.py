@@ -132,8 +132,10 @@ class CommandLine(object):
         """Return a list of options common to all actions."""
         return [
             optparse.Option(
-                "--gnote", dest="gnote", action="store_true",
-                help="Make tomtom connect to Gnote via DBus instead of Tomboy."
+                "--application", dest="application",
+                choices=["Tomboy", "Gnote"],
+                help="""Choose the application to connect to. """
+                    """APPLICATION must be one of Tomboy or Gnote."""
             )
         ]
 
@@ -185,10 +187,7 @@ class CommandLine(object):
             print >> sys.stderr, exc
             exit(ACTION_OPTION_TYPE_ERROR_RETURN_CODE)
 
-        # By default, connect to Tomboy, if --gnote is used, connect to Gnote.
-        application = "Tomboy"
-        if options.gnote:
-            application = "Gnote"
+        application = self.determine_connection_app(options)
 
         try:
             action.tomboy_interface = core.Tomtom(application)
@@ -226,6 +225,16 @@ class CommandLine(object):
             # out if you have a failing test that shows this as being the
             # error.
             sys.exit(MALFORMED_ACTION_RETURN_CODE)
+
+    def determine_connection_app(self, options):
+        """Try and find which one of Tomboy and Gnote to connect to."""
+        # Command line option. This is the strongest user interaction. Takes
+        # precedence.
+        if options.application:
+            return options.application
+
+        # XXX Bad hardcoded value. This must be replaced by automatic detection.
+        return "Tomboy"
 
     def list_of_actions(self):
         """Retrieve a list of all registered actions.

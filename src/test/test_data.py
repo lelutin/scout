@@ -357,68 +357,58 @@ use "help" before the action name.
 Here is a list of all the available actions:
 """
 
+default_options_help = \
+"""  -h, --help            show this help message and exit
+  --application=APPLICATION
+                        Choose the application to connect to. APPLICATION must
+                        be one of Tomboy or Gnote."""
+
+filtering_options_help = \
+"""  Filtering:
+    Filter notes by different criteria.
+
+    -b BOOKS            %(action)s only notes belonging to specified notebooks. It
+                        is a shortcut to option "-t" to specify notebooks more
+                        easily. For example, use "-b HGTTG" instead of "-t
+                        system:notebook:HGTTG". Use this option once for each
+                        desired book.
+    --with-templates    Include template notes. This option is different from
+                        using "-t system:template" in that the latter used
+                        alone will only include the templates, while "using
+                        "--with-templates" without specifying tags for
+                        selection will include all notes and templates.
+    -t TAGS             %(action)s only notes with specified tags. Use this option
+                        once for each desired tag. This option selects raw
+                        tags and could be useful for user-assigned tags."""
+
 help_details_list = \
 """Usage: app_name list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]
 
 Options:
-  -h, --help          show this help message and exit
-  --gnote             Make tomtom connect to Gnote via DBus instead of Tomboy.
-  -n MAX_NOTES        Limit the number of notes listed.
+%s
+  -n MAX_NOTES          Limit the number of notes listed.
 
-  Filtering:
-    Filter notes by different criteria.
-
-    -b BOOKS          List only notes belonging to specified notebooks. It is
-                      a shortcut to option "-t" to specify notebooks more
-                      easily. For example, use "-b HGTTG" instead of "-t
-                      system:notebook:HGTTG". Use this option once for each
-                      desired book.
-    --with-templates  Include template notes. This option is different from
-                      using "-t system:template" in that the latter used alone
-                      will only include the templates, while "using "--with-
-                      templates" without specifying tags for selection will
-                      include all notes and templates.
-    -t TAGS           List only notes with specified tags. Use this option
-                      once for each desired tag. This option selects raw tags
-                      and could be useful for user-assigned tags."""
+%s""" % (default_options_help, filtering_options_help % {"action": "List"})
 
 help_details_display = """Usage: app_name display [-h] [note_name ...]
 
 Options:
-  -h, --help  show this help message and exit
-  --gnote     Make tomtom connect to Gnote via DBus instead of Tomboy."""
+%s""" % (default_options_help, )
 
 help_details_search = \
 """Usage: app_name search -h
        app_name search [-b <book name>[,...]|-t <tag>[,...]|--with-templates] <search_pattern> [note_name ...]
 
 Options:
-  -h, --help          show this help message and exit
-  --gnote             Make tomtom connect to Gnote via DBus instead of Tomboy.
+%s
 
-  Filtering:
-    Filter notes by different criteria.
-
-    -b BOOKS          Search only notes belonging to specified notebooks. It
-                      is a shortcut to option "-t" to specify notebooks more
-                      easily. For example, use "-b HGTTG" instead of "-t
-                      system:notebook:HGTTG". Use this option once for each
-                      desired book.
-    --with-templates  Include template notes. This option is different from
-                      using "-t system:template" in that the latter used alone
-                      will only include the templates, while "using "--with-
-                      templates" without specifying tags for selection will
-                      include all notes and templates.
-    -t TAGS           Search only notes with specified tags. Use this option
-                      once for each desired tag. This option selects raw tags
-                      and could be useful for user-assigned tags."""
+%s""" % (default_options_help, filtering_options_help % {"action": "Search"})
 
 help_details_version = \
 """Usage: app_name version [-h]
 
 Options:
-  -h, --help  show this help message and exit
-  --gnote     Make tomtom connect to Gnote via DBus instead of Tomboy."""
+%s""" % (default_options_help, )
 
 too_few_arguments_error = \
 (os.linesep * 2).join([
