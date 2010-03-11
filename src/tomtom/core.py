@@ -78,14 +78,6 @@ class Tomtom(object):
 
         try:
             tb_bus = dbus.SessionBus()
-            tb_object = tb_bus.get_object(
-                "org.gnome.%s" % application,
-                "/org/gnome/%s/RemoteControl" % application
-            )
-            self.comm = dbus.Interface(
-                tb_object,
-                "org.gnome.%s.RemoteControl" % application
-            )
         except dbus.DBusException, exc:
             msg = os.linesep.join([
                 """Could not establish connection with %s""" + os.linesep,
@@ -95,6 +87,20 @@ class Tomtom(object):
             ])
             msg_map = (application, exc)
             raise ConnectionError(msg % msg_map)
+
+        try:
+            tb_object = tb_bus.get_object(
+                "org.gnome.%s" % application,
+                "/org/gnome/%s/RemoteControl" % application
+            )
+            self.comm = dbus.Interface(
+                tb_object,
+                "org.gnome.%s.RemoteControl" % application
+            )
+        except dbus.DBusException, exc:
+            msg = """Application %s is not publishing any dbus object. """ + \
+                  """It is possibly not installed."""
+            raise ConnectionError(msg % application)
 
     def get_notes(self, **kwargs):
         """Get a list of notes from the application.

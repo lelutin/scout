@@ -1113,15 +1113,7 @@ class TestCore(BasicMocking):
         dbus_interface = self.m.CreateMockAnything()
 
         dbus.SessionBus()\
-            .AndReturn(session_bus)
-        session_bus.get_object(
-            "org.gnome.Tomboy",
-            "/org/gnome/Tomboy/RemoteControl"
-        ).AndReturn(dbus_object)
-        dbus.Interface(
-            dbus_object,
-            "org.gnome.Tomboy.RemoteControl"
-        ).AndRaise( dbus.DBusException("cosmos error") )
+            .AndRaise( dbus.DBusException("cosmos error") )
 
         self.m.ReplayAll()
 
