@@ -64,7 +64,7 @@ import os
 import re
 
 from tomtom import plugins
-from tomtom.cli import TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE
+from tomtom.cli import TOO_FEW_ARGUMENTS_ERROR
 
 DESC = __doc__.splitlines()[0]
 
@@ -93,7 +93,7 @@ class SearchAction(plugins.ActionPlugin):
         if len(positional) < 1:
             print >> sys.stderr, \
                 "Error: You must specify a pattern to perform a search"
-            sys.exit(TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE)
+            sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
         search_pattern = positional[0]
         note_names = positional[1:]

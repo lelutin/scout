@@ -56,12 +56,12 @@ from tomtom.plugins import ActionPlugin
 # Return codes sent on errors.
 # Codes between 100 and 199 are fatal errors
 # Codes between 200 and 254 are minor errors
-ACTION_NOT_FOUND_RETURN_CODE = 100
-MALFORMED_ACTION_RETURN_CODE = 101
-DBUS_CONNECTION_ERROR_RETURN_CODE = 102
-ACTION_OPTION_TYPE_ERROR_RETURN_CODE = 103
-TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE = 200
-NOTE_NOT_FOUND_RETURN_CODE   = 201
+ACTION_NOT_FOUND = 100
+MALFORMED_ACTION = 101
+DBUS_CONNECTION_ERROR = 102
+ACTION_OPTION_TYPE_ERROR = 103
+TOO_FEW_ARGUMENTS_ERROR = 200
+NOTE_NOT_FOUND = 201
 
 class CommandLine(object):
     """Main entry point for Tomtom."""
@@ -88,7 +88,7 @@ class CommandLine(object):
                 """%s: %s is not a valid """ % (app_name, action_name) + \
                 """action. Use option -h for a list of available actions."""
 
-            sys.exit(ACTION_NOT_FOUND_RETURN_CODE)
+            sys.exit(ACTION_NOT_FOUND)
 
         return action_class[0]()
 
@@ -185,7 +185,7 @@ class CommandLine(object):
             )
         except TypeError, exc:
             print >> sys.stderr, exc
-            exit(ACTION_OPTION_TYPE_ERROR_RETURN_CODE)
+            exit(ACTION_OPTION_TYPE_ERROR)
 
         application = self.determine_connection_app(options)
 
@@ -196,7 +196,7 @@ class CommandLine(object):
                 os.path.basename(sys.argv[0]),
                 exc
             )
-            sys.exit(DBUS_CONNECTION_ERROR_RETURN_CODE)
+            sys.exit(DBUS_CONNECTION_ERROR)
 
         try:
             action.perform_action(options, positional_arguments)
@@ -209,7 +209,7 @@ class CommandLine(object):
             msg = """%s: Error: Note named "%s" was not found."""
             error_map = ( os.path.basename( sys.argv[0] ), exc )
             print >> sys.stderr, msg % error_map
-            sys.exit(NOTE_NOT_FOUND_RETURN_CODE)
+            sys.exit(NOTE_NOT_FOUND)
         except:
             import traceback
 
@@ -224,7 +224,7 @@ class CommandLine(object):
             # This is pretty annoying when running acceptance tests. Comment it
             # out if you have a failing test that shows this as being the
             # error.
-            sys.exit(MALFORMED_ACTION_RETURN_CODE)
+            sys.exit(MALFORMED_ACTION)
 
     def determine_connection_app(self, options):
         """Try and find which one of Tomboy and Gnote to connect to."""
@@ -300,7 +300,7 @@ class CommandLine(object):
                 """For more details, use one of "-h", "--help" or "help"."""
             ])
             print >> sys.stderr, usage_output
-            sys.exit(TOO_FEW_ARGUMENTS_ERROR_RETURN_CODE)
+            sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
         action = sys.argv[1]
         # Convert the rest of the arguments to unicode objects so that they are
