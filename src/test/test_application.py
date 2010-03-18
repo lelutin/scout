@@ -33,12 +33,12 @@
 """
 Application tests.
 
-These are unit tests for the applications classes and methods.
+These are unit tests for the application's classes and methods.
 
-The docstrings on the test methods are displayed by the unittest.main()
-routine, so it should be a short but precise description of what is being
-tested. There should also be the test case's second word followed by a colon
-to classify tests. Having this classification makes looking for failing
+The docstrings on the test methods are displayed as labels for the tests by the
+test runner, so it should be a short but precise one-line description of what
+is being tested. There should also be the test case's second word followed by a
+colon to classify tests. Having this classification makes looking for failing
 tests a lot easier.
 
 """
@@ -745,7 +745,7 @@ class TestCore(BasicMocking):
         dbus.SessionBus = old_SessionBus
         dbus.Interface = old_Interface
 
-    def mock_out_TomboyNote_and_verify_constructor(self, **kwargs):
+    def verify_TomboyNote_constructor(self, **kwargs):
         """Build a TomboyNote mock and make __init__ its test subject."""
         tn = self.wrap_subject(core.TomboyNote, "__init__")
 
@@ -765,7 +765,7 @@ class TestCore(BasicMocking):
         tags = ["tag1", "tag2"]
 
         # case 1: Construct with all data and a dbus.Int64 date
-        tn = self.mock_out_TomboyNote_and_verify_constructor(
+        tn = self.verify_TomboyNote_constructor(
             uri=uri1,
             title=title,
             date=date_int64,
@@ -782,7 +782,7 @@ class TestCore(BasicMocking):
         """Core: TomboyNote initializes its instance variables. case 2."""
         uri2 = "note://another-false-uri"
 
-        tn = self.mock_out_TomboyNote_and_verify_constructor(uri=uri2)
+        tn = self.verify_TomboyNote_constructor(uri=uri2)
 
         # case 2: Construct with only uri, rest is default
         self.assertEqual(tn.uri, uri2)
@@ -795,7 +795,7 @@ class TestCore(BasicMocking):
         datetime_date = datetime.datetime(2009, 11, 13, 18, 42, 23)
 
         # case 3: the date can be entered with a datetime.datetime
-        tn = self.mock_out_TomboyNote_and_verify_constructor(
+        tn = self.verify_TomboyNote_constructor(
             uri="not important",
             date=datetime_date
         )
