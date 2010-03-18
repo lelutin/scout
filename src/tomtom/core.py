@@ -57,6 +57,10 @@ class NoteNotFound(Exception):
     """Simple exception raised when a specific note does not exist."""
     pass
 
+class AutoDetectionError(Exception):
+    """Raised when autodetection of available applications failed."""
+    pass
+
 class Tomtom(object):
     """Application class for Tomtom.
 
@@ -73,8 +77,7 @@ class Tomtom(object):
             application -- string name of either Tomboy or Gnote.
 
         """
-        super(Tomtom, self).__init__(application)
-        self.application = application
+        super(Tomtom, self).__init__()
 
         try:
             tb_bus = dbus.SessionBus()
@@ -88,19 +91,55 @@ class Tomtom(object):
             msg_map = (application, exc)
             raise ConnectionError(msg % msg_map)
 
-        try:
-            tb_object = tb_bus.get_object(
-                "org.gnome.%s" % application,
-                "/org/gnome/%s/RemoteControl" % application
-            )
-            self.comm = dbus.Interface(
-                tb_object,
-                "org.gnome.%s.RemoteControl" % application
-            )
-        except dbus.DBusException, exc:
-            msg = """Application %s is not publishing any dbus object. """ + \
-                  """It is possibly not installed."""
-            raise ConnectionError(msg % application)
+        if application is None:
+            (application, tb_object) = self._autodetect_app(tb_bus)
+        else:
+            try:
+                tb_object = tb_bus.get_object(
+                    "org.gnome.%s" % application,
+                    "/org/gnome/%s/RemoteControl" % application
+                )
+            except dbus.DBusException, exc:
+                msg = """Application %s is not publishing any dbus """ + \
+                      """object. It is possibly not installed."""
+                raise ConnectionError(msg % application)
+
+        self.application = application
+
+        self.comm = dbus.Interface(
+            tb_object,
+            "org.gnome.%s.RemoteControl" % application
+        )
+
+    def _autodetect_app(self, bus):
+        """Determine only one of Tomboy and Gnote is present."""
+        success_list = []
+
+        for app in ["Tomboy", "Gnote"]:
+            try:
+                obj = bus.get_object(
+                    "org.gnome.%s" % app,
+                    "/org/gnome/%s/RemoteControl" % app
+                )
+                success_list.append( (app, obj) )
+            except dbus.DBusException, exc:
+                pass
+
+        if len(success_list) != 1:
+            if len(success_list) == 0:
+                error_message = \
+                    """No applications were found. Verify that one of """ + \
+                    """Tomboy or Gnote are installed."""
+
+            if len(success_list) > 1:
+                error_message = \
+                    """More than one application is currently """ + \
+                    """installed on your system. Tomtom could not """ + \
+                    """decide on which one to favor."""
+
+            raise AutoDetectionError(error_message)
+
+        return success_list[0]
 
     def get_notes(self, **kwargs):
         """Get a list of notes from the application.

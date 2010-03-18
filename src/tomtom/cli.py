@@ -50,7 +50,8 @@ import pkg_resources
 import optparse
 
 from tomtom import core
-from tomtom.core import TOMTOM_VERSION, NoteNotFound, ConnectionError
+from tomtom.core import TOMTOM_VERSION, NoteNotFound, ConnectionError, \
+        AutoDetectionError
 from tomtom.plugins import ActionPlugin
 
 # Return codes sent on errors.
@@ -62,6 +63,7 @@ DBUS_CONNECTION_ERROR = 102
 ACTION_OPTION_TYPE_ERROR = 103
 TOO_FEW_ARGUMENTS_ERROR = 200
 NOTE_NOT_FOUND = 201
+AUTODETECTION_FAILED = 202
 
 class CommandLine(object):
     """Main entry point for Tomtom."""
@@ -197,6 +199,16 @@ class CommandLine(object):
                 exc
             )
             sys.exit(DBUS_CONNECTION_ERROR)
+        except AutoDetectionError, exc:
+            prog = os.path.basename( sys.argv[0] )
+            msg = (os.linesep * 2).join([
+                """%s: failed to determine which application to use.""",
+                exc.__str__(),
+                """Use the command line argument "--application" to specify """
+                    """it manually.""",
+            ])
+            print >> sys.stderr, msg % prog
+            sys.exit(AUTODETECTION_FAILED)
 
         try:
             action.perform_action(options, positional_arguments)
@@ -227,14 +239,16 @@ class CommandLine(object):
             sys.exit(MALFORMED_ACTION)
 
     def determine_connection_app(self, options):
-        """Try and find which one of Tomboy and Gnote to connect to."""
-        # Command line option. This is the strongest user interaction. Takes
-        # precedence.
+        """Determine if we need to force the use of one of Tomboy or Gnote."""
+        # Command line option. This is the strongest user interaction. It takes
+        # precedence over everything else.
         if options.application:
             return options.application
 
-        # XXX Bad hardcoded value. This must be replaced by automatic detection.
-        return "Tomboy"
+        # TODO check configuration for a value
+
+        # None means to attempt autodetection
+        return None
 
     def list_of_actions(self):
         """Retrieve a list of all registered actions.

@@ -65,37 +65,39 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         """
         super(AcceptanceTests, self).setUp()
 
-        # By default, mock out Tomboy interaction.
-        self.mock_out_dbus("Tomboy")
+        # mock out dbus interaction with application discovery
+        self.mock_out_dbus()
 
-    def tearDown(self):
-        """Unit test breakdown.
-
-        Remove mocks and replace what was disturbed so that it doesn't affect
-        other tests.
-
-        """
-        super(AcceptanceTests, self).tearDown()
-
-        dbus.SessionBus = self.old_SessionBus
-        dbus.Interface = self.old_Interface
-
-    def mock_out_dbus(self, application):
+    def mock_out_dbus(self, application=None):
         """Mock out dbus interaction with the specified application."""
-        self.old_SessionBus = dbus.SessionBus
-        self.old_Interface = dbus.Interface
-        dbus.SessionBus = self.m.CreateMockAnything()
-        dbus.Interface = self.m.CreateMockAnything()
+        self.m.StubOutWithMock(dbus, "SessionBus", use_mock_anything=True)
+        self.m.StubOutWithMock(dbus, "Interface", use_mock_anything=True)
         session_bus = self.m.CreateMockAnything()
         dbus_object = self.m.CreateMockAnything()
         self.dbus_interface = self.m.CreateMockAnything()
 
         dbus.SessionBus()\
             .AndReturn(session_bus)
-        session_bus.get_object(
-            "org.gnome.%s" % application,
-            "/org/gnome/%s/RemoteControl" % application
-        ).AndReturn(dbus_object)
+
+        # Forced application
+        if application is not None:
+            session_bus.get_object(
+                "org.gnome.%s" % application,
+                "/org/gnome/%s/RemoteControl" % application
+            ).AndReturn(dbus_object)
+        # Application detection: fake successful detection
+        else:
+            application = "Tomboy"
+
+            session_bus.get_object(
+                "org.gnome.Tomboy",
+                "/org/gnome/Tomboy/RemoteControl"
+            ).AndReturn(dbus_object)
+            session_bus.get_object(
+                "org.gnome.Gnote",
+                "/org/gnome/Gnote/RemoteControl"
+            ).AndRaise(dbus.DBusException)
+
         dbus.Interface(
             dbus_object,
             "org.gnome.%s.RemoteControl" % application

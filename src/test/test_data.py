@@ -466,3 +466,9 @@ module_descriptions = [
     "  otheraction : No description available.",
 ]
 
+autodetection_error = \
+"""app_name: failed to determine which application to use.
+
+autodetection failed for some reason
+
+Use the command line argument "--application" to specify it manually."""

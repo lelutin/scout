@@ -363,7 +363,7 @@ class TestMain(BasicMocking, CLIMocking):
         command_line.determine_connection_app(options)\
             .AndReturn(app_name)
 
-        if exception_class == core.ConnectionError:
+        if exception_class in [core.ConnectionError, core.AutoDetectionError]:
             core.Tomtom(app_name)\
                 .AndRaise( exception_class(exception_argument) )
             return (command_line, action_name, fake_action, arguments)
@@ -472,6 +472,16 @@ class TestMain(BasicMocking, CLIMocking):
             exception_out=SystemExit,
             exception_argument="unexistant",
             expected_text=test_data.unexistant_note_error + os.linesep
+        )
+
+    def test_dispatch_handles_AutoDetectionError(self):
+        """Main: No sensible application choice was identified."""
+        sys.argv = ["app_name"]
+        self.verify_dispatch_exception(
+            core.AutoDetectionError,
+            exception_out=SystemExit,
+            exception_argument="autodetection failed for some reason",
+            expected_text=test_data.autodetection_error + os.linesep
         )
 
     def print_traceback(self):
@@ -668,7 +678,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-    def test_determine_connection_app(self):
+    def test_determine_connection_app_cli_argument(self):
         """Main: Application specified on command line."""
         command_line = self.wrap_subject(
             cli.CommandLine,
@@ -687,12 +697,14 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-    def test_determine_connection_app_default_value(self):
+    def test_determine_connection_app_undecided(self):
         """Main: Default application to Tomboy."""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "determine_connection_app"
         )
+
+        sys.argv = ["app_name"]
 
         fake_opt_values = self.m.CreateMock(optparse.Values)
         fake_opt_values.application = None
@@ -700,7 +712,7 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.ReplayAll()
 
         self.assertEqual(
-            "Tomboy",
+            None,
             command_line.determine_connection_app(fake_opt_values)
         )
 
@@ -709,8 +721,8 @@ class TestMain(BasicMocking, CLIMocking):
 class TestCore(BasicMocking):
     """Tests for general code."""
 
-    def test_Tomtom_constructor(self):
-        """Core: Tomtom's dbus interface is initialized."""
+    def verify_Tomtom_constructor(self, application):
+        """Test that Tomtom's constructor goes through successfully."""
         tt = self.wrap_subject(core.Tomtom, "__init__")
 
         old_SessionBus = dbus.SessionBus
@@ -724,23 +736,65 @@ class TestCore(BasicMocking):
 
         dbus.SessionBus()\
             .AndReturn(session_bus)
-        session_bus.get_object(
-            "org.gnome.the_application",
-            "/org/gnome/the_application/RemoteControl"
-        ).AndReturn(dbus_object)
+
+        app_name = application
+
+        if application is None:
+            tt._autodetect_app(session_bus)\
+                .AndReturn( tuple(["Tomboy", dbus_object]) )
+            app_name = "Tomboy"
+        else:
+            session_bus.get_object(
+                "org.gnome.%s" % app_name,
+                "/org/gnome/%s/RemoteControl" % app_name
+            ).AndReturn(dbus_object)
+
         dbus.Interface(
             dbus_object,
-            "org.gnome.the_application.RemoteControl"
+            "org.gnome.%s.RemoteControl" % app_name
         ).AndReturn(dbus_interface)
 
         self.m.ReplayAll()
 
-        tt.__init__("the_application")
+        tt.__init__(application)
 
         self.m.VerifyAll()
 
-        self.assertEqual( dbus_interface, tt.comm )
-        self.assertEqual( "the_application", tt.application )
+        self.assertEqual(dbus_interface, tt.comm)
+        self.assertEqual(app_name, tt.application)
+
+        dbus.SessionBus = old_SessionBus
+        dbus.Interface = old_Interface
+
+    def test_Tomtom_constructor(self):
+        """Core: Tomtom's dbus interface is initialized."""
+        self.verify_Tomtom_constructor("the_application")
+
+    def test_Tomtom_constructor_with_autodetection(self):
+        """Core: Tomtom's dbus interface is autodetected and initialized."""
+        self.verify_Tomtom_constructor(None)
+
+    def test_dbus_Tomboy_communication_problem(self):
+        """Core: Raise an exception if linking dbus with Tomboy failed."""
+        tt = self.wrap_subject(core.Tomtom, "__init__")
+
+        old_SessionBus = dbus.SessionBus
+        old_Interface = dbus.Interface
+
+        dbus.SessionBus = self.m.CreateMockAnything()
+        dbus.Interface = self.m.CreateMockAnything()
+        session_bus = self.m.CreateMockAnything()
+        dbus_object = self.m.CreateMockAnything()
+        dbus_interface = self.m.CreateMockAnything()
+
+        dbus.SessionBus()\
+            .AndRaise( dbus.DBusException("cosmos error") )
+
+        self.m.ReplayAll()
+
+        self.assertRaises(core.ConnectionError, tt.__init__, "Tomboy")
+
+        self.m.VerifyAll()
 
         dbus.SessionBus = old_SessionBus
         dbus.Interface = old_Interface
@@ -1099,30 +1153,51 @@ class TestCore(BasicMocking):
 
         self.m.VerifyAll()
 
-    def test_dbus_Tomboy_communication_problem(self):
-        """Core: Raise an exception if linking dbus with Tomboy failed."""
-        tt = self.wrap_subject(core.Tomtom, "__init__")
+    def verify_autodetect_app(self, expected_apps):
+        """Test autodetection of the dbus application to use."""
+        tt = self.wrap_subject(core.Tomtom, "_autodetect_app")
 
-        old_SessionBus = dbus.SessionBus
-        old_Interface = dbus.Interface
+        fake_bus = self.m.CreateMock(dbus.SessionBus)
+        fake_object = self.m.CreateMock(dbus.proxies.ProxyObject)
 
-        dbus.SessionBus = self.m.CreateMockAnything()
-        dbus.Interface = self.m.CreateMockAnything()
-        session_bus = self.m.CreateMockAnything()
-        dbus_object = self.m.CreateMockAnything()
-        dbus_interface = self.m.CreateMockAnything()
-
-        dbus.SessionBus()\
-            .AndRaise( dbus.DBusException("cosmos error") )
+        for app in ["Tomboy", "Gnote"]:
+            if app in expected_apps:
+                fake_bus.get_object(
+                    "org.gnome.%s" % app,
+                    "/org/gnome/%s/RemoteControl" % app
+                ).AndReturn(fake_object)
+            else:
+                fake_bus.get_object(
+                    "org.gnome.%s" % app,
+                    "/org/gnome/%s/RemoteControl" % app
+                ).AndRaise(dbus.DBusException)
 
         self.m.ReplayAll()
 
-        self.assertRaises(core.ConnectionError, tt.__init__, "Tomboy")
+        if len(expected_apps) == 1:
+            self.assertEqual(
+                (expected_apps[0], fake_object),
+                tt._autodetect_app(fake_bus)
+            )
+        else:
+            self.assertRaises(
+                core.AutoDetectionError,
+                tt._autodetect_app, fake_bus
+            )
 
         self.m.VerifyAll()
 
-        dbus.SessionBus = old_SessionBus
-        dbus.Interface = old_Interface
+    def test_autodetect_app(self):
+        """Core: Autodetect, only one application is running."""
+        self.verify_autodetect_app( ["Tomboy"] )
+
+    def test_autodetect_app_none(self):
+        """Core: Autodetection fails to find any application."""
+        self.verify_autodetect_app( [] )
+
+    def test_autodetect_app_too_much(self):
+        """Core: Autodetection fails to find any application."""
+        self.verify_autodetect_app( ["Tomboy", "Gnote"] )
 
 class TestList(BasicMocking, CLIMocking):
     """Tests for code that handles the notes and lists them."""
