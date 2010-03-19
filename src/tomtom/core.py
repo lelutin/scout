@@ -122,7 +122,7 @@ class Tomtom(object):
                     "/org/gnome/%s/RemoteControl" % app
                 )
                 success_list.append( (app, obj) )
-            except dbus.DBusException, exc:
+            except dbus.DBusException:
                 pass
 
         if len(success_list) != 1:
@@ -172,8 +172,8 @@ class Tomtom(object):
 
         """
         lines = self.comm.GetNoteContents(note.uri).splitlines()
-        #TODO Oddly (but it is good), splitting the lines makes the indentation
-        # bullets appear.. come up with a test for this to stay
+        # Oddly (but it is good), splitting the lines makes the indentation
+        # bullets appear..
         if note.tags:
             lines[0] = "%s  (%s)" % ( lines[0], ", ".join(note.tags) )
 
