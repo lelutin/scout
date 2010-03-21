@@ -66,7 +66,7 @@ class VersionAction(ActionPlugin):
     short_description = DESC
     usage = "%prog version [-h]"
 
-    def perform_action(self, options, positional):
+    def perform_action(self, config, options, positional):
         """Display Tomboy's version information.
 
         This action gets Tomboy's version via dbus and prints it out.

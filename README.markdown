@@ -22,8 +22,7 @@ On Fedora or Centos, use the following:
 
     $ sudo yum install dbus-python
 
-Use
-===
+# Use
 
 To use tomtom the first argument must be an action name. For example, say you
 want to get a list of all non-template notes. You can call the following:
@@ -45,8 +44,33 @@ of the two following commands call the detailed help for the action "display":
     $ tomtom --help display
     $ tomtom display -h
 
-Contributing
-============
+## Choosing the application
+
+Tomtom can be used with either Tomboy or Gnote. Tomtom detects which one of
+them is currently installed. If only one of them is present, it will
+automatically connect to it.
+
+However, in a context where both Tomboy and Gnote are installed, Tomtom cannot
+determine which one to use unless it is specified as an argument to the command
+line or in a configuration file.
+
+A system-wide configuration file can be placed in ''/etc/tomtom.cfg''. Each
+user can also create a configuration file in their home directory (e.g. either
+''~/.tomtom/config'' or ''~/.config/tomtom/config''). Values in the user
+configuration file will override those set in the system-wide configuration.
+The configuration file should follow the Windows INI file format. To select the
+application, the "application" option in the "tomtom" section should be set to
+either Tomboy or Gnote. Ex. (Tomboy):
+
+    [tomtom]
+    application: Tomboy
+
+The command line argument takes precedence over the value set in the
+configuration file. Here's how to list notes from Gnote:
+
+    tomtom list --application=Gnote
+
+#Contributing
 
 All contributions to the code are welcome. Contributed code should come with
 unit tests for added functions and acceptance tests for command line interface
@@ -54,8 +78,7 @@ modifications. The main repository is on [GitHub]. Feel free to either fork the
 repository and send pull requests, or simply to generate patches and send them
 by e-mail to lelutin@gmail.com.
 
-Tests
------
+## Tests
 
 To be able to run the unit or acceptance tests, you will need to have pymox
 and nose installed. On Debian or Ubuntu, use the following command to install
@@ -91,8 +114,7 @@ use the following:
 
     $ git test --failed
 
-License
-=======
+# License
 
 Tomtom is licensed under the BSD license as mentioned in all source code files.
 A copy of the license should be available with the source code.

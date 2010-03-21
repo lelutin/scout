@@ -73,7 +73,7 @@ class DisplayAction(ActionPlugin):
     usage = "%prog display [-h] [note_name ...]"
     note_separator = "=========================="
 
-    def perform_action(self, options, positional):
+    def perform_action(self, config, options, positional):
         """Use the tomtom object to print the content of one or more notes.
 
         This action fetches note contents and displays them to the screen.

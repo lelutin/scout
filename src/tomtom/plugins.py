@@ -146,7 +146,7 @@ class ActionPlugin(object):
         """
         pass
 
-    def perform_action(self, options, positional):
+    def perform_action(self, config, options, positional):
         """This is the entry point for running actions.
 
         This method is the starting point in performing the action. Once this

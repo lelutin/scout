@@ -50,6 +50,7 @@ import dbus
 import pkg_resources
 import traceback
 import optparse
+import ConfigParser as configparser
 
 from tomtom import core, cli, plugins
 # Import the list action under a different name to avoid overwriting the list()
@@ -349,6 +350,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         action_name = "some_action"
         fake_action = self.m.CreateMock(plugins.ActionPlugin)
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
         arguments = self.m.CreateMock(list)
         positional_arguments = self.m.CreateMock(list)
         options = self.m.CreateMock(optparse.Values)
@@ -357,10 +359,13 @@ class TestMain(BasicMocking, CLIMocking):
         command_line.load_action(action_name)\
             .AndReturn(fake_action)
 
+        command_line.get_config()\
+            .AndReturn( fake_config )
+
         command_line.parse_options(fake_action, arguments)\
             .AndReturn( (options, positional_arguments) )
 
-        command_line.determine_connection_app(options)\
+        command_line.determine_connection_app(fake_config, options)\
             .AndReturn(app_name)
 
         if exception_class in [core.ConnectionError, core.AutoDetectionError]:
@@ -372,11 +377,17 @@ class TestMain(BasicMocking, CLIMocking):
                 .AndReturn( fake_tomtom )
 
         if exception_class:
-            fake_action.perform_action(options, positional_arguments)\
-                .AndRaise( exception_class(exception_argument) )
+            fake_action.perform_action(
+                fake_config,
+                options,
+                positional_arguments
+            ).AndRaise( exception_class(exception_argument) )
         else:
-            fake_action.perform_action(options, positional_arguments)\
-                .AndReturn(None)
+            fake_action.perform_action(
+                fake_config,
+                options,
+                positional_arguments
+            ).AndReturn(None)
 
         return (command_line, action_name, fake_action, arguments)
 
@@ -526,10 +537,14 @@ class TestMain(BasicMocking, CLIMocking):
         action_name = "some_action"
         fake_action = self.m.CreateMock(plugins.ActionPlugin)
         fake_action.name = action_name
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
         arguments = self.m.CreateMock(list)
 
         command_line.load_action(action_name)\
             .AndReturn(fake_action)
+
+        command_line.get_config()\
+            .AndReturn(fake_config)
 
         command_line.parse_options(fake_action, arguments)\
             .AndRaise( TypeError(test_data.option_type_error_message) )
@@ -687,36 +702,142 @@ class TestMain(BasicMocking, CLIMocking):
 
         fake_opt_values = self.m.CreateMock(optparse.Values)
         fake_opt_values.application = "Gnote"
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
         self.m.ReplayAll()
 
         self.assertEqual(
             "Gnote",
-            command_line.determine_connection_app(fake_opt_values)
+            command_line.determine_connection_app(fake_config, fake_opt_values)
+        )
+
+        self.m.VerifyAll()
+
+    def test_determine_connection_app_configuration(self):
+        """Main: No user choice of application."""
+        command_line = self.wrap_subject(
+            cli.CommandLine,
+            "determine_connection_app"
+        )
+        command_line.core_config_section = "core_section"
+
+        fake_opt_values = self.m.CreateMock(optparse.Values)
+        fake_opt_values.application = None
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
+
+        fake_config.has_option("core_section", "application")\
+            .AndReturn(True)
+
+        fake_config.get("core_section", "application")\
+            .AndReturn("this_one")
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            "this_one",
+            command_line.determine_connection_app(fake_config, fake_opt_values)
         )
 
         self.m.VerifyAll()
 
     def test_determine_connection_app_undecided(self):
-        """Main: Default application to Tomboy."""
+        """Main: No user choice of application."""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "determine_connection_app"
         )
-
-        sys.argv = ["app_name"]
+        command_line.core_config_section = "core_section"
 
         fake_opt_values = self.m.CreateMock(optparse.Values)
         fake_opt_values.application = None
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
+
+        fake_config.has_option("core_section", "application")\
+            .AndReturn(False)
 
         self.m.ReplayAll()
 
         self.assertEqual(
             None,
-            command_line.determine_connection_app(fake_opt_values)
+            command_line.determine_connection_app(fake_config, fake_opt_values)
         )
 
         self.m.VerifyAll()
+
+    def test_get_config(self):
+        """Main: Retrieve configuration values from a file."""
+        command_line = self.wrap_subject(cli.CommandLine, "get_config")
+
+        fake_parser = self.m.CreateMock(configparser.SafeConfigParser)
+        self.m.StubOutWithMock(
+            configparser,
+            "SafeConfigParser",
+            use_mock_anything=True
+        )
+
+        self.m.StubOutWithMock(os.path, "expanduser")
+
+        fake_sanitized = self.m.CreateMockAnything()
+
+        configparser.SafeConfigParser()\
+            .AndReturn(fake_parser)
+
+        os.path.expanduser("~/.tomtom/config")\
+            .AndReturn("/home/borg/.tomtom/config")
+        os.path.expanduser("~/.config/tomtom/config")\
+            .AndReturn("/home/borg/.config/tomtom/config")
+
+        fake_parser.read([
+            "/etc/tomtom.cfg",
+            "/home/borg/.tomtom/config",
+            "/home/borg/.config/tomtom/config",
+        ])
+
+        command_line.sanitized_config(fake_parser)\
+            .AndReturn( fake_sanitized )
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            fake_sanitized,
+            command_line.get_config()
+        )
+
+        self.m.VerifyAll()
+
+    def verify_sanitized_config(self, section_is_present):
+        """Test the configuration sanitization process."""
+        command_line = self.wrap_subject(cli.CommandLine, "sanitized_config")
+
+        command_line.core_config_section = "this"
+        command_line.core_options = ["option1", "bobby-tables"]
+
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
+
+        fake_config.has_section("this")\
+            .AndReturn(section_is_present)
+
+        if not section_is_present:
+            fake_config.add_section("this")
+
+        fake_config.options("this")\
+            .AndReturn(["option1", "unwanted", "bobby-tables"])
+
+        fake_config.remove_option("this", "unwanted")
+
+        self.m.ReplayAll()
+
+        command_line.sanitized_config(fake_config)
+
+        self.m.VerifyAll()
+
+    def test_sanitized_config(self):
+        """Main: Core configuration retains only values that are known."""
+        self.verify_sanitized_config(True)
+
+    def test_sanitized_config_missing_section(self):
+        """Main: Core configuration section is not present."""
+        self.verify_sanitized_config(False)
 
 class TestCore(BasicMocking):
     """Tests for general code."""
@@ -1378,6 +1499,7 @@ class TestList(BasicMocking, CLIMocking):
         fake_options.tags = list(tags)
         fake_options.templates = with_templates
         fake_options.max_notes = 5
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
         list_of_notes = test_data.full_list_of_notes(self.m)
 
@@ -1392,7 +1514,7 @@ class TestList(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        lst_ap.perform_action(fake_options, [])
+        lst_ap.perform_action(fake_config, fake_options, [])
 
         self.m.VerifyAll()
 
@@ -1479,6 +1601,7 @@ class TestDisplay(BasicMocking, CLIMocking):
         dsp_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
 
         fake_options = self.m.CreateMock(optparse.Values)
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
         notes = [ self.m.CreateMock(core.TomboyNote) ]
 
         dsp_ap.tomboy_interface.get_notes(names=["addressbook"])\
@@ -1491,7 +1614,7 @@ class TestDisplay(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        dsp_ap.perform_action(fake_options, ["addressbook"])
+        dsp_ap.perform_action(fake_config, fake_options, ["addressbook"])
 
         self.m.VerifyAll()
 
@@ -1505,11 +1628,12 @@ class TestDisplay(BasicMocking, CLIMocking):
         dsp_ap = self.wrap_subject(display.DisplayAction, "perform_action")
 
         fake_options = self.m.CreateMock(optparse.Values)
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
         self.m.ReplayAll()
         self.assertRaises(
             SystemExit,
-            dsp_ap.perform_action, fake_options, []
+            dsp_ap.perform_action, fake_config, fake_options, []
         )
         self.m.VerifyAll()
 
@@ -1598,6 +1722,7 @@ class TestSearch(BasicMocking, CLIMocking):
         fake_options = self.m.CreateMock(optparse.Values)
         fake_options.tags = list(tags)
         fake_options.templates = with_templates
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
         srch_ap.tomboy_interface.get_notes(
             names=["note1", "note2"],
@@ -1610,7 +1735,11 @@ class TestSearch(BasicMocking, CLIMocking):
 
         self.m.ReplayAll()
 
-        srch_ap.perform_action(fake_options, ["findme", "note1", "note2"])
+        srch_ap.perform_action(
+            fake_config,
+            fake_options,
+            ["findme", "note1", "note2"]
+        )
 
         self.m.VerifyAll()
 
@@ -1632,12 +1761,13 @@ class TestSearch(BasicMocking, CLIMocking):
         srch_ap = self.wrap_subject(search.SearchAction, "perform_action")
 
         fake_options = self.m.CreateMock(optparse.Values)
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
         self.m.ReplayAll()
 
         self.assertRaises(
             SystemExit,
-            srch_ap.perform_action, fake_options, []
+            srch_ap.perform_action, fake_config, fake_options, []
         )
 
         self.m.VerifyAll()
@@ -1657,13 +1787,14 @@ class TestVersion(BasicMocking, CLIMocking):
         vrsn_ap.tomboy_interface.application = "some_app"
 
         fake_options = self.m.CreateMock(optparse.Values)
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
         vrsn_ap.tomboy_interface.comm.Version()\
             .AndReturn("1.0.1")
 
         self.m.ReplayAll()
 
-        vrsn_ap.perform_action(fake_options, [])
+        vrsn_ap.perform_action(fake_config, fake_options, [])
 
         self.m.VerifyAll()
 
@@ -1862,6 +1993,7 @@ class TestPlugins(BasicMocking):
         self.verify_method_does_nothing(
             plugins.ActionPlugin,
             "perform_action",
+            self.m.CreateMockAnything(),
             self.m.CreateMockAnything(),
             self.m.CreateMockAnything()
         )

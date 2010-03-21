@@ -79,7 +79,7 @@ class ListAction(plugins.ActionPlugin):
 
         self.add_option_library( plugins.FilteringGroup("List") )
 
-    def perform_action(self, options, positional):
+    def perform_action(self, config, options, positional):
         """Use the tomtom object to list notes.
 
         This action prints modification date, title and tags of notes to the

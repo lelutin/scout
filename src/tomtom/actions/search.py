@@ -79,7 +79,7 @@ class SearchAction(plugins.ActionPlugin):
         """Set action's options."""
         self.add_option_library( plugins.FilteringGroup("Search") )
 
-    def perform_action(self, options, positional):
+    def perform_action(self, config, options, positional):
         """Use the tomtom object to search for some text within notes.
 
         This action performs a textual search within notes and reports the

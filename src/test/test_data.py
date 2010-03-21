@@ -347,8 +347,8 @@ main_help = \
        app_name (-h|--help|help) [action]
        app_name (-v|--version)
 
-Tomtom is a command line interface to the Tomboy note taking application. It
-also supports Gnote.
+Tomtom is a command line interface to the note taking applications: Tomboy and
+Gnote.
 
 Options depend on what action you are taking. To obtain details on options for
 a particular action, combine one of "-h" or "--help" with the action name or
@@ -471,4 +471,5 @@ autodetection_error = \
 
 autodetection failed for some reason
 
-Use the command line argument "--application" to specify it manually."""
+Use the command line argument "--application" to specify it manually or use the
+"application" configuration option."""

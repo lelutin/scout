@@ -34,8 +34,8 @@
        %(tomtom)s (-h|--help|help) [action]
        %(tomtom)s (-v|--version)
 
-Tomtom is a command line interface to the Tomboy note taking application. It
-also supports Gnote.
+Tomtom is a command line interface to the note taking applications: Tomboy and
+Gnote.
 
 Options depend on what action you are taking. To obtain details on options for
 a particular action, combine one of "-h" or "--help" with the action name or
@@ -48,6 +48,7 @@ import sys
 import os
 import pkg_resources
 import optparse
+import ConfigParser as configparser
 
 from tomtom import core
 from tomtom.core import TOMTOM_VERSION, NoteNotFound, ConnectionError, \
@@ -67,6 +68,12 @@ AUTODETECTION_FAILED = 202
 
 class CommandLine(object):
     """Main entry point for Tomtom."""
+
+    # config file general settings
+    core_config_section = "tomtom"
+    core_options = [
+        "application",
+    ]
 
     def load_action(self, action_name):
         """Load the action named <action_name>.
@@ -169,9 +176,8 @@ class CommandLine(object):
         """Call upon a requested action.
 
         This function is responsible for importing the right module for the
-        required actiion and triggering its entry point. If the function
-        "perform_action" is not present in the imported module, it prints an
-        error message on the standard error stream and exits.
+        required action and triggering its entry point. Exceptions raised in the
+        action are catched and displayed to the user with an error message.
 
         Arguments:
             action_name -- A string representing the requested action
@@ -180,6 +186,10 @@ class CommandLine(object):
         """
         action = self.load_action(action_name)
 
+        # Get the configuration from file
+        configuration = self.get_config()
+
+        # Get the command line arguments
         try:
             options, positional_arguments = self.parse_options(
                 action,
@@ -189,8 +199,10 @@ class CommandLine(object):
             print >> sys.stderr, exc
             exit(ACTION_OPTION_TYPE_ERROR)
 
-        application = self.determine_connection_app(options)
+        # Find out which application to use
+        application = self.determine_connection_app(configuration, options)
 
+        # Create a Tomtom object and put a reference to it in the action
         try:
             action.tomboy_interface = core.Tomtom(application)
         except ConnectionError, exc:
@@ -205,13 +217,15 @@ class CommandLine(object):
                 """%s: failed to determine which application to use.""",
                 exc.__str__(),
                 """Use the command line argument "--application" to specify """
-                    """it manually.""",
+                    """it manually or use the""" + os.linesep +
+                    """"application" configuration option.""",
             ])
             print >> sys.stderr, msg % prog
             sys.exit(AUTODETECTION_FAILED)
 
+        # Run the action
         try:
-            action.perform_action(options, positional_arguments)
+            action.perform_action(configuration, options, positional_arguments)
         except (SystemExit, KeyboardInterrupt):
             # Let the application exit if it wants to, and KeyboardInterrupt is
             # handled on an upper level so that interrupting execution with
@@ -238,14 +252,41 @@ class CommandLine(object):
             # error.
             sys.exit(MALFORMED_ACTION)
 
-    def determine_connection_app(self, options):
+    def get_config(self):
+        """Load the configuration from a file."""
+        config_parser = configparser.SafeConfigParser()
+
+        config_parser.read([
+            "/etc/tomtom.cfg",
+            os.path.expanduser("~/.tomtom/config"),
+            os.path.expanduser("~/.config/tomtom/config"),
+        ])
+
+        return self.sanitized_config(config_parser)
+
+    def sanitized_config(self, parser):
+        """Reject every unknown configuration in tomtom sectionself."""
+        # If the core section is not there, add an empty one.
+        if not parser.has_section(self.core_config_section):
+            parser.add_section(self.core_config_section)
+
+        # Keep only the options that we know of, thrash the rest
+        for option in parser.options(self.core_config_section):
+            if option not in self.core_options:
+                parser.remove_option(self.core_config_section, option)
+
+        return parser
+
+    def determine_connection_app(self, config, options):
         """Determine if we need to force the use of one of Tomboy or Gnote."""
         # Command line option. This is the strongest user interaction. It takes
         # precedence over everything else.
         if options.application:
             return options.application
 
-        # TODO check configuration for a value
+        # Configuration.
+        if config.has_option(self.core_config_section, "application"):
+            return config.get(self.core_config_section, "application")
 
         # None means to attempt autodetection
         return None

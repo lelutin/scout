@@ -40,6 +40,7 @@ import os
 import mox
 import dbus
 import pkg_resources
+import ConfigParser as configparser
 
 import test_data
 from test_utils import *
@@ -65,8 +66,48 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         """
         super(AcceptanceTests, self).setUp()
 
+        # fake absence of configuration
+        self.mock_out_app_config()
+
         # mock out dbus interaction with application discovery
         self.mock_out_dbus()
+
+    def mock_out_app_config(self):
+        """Mock out the getting the application on the configuration file."""
+        fake_parser = self.m.CreateMock(configparser.SafeConfigParser)
+
+        self.m.StubOutWithMock(
+            configparser,
+            "SafeConfigParser",
+            use_mock_anything=True
+        )
+
+        self.m.StubOutWithMock(os.path, "expanduser")
+
+        configparser.SafeConfigParser()\
+            .AndReturn(fake_parser)
+
+        os.path.expanduser("~/.tomtom/config")\
+            .AndReturn("/home/bobby/.tomtom/config")
+        os.path.expanduser("~/.config/tomtom/config")\
+            .AndReturn("/home/bobby/.config/tomtom/config")
+
+        fake_parser.read([
+            "/etc/tomtom.cfg",
+            "/home/bobby/.tomtom/config",
+            "/home/bobby/.config/tomtom/config",
+        ])
+
+        fake_parser.has_section("tomtom")\
+            .AndReturn(False)
+
+        fake_parser.add_section("tomtom")
+
+        fake_parser.options("tomtom")\
+            .AndReturn( [] )
+
+        fake_parser.has_option("tomtom", "application")\
+            .AndReturn(False)
 
     def mock_out_dbus(self, application=None):
         """Mock out dbus interaction with the specified application."""
