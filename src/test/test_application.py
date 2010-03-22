@@ -506,13 +506,13 @@ class TestMain(BasicMocking, CLIMocking):
 
         sys.argv = ["app_name"]
 
-        old_print_exc = traceback.print_exc
-        traceback.print_exc = self.print_traceback
-
         self.m.StubOutWithMock(os.path, "basename")
+        self.m.StubOutWithMock(traceback, "print_exc")
 
         os.path.basename(sys.argv[0])\
             .AndReturn(sys.argv[0])
+
+        traceback.print_exc()
 
         self.m.ReplayAll()
 
@@ -523,12 +523,6 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-        self.assertEqual(
-            test_data.unhandled_action_exception_error_message + os.linesep,
-            sys.stderr.getvalue()
-        )
-
-        traceback.print_exc = old_print_exc
 
     def test_dispatch_handles_option_type_exceptions(self):
         """Main: dispatch prints an error if an option is of the wrong type."""
@@ -843,17 +837,16 @@ class TestCore(BasicMocking):
     """Tests for general code."""
 
     def verify_Tomtom_constructor(self, application):
-        """Test that Tomtom's constructor goes through successfully."""
+        """Test Tomtom's constructor."""
         tt = self.wrap_subject(core.Tomtom, "__init__")
 
-        old_SessionBus = dbus.SessionBus
-        old_Interface = dbus.Interface
+        session_bus = self.m.CreateMock(dbus.SessionBus)
+        dbus_interface = self.m.CreateMock(dbus.Interface)
 
-        dbus.SessionBus = self.m.CreateMockAnything()
-        dbus.Interface = self.m.CreateMockAnything()
-        session_bus = self.m.CreateMockAnything()
-        dbus_object = self.m.CreateMockAnything()
-        dbus_interface = self.m.CreateMockAnything()
+        self.m.StubOutWithMock(dbus, "SessionBus", use_mock_anything=True)
+        self.m.StubOutWithMock(dbus, "Interface", use_mock_anything=True)
+
+        dbus_object = self.m.CreateMock(dbus.proxies.ProxyObject)
 
         dbus.SessionBus()\
             .AndReturn(session_bus)
@@ -865,27 +858,38 @@ class TestCore(BasicMocking):
                 .AndReturn( tuple(["Tomboy", dbus_object]) )
             app_name = "Tomboy"
         else:
-            session_bus.get_object(
-                "org.gnome.%s" % app_name,
-                "/org/gnome/%s/RemoteControl" % app_name
-            ).AndReturn(dbus_object)
+            if application == "fail_app":
+                session_bus.get_object(
+                    "org.gnome.%s" % app_name,
+                    "/org/gnome/%s/RemoteControl" % app_name
+                ).AndRaise(dbus.DBusException)
+            else:
+                session_bus.get_object(
+                    "org.gnome.%s" % app_name,
+                    "/org/gnome/%s/RemoteControl" % app_name
+                ).AndReturn(dbus_object)
 
-        dbus.Interface(
-            dbus_object,
-            "org.gnome.%s.RemoteControl" % app_name
-        ).AndReturn(dbus_interface)
+        if application != "fail_app":
+            dbus.Interface(
+                dbus_object,
+                "org.gnome.%s.RemoteControl" % app_name
+            ).AndReturn(dbus_interface)
 
         self.m.ReplayAll()
 
-        tt.__init__(application)
+        if application == "fail_app":
+            self.assertRaises(
+                core.ConnectionError,
+                tt.__init__, application
+            )
+        else:
+            tt.__init__(application)
 
         self.m.VerifyAll()
 
-        self.assertEqual(dbus_interface, tt.comm)
-        self.assertEqual(app_name, tt.application)
-
-        dbus.SessionBus = old_SessionBus
-        dbus.Interface = old_Interface
+        if application != "fail_app":
+            self.assertEqual(dbus_interface, tt.comm)
+            self.assertEqual(app_name, tt.application)
 
     def test_Tomtom_constructor(self):
         """Core: Tomtom's dbus interface is initialized."""
@@ -895,18 +899,17 @@ class TestCore(BasicMocking):
         """Core: Tomtom's dbus interface is autodetected and initialized."""
         self.verify_Tomtom_constructor(None)
 
+    def test_Tomtom_constructor_application_fails(self):
+        """Core: Tomtom's dbus interface is unavailable."""
+        self.verify_Tomtom_constructor("fail_app")
+
     def test_dbus_Tomboy_communication_problem(self):
         """Core: Raise an exception if linking dbus with Tomboy failed."""
         tt = self.wrap_subject(core.Tomtom, "__init__")
 
-        old_SessionBus = dbus.SessionBus
-        old_Interface = dbus.Interface
+        session_bus = self.m.CreateMock(dbus.SessionBus)
 
-        dbus.SessionBus = self.m.CreateMockAnything()
-        dbus.Interface = self.m.CreateMockAnything()
-        session_bus = self.m.CreateMockAnything()
-        dbus_object = self.m.CreateMockAnything()
-        dbus_interface = self.m.CreateMockAnything()
+        self.m.StubOutWithMock(dbus, "SessionBus", use_mock_anything=True)
 
         dbus.SessionBus()\
             .AndRaise( dbus.DBusException("cosmos error") )
@@ -916,9 +919,6 @@ class TestCore(BasicMocking):
         self.assertRaises(core.ConnectionError, tt.__init__, "Tomboy")
 
         self.m.VerifyAll()
-
-        dbus.SessionBus = old_SessionBus
-        dbus.Interface = old_Interface
 
     def verify_TomboyNote_constructor(self, **kwargs):
         """Build a TomboyNote mock and make __init__ its test subject."""
