@@ -31,10 +31,11 @@
 #
 ###############################################################################
 #
-# This is an action module. Action modules need to have a function named
-# "perform_action". It can import tomtom classes and any other packages to help
-# in its task. An action should use tomtom to get or send information from or
-# to Tomboy and use the standard input, output and error streams as its
+# This is an action module. Action modules are subclasses of
+# tomtom.plugins.ActionPlugin. Their entry point is the object's
+# "perform_action" method. It can import tomtom classes and any other packages
+# to help in its task. An action should use tomtom to get or send information
+# from or to Tomboy and use the standard input, output and error streams as its
 # interface with the user.
 #
 # Actions are listed dynamically in tomtom's basic help message. Actions'
