@@ -60,9 +60,11 @@ permanently and, once it is done, their content is lost.
 
 """
 import os
+import sys
 import optparse
 
 from tomtom import plugins
+from tomtom.cli import TOO_FEW_ARGUMENTS_ERROR
 
 DESC = __doc__.splitlines()[0]
 
@@ -117,6 +119,17 @@ class DeleteAction(plugins.ActionPlugin):
             positional -- a list of strings of positional arguments
 
         """
+        if not positional and not options.tags:
+            msg = (os.linesep * 2).join([
+                """error: No filters or note names given.""",
+                """To delete notes, you must specify a filtering option, """
+                    """note names, or both.""",
+                """Use option -h or --help to learn more about filters."""
+            ])
+            print msg
+
+            sys.exit(TOO_FEW_ARGUMENTS_ERROR)
+
         notes = self.tomboy_interface.get_notes(
             names=positional,
             tags=options.tags,

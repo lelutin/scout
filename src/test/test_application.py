@@ -1526,31 +1526,53 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
 
 class TestDelete(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that delete notes."""
-    def test_perform_action(self):
-        """Delete: perform_action executes successfully."""
+
+    def verify_perform_action(self, tags, names):
+        """Test delete's entry point."""
         del_ap = self.wrap_subject(delete.DeleteAction, "perform_action")
         del_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
 
         fake_options = self.m.CreateMock(optparse.Values)
-        fake_options.tags = ["tag1", "tag2"]
+        fake_options.tags = tags
         fake_options.templates = True
         fake_options.dry_run = False
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
         notes = [ self.m.CreateMock(core.TomboyNote) ]
 
-        del_ap.tomboy_interface.get_notes(
-            names=["note1"],
-            tags=["tag1", "tag2"],
-            exclude_templates=False
-        ).AndReturn(notes)
+        if names or tags:
+            del_ap.tomboy_interface.get_notes(
+                names=names,
+                tags=tags,
+                exclude_templates=False
+            ).AndReturn(notes)
 
-        del_ap.delete_notes(notes, False)
+            del_ap.delete_notes(notes, False)
 
         self.m.ReplayAll()
 
-        del_ap.perform_action(fake_config, fake_options, ["note1"])
+        if names or tags:
+            del_ap.perform_action(fake_config, fake_options, names)
+        else:
+            self.assertRaises(
+                SystemExit,
+                del_ap.perform_action, fake_config, fake_options, names
+            )
 
         self.m.VerifyAll()
+
+        if not names and not tags:
+            self.assertEqual(
+                test_data.delete_no_argument_msg + os.linesep,
+                sys.stdout.getvalue()
+            )
+
+    def test_perform_action(self):
+        """Delete: perform_action executes successfully."""
+        self.verify_perform_action( tags=["tag1", "tag2"], names=["note1"] )
+
+    def test_perform_action_no_argument(self):
+        """Delete: No filtering or note names given."""
+        self.verify_perform_action( tags=[], names=[] )
 
     def verify_delete_notes(self, dry_run):
         """Test note deletion."""

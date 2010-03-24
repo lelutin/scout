@@ -697,17 +697,21 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
             sys.stdout.getvalue()
         )
 
-    def verify_delete_notes(self, dry_run):
+    def verify_delete_notes(self, arguments, dry_run):
         """Test note deletion."""
         list_of_notes = test_data.full_list_of_notes(self.m)
 
-        self.mock_out_listing(list_of_notes)
+        if arguments:
+            self.mock_out_listing(list_of_notes)
 
-        expected_notes = [
-            n for n in list_of_notes
-            if "system:notebook:pim" in n.tags
-               or n.title == "TDD"
-        ]
+            # This is not really nice.. but for now it does the job..
+            expected_notes = [
+                n for n in list_of_notes
+                if "system:notebook:pim" in n.tags
+                   or n.title == "TDD"
+            ]
+        else:
+            expected_notes = []
 
         if not dry_run:
             for note in expected_notes:
@@ -718,27 +722,41 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         sys.argv = [
             "unused_prog_name",
             "delete",
-            "-b", "pim",
         ]
         if dry_run:
             sys.argv.append("--dry-run")
 
-        sys.argv.append("TDD")
+        sys.argv.extend(arguments)
 
-        cli.exception_wrapped_main()
+        if arguments:
+            cli.exception_wrapped_main()
+        else:
+            self.assertRaises(
+                SystemExit,
+                cli.exception_wrapped_main
+            )
 
         self.m.VerifyAll()
 
     def test_delete_notes(self):
         """Acceptance: Delete a list of notes."""
-        self.verify_delete_notes(False)
+        self.verify_delete_notes( ["-b", "pim", "TDD"], False )
 
     def test_delete_notes_dry_run(self):
         """Acceptance: Dry run of note deletion."""
-        self.verify_delete_notes(True)
+        self.verify_delete_notes( ["-b", "pim", "TDD"], True )
 
         self.assertEqual(
             test_data.delete_dry_run_list + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+    def test_delete_notes_no_argument(self):
+        """Acceptance: Delete without argument prints a message."""
+        self.verify_delete_notes( [], False )
+
+        self.assertEqual(
+            test_data.delete_no_argument_msg + os.linesep,
             sys.stdout.getvalue()
         )
 

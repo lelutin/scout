@@ -227,6 +227,13 @@ book_help_delete = \
 """Help me out! By default, template notes are included so that the """ + \
     """entire book is deleted."""
 
+delete_no_argument_msg = \
+"""error: No filters or note names given.
+
+To delete notes, you must specify a filtering option, note names, or both.
+
+Use option -h or --help to learn more about filters."""
+
 # List of notes used in multiple tests
 def note_mock(m, uri, title, date, tags):
     """Create a mock object of a TomboyNote with preset attributes."""
