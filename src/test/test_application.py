@@ -1527,7 +1527,7 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
 class TestDelete(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that delete notes."""
 
-    def verify_perform_action(self, tags, names):
+    def verify_perform_action(self, tags, names, all_notes):
         """Test delete's entry point."""
         del_ap = self.wrap_subject(delete.DeleteAction, "perform_action")
         del_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
@@ -1536,10 +1536,20 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
         fake_options.tags = tags
         fake_options.templates = True
         fake_options.dry_run = False
+        fake_options.erase_all = all_notes
+
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
         notes = [ self.m.CreateMock(core.TomboyNote) ]
 
-        if names or tags:
+        if all_notes:
+            del_ap.tomboy_interface.get_notes(
+                names=[],
+                tags=[],
+                exclude_templates=False
+            ).AndReturn(notes)
+
+            del_ap.delete_notes(notes, False)
+        elif names or tags:
             del_ap.tomboy_interface.get_notes(
                 names=names,
                 tags=tags,
@@ -1550,7 +1560,7 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
 
         self.m.ReplayAll()
 
-        if names or tags:
+        if all_notes or names or tags:
             del_ap.perform_action(fake_config, fake_options, names)
         else:
             self.assertRaises(
@@ -1560,7 +1570,7 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
 
         self.m.VerifyAll()
 
-        if not names and not tags:
+        if not names and not tags and not all_notes:
             self.assertEqual(
                 test_data.delete_no_argument_msg + os.linesep,
                 sys.stdout.getvalue()
@@ -1568,11 +1578,19 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
 
     def test_perform_action(self):
         """Delete: perform_action executes successfully."""
-        self.verify_perform_action( tags=["tag1", "tag2"], names=["note1"] )
+        self.verify_perform_action(
+            tags=["tag1", "tag2"],
+            names=["note1"],
+            all_notes=False
+        )
 
     def test_perform_action_no_argument(self):
         """Delete: No filtering or note names given."""
-        self.verify_perform_action( tags=[], names=[] )
+        self.verify_perform_action( tags=[], names=[], all_notes=False )
+
+    def test_perform_action_all_notes(self):
+        """Delete: All notes requested for deletion."""
+        self.verify_perform_action( tags=[], names=[], all_notes=True )
 
     def verify_delete_notes(self, dry_run):
         """Test note deletion."""
@@ -1627,6 +1645,7 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
         fake_option.help = "Help me out!"
 
         new_template_option = self.m.CreateMock(optparse.Option)
+        new_all_notes_option = self.m.CreateMock(optparse.Option)
 
         del_ap.add_option(
             "--dry-run",
@@ -1651,7 +1670,18 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
                 """tag or book name."""
         ).AndReturn(new_template_option)
 
-        fake_filtering_group.add_options( [new_template_option] )
+        optparse.Option(
+            "--all-notes",
+            dest="erase_all", action="store_true", default=False,
+            help="""Delete all notes. Once this is done, there is no turning """
+                """back. To make sure that it is doing what you want, you """
+                """could use the --dry-run option first."""
+        ).AndReturn(new_all_notes_option)
+
+        fake_filtering_group.add_options([
+            new_template_option,
+            new_all_notes_option
+        ])
 
         del_ap.add_option_library(fake_filtering_group)
 

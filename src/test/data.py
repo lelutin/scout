@@ -442,7 +442,11 @@ Options:
                         for each desired tag. This option selects raw tags and
                         could be useful for user-assigned tags.
     --spare-templates   Do not delete template notes that get caught with a
-                        tag or book name.""" % default_options_help
+                        tag or book name.
+    --all-notes         Delete all notes. Once this is done, there is no
+                        turning back. To make sure that it is doing what you
+                        want, you could use the --dry-run option first.""" \
+    % default_options_help
 
 help_details_search = \
 """Usage: app_name search (-h|--help)

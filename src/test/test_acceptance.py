@@ -697,18 +697,20 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
             sys.stdout.getvalue()
         )
 
-    def verify_delete_notes(self, arguments, dry_run):
+    def verify_delete_notes(self, tags, names, all_notes, dry_run):
         """Test note deletion."""
         list_of_notes = test_data.full_list_of_notes(self.m)
 
-        if arguments:
+        if all_notes or tags or names:
             self.mock_out_listing(list_of_notes)
 
-            # This is not really nice.. but for now it does the job..
+        if all_notes:
+            expected_notes = list_of_notes
+        elif tags or names:
             expected_notes = [
                 n for n in list_of_notes
-                if "system:notebook:pim" in n.tags
-                   or n.title == "TDD"
+                if set(n.tags).intersection(tags)
+                   or n.title in names
             ]
         else:
             expected_notes = []
@@ -725,26 +727,45 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         ]
         if dry_run:
             sys.argv.append("--dry-run")
+        if all_notes:
+            sys.argv.append("--all-notes")
 
-        sys.argv.extend(arguments)
+        for tag in tags:
+            sys.argv.extend([
+                "-t",
+                tag,
+            ])
 
-        if arguments:
-            cli.exception_wrapped_main()
-        else:
+        for name in names:
+            sys.argv.append(name)
+
+        if not all_notes and not tags and not names:
             self.assertRaises(
                 SystemExit,
                 cli.exception_wrapped_main
             )
+        else:
+            cli.exception_wrapped_main()
 
         self.m.VerifyAll()
 
     def test_delete_notes(self):
         """Acceptance: Delete a list of notes."""
-        self.verify_delete_notes( ["-b", "pim", "TDD"], False )
+        self.verify_delete_notes(
+            tags=["system:notebook:pim"],
+            names=["TDD"],
+            all_notes=False,
+            dry_run=False
+        )
 
     def test_delete_notes_dry_run(self):
         """Acceptance: Dry run of note deletion."""
-        self.verify_delete_notes( ["-b", "pim", "TDD"], True )
+        self.verify_delete_notes(
+            tags=["system:notebook:pim"],
+            names=["TDD"],
+            all_notes=False,
+            dry_run=True
+        )
 
         self.assertEqual(
             test_data.delete_dry_run_list + os.linesep,
@@ -753,11 +774,25 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
 
     def test_delete_notes_no_argument(self):
         """Acceptance: Delete without argument prints a message."""
-        self.verify_delete_notes( [], False )
+        self.verify_delete_notes(
+            tags=[],
+            names=[],
+            all_notes=False,
+            dry_run=False
+        )
 
         self.assertEqual(
             test_data.delete_no_argument_msg + os.linesep,
             sys.stdout.getvalue()
+        )
+
+    def test_delete_notes_all_notes(self):
+        """Acceptance: Delete all notes."""
+        self.verify_delete_notes(
+            tags=[],
+            names=[],
+            all_notes=True,
+            dry_run=False
         )
 
     def test_help_delete_specific(self):

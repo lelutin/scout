@@ -104,6 +104,13 @@ class DeleteAction(plugins.ActionPlugin):
                 help="""Do not delete template notes that get caught with a """
                     """tag or book name."""
             ),
+            optparse.Option(
+                "--all-notes",
+                dest="erase_all", action="store_true", default=False,
+                help="""Delete all notes. Once this is done, there is no """
+                    """turning back. To make sure that it is doing what you """
+                    """want, you could use the --dry-run option first."""
+            ),
         ])
 
         self.add_option_library( filter_group )
@@ -119,7 +126,8 @@ class DeleteAction(plugins.ActionPlugin):
             positional -- a list of strings of positional arguments
 
         """
-        if not positional and not options.tags:
+        # Nothing was requested, so do nothing.
+        if not positional and not options.tags and not options.erase_all:
             msg = (os.linesep * 2).join([
                 """error: No filters or note names given.""",
                 """To delete notes, you must specify a filtering option, """
@@ -129,6 +137,11 @@ class DeleteAction(plugins.ActionPlugin):
             print msg
 
             sys.exit(TOO_FEW_ARGUMENTS_ERROR)
+
+        # All notes requested for deletion. Force no filters.
+        if options.erase_all:
+            options.tags = []
+            positional = []
 
         notes = self.tomboy_interface.get_notes(
             names=positional,
