@@ -128,10 +128,11 @@ class DeleteAction(plugins.ActionPlugin):
     def delete_notes(self, notes, dry_run=True):
         """Delete each note in a list of notes."""
         if dry_run:
-            print "The following notes are selected for deletion:"
+            msg = "The following notes are selected for deletion:"
+            print msg.encode('utf-8')
 
         for note in notes:
             if dry_run:
-                print "  %s" % note.title
+                print ("  %s" % note.title).encode('utf-8')
             else:
                 self.tomboy_interface.comm.DeleteNote(note.uri)
