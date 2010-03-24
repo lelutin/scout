@@ -57,10 +57,10 @@ from tomtom import core, cli, plugins
 # builtin function.
 from tomtom.actions import display, list as _list, delete, search, version
 
-import test_data
-from test_utils import *
+from . import data as test_data
+from . import bases
 
-class TestMain(BasicMocking, CLIMocking):
+class TestMain(bases.BasicMocking, bases.CLIMocking):
     """Tests for functions in the main script.
 
     This test case verifies that functions in the main script behave as
@@ -833,7 +833,7 @@ class TestMain(BasicMocking, CLIMocking):
         """Main: Core configuration section is not present."""
         self.verify_sanitized_config(False)
 
-class TestCore(BasicMocking):
+class TestCore(bases.BasicMocking):
     """Tests for general code."""
 
     def verify_Tomtom_constructor(self, application):
@@ -1249,7 +1249,7 @@ class TestCore(BasicMocking):
         """Core: Autodetection fails to find any application."""
         self.verify_autodetect_app( ["Tomboy", "Gnote"] )
 
-class TestList(BasicMocking, CLIMocking):
+class TestList(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that handles the notes and lists them."""
 
     def test_listing(self):
@@ -1413,7 +1413,7 @@ class TestList(BasicMocking, CLIMocking):
         """List: perform_action called with a tag as filter."""
         self.verify_perform_action(with_templates=True)
 
-class TestDisplay(BasicMocking, CLIMocking):
+class TestDisplay(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that display notes' content."""
     def test_get_display_for_notes(self):
         """Display: Tomtom returns notes' contents, separated a marker."""
@@ -1524,7 +1524,7 @@ class TestDisplay(BasicMocking, CLIMocking):
             sys.stderr.getvalue()
         )
 
-class TestDelete(BasicMocking, CLIMocking):
+class TestDelete(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that delete notes."""
     def test_perform_action(self):
         """Delete: perform_action executes successfully."""
@@ -1644,7 +1644,7 @@ class TestDelete(BasicMocking, CLIMocking):
             fake_option.help
         )
 
-class TestSearch(BasicMocking, CLIMocking):
+class TestSearch(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that perform a textual search within notes."""
     def test_search_for_text(self):
         """Search: Tomtom triggers a search through requested notes."""
@@ -1779,7 +1779,7 @@ class TestSearch(BasicMocking, CLIMocking):
             sys.stderr.getvalue()
         )
 
-class TestVersion(BasicMocking, CLIMocking):
+class TestVersion(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that show Tomboy's version."""
     def test_perform_action(self):
         """Version: perform_action prints out Tomboy's version."""
@@ -1805,7 +1805,7 @@ class TestVersion(BasicMocking, CLIMocking):
             sys.stdout.getvalue()
         )
 
-class TestPlugins(BasicMocking):
+class TestPlugins(bases.BasicMocking):
     """Tests for the basis of plugins."""
     def test_ActionPlugin_constructor(self):
         """Plugins: ActionPlugin's constructor sets initial values."""
