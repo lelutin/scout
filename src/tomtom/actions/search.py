@@ -72,9 +72,8 @@ DESC = __doc__.splitlines()[0]
 class SearchAction(plugins.ActionPlugin):
     """Plugin object for searching text in notes"""
     short_description = DESC
-    usage = """%prog search -h""" + os.linesep + \
-        """       %prog search [-b <book name>[,...]|-t <tag>[,...]|""" + \
-        """--with-templates] <search_pattern> [note_name ...]"""
+    usage = """%prog search (-h|--help)""" + os.linesep + \
+        """       %prog search [filter ...] <search_pattern> [note_name ...]"""
 
     def init_options(self):
         """Set action's options."""
@@ -87,6 +86,7 @@ class SearchAction(plugins.ActionPlugin):
         results to the screen.
 
         Arguments:
+            config -- a ConfigParser.SafeParser object representing config files
             options -- an optparse.Values object containing the parsed options
             positional -- a list of strings of positional arguments
 

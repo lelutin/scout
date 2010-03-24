@@ -294,7 +294,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             test_data.note_contents_from_dbus["python-work"]
         ]
 
-        self.mock_out_get_notes_by_names([todo, python_work])
+        list_of_notes = test_data.full_list_of_notes(self.m)
+        self.mock_out_listing(list_of_notes)
 
         self.dbus_interface.GetNoteContents(todo.uri)\
             .AndReturn(test_data.note_contents_from_dbus["TODO-list"])
@@ -316,8 +317,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def test_note_does_not_exist(self):
         """Acceptance: Specified note non-existant: display an error."""
-        self.dbus_interface.FindNote("unexistant")\
-            .AndReturn(dbus.String(""))
+        list_of_notes = test_data.full_list_of_notes(self.m)
+        self.mock_out_listing(list_of_notes)
 
         self.m.ReplayAll()
 
@@ -385,7 +386,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             list_of_notes[6],
         ]
 
-        self.mock_out_get_notes_by_names(requested_notes)
+        list_of_notes = test_data.full_list_of_notes(self.m)
+        self.mock_out_listing(list_of_notes)
 
         for note in requested_notes:
             self.dbus_interface.GetNoteContents(note.uri)\
@@ -710,4 +712,60 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.assertEquals(
             test_data.expected_list + os.linesep,
             sys.stdout.getvalue()
+        )
+
+    def verify_delete_notes(self, dry_run):
+        """Test note deletion."""
+        list_of_notes = test_data.full_list_of_notes(self.m)
+
+        self.mock_out_listing(list_of_notes)
+
+        expected_notes = [
+            n for n in list_of_notes
+            if "system:notebook:pim" in n.tags
+               or n.title == "TDD"
+        ]
+
+        if not dry_run:
+            for note in expected_notes:
+                self.dbus_interface.DeleteNote(note.uri)
+
+        self.m.ReplayAll()
+
+        sys.argv = [
+            "unused_prog_name",
+            "delete",
+            "-b", "pim",
+        ]
+        if dry_run:
+            sys.argv.append("--dry-run")
+
+        sys.argv.append("TDD")
+
+        cli.exception_wrapped_main()
+
+        self.m.VerifyAll()
+
+    def test_delete_notes(self):
+        """Acceptance: Delete a list of notes."""
+        self.verify_delete_notes(False)
+
+    def test_delete_notes_dry_run(self):
+        """Acceptance: Dry run of note deletion."""
+        self.verify_delete_notes(True)
+
+        self.assertEqual(
+            test_data.delete_dry_run_list + os.linesep,
+            sys.stdout.getvalue()
+        )
+
+    def test_help_delete_specific(self):
+        """Acceptance: Detailed help using "-h" after "version" action."""
+        self.verify_help_text(
+            [
+                "app_name",
+                "delete",
+                "--help"
+            ],
+            test_data.help_details_delete
         )

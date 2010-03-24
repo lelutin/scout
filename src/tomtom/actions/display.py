@@ -71,7 +71,10 @@ DESC = __doc__.splitlines()[0]
 class DisplayAction(ActionPlugin):
     """Plugin object for displaying notes' contents"""
     short_description = DESC
-    usage = "%prog display [-h] [note_name ...]"
+    usage = os.linesep.join([
+        "%prog display (-h|--help)",
+        "       %prog display [note_name ...]",
+    ])
     note_separator = "=========================="
 
     def perform_action(self, config, options, positional):
@@ -80,6 +83,7 @@ class DisplayAction(ActionPlugin):
         This action fetches note contents and displays them to the screen.
 
         Arguments:
+            config -- a ConfigParser.SafeParser object representing config files
             options -- an optparse.Values object containing the parsed options
             positional -- a list of strings of positional arguments
 

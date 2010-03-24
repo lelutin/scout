@@ -34,6 +34,7 @@ setup(
             "list = tomtom.actions.list:ListAction",
             "display = tomtom.actions.display:DisplayAction",
             "search = tomtom.actions.search:SearchAction",
+            "delete = tomtom.actions.delete:DeleteAction",
             "version = tomtom.actions.version:VersionAction",
         ],
     },

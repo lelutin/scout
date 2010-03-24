@@ -214,6 +214,20 @@ display_no_note_name_error = \
 
 display_separator = "=========================="
 
+# Those are values to test the "delete" feature.
+delete_dry_run_list = \
+"""The following notes are selected for deletion:
+  addressbook
+  TODO-list
+  TDD
+  business contacts
+  New note template"""
+
+book_help_delete = \
+"""Help me out! By default, template notes are included so that the """ + \
+    """entire book is deleted."""
+
+# List of notes used in multiple tests
 def note_mock(m, uri, title, date, tags):
     """Create a mock object of a TomboyNote with preset attributes."""
     note = m.CreateMock(TomboyNote)
@@ -367,22 +381,23 @@ filtering_options_help = \
 """  Filtering:
     Filter notes by different criteria.
 
-    -b BOOKS            %(action)s only notes belonging to specified notebooks. It
-                        is a shortcut to option "-t" to specify notebooks more
+    -b BOOK             %(action)s notes belonging to specified notebooks. It is a
+                        shortcut to option "-t" to specify notebooks more
                         easily. For example, use "-b HGTTG" instead of "-t
                         system:notebook:HGTTG". Use this option once for each
                         desired book.
+    -t TAG              %(action)s notes with specified tags. Use this option once
+                        for each desired tag. This option selects raw tags and
+                        could be useful for user-assigned tags.
     --with-templates    Include template notes. This option is different from
                         using "-t system:template" in that the latter used
                         alone will only include the templates, while "using
                         "--with-templates" without specifying tags for
-                        selection will include all notes and templates.
-    -t TAGS             %(action)s only notes with specified tags. Use this option
-                        once for each desired tag. This option selects raw
-                        tags and could be useful for user-assigned tags."""
+                        selection will include all notes and templates."""
 
 help_details_list = \
-"""Usage: app_name list [-h|-n <num>|-t <tag>[,...]|-b <book>[,...]]
+"""Usage: app_name list (-h|--help)
+       app_name list [-n <num>] [filter ...]
 
 Options:
 %s
@@ -390,14 +405,41 @@ Options:
 
 %s""" % (default_options_help, filtering_options_help % {"action": "List"})
 
-help_details_display = """Usage: app_name display [-h] [note_name ...]
+help_details_display = \
+"""Usage: app_name display (-h|--help)
+       app_name display [note_name ...]
 
 Options:
 %s""" % (default_options_help, )
 
+help_details_delete = \
+"""Usage: app_name delete -h
+       app_name delete [filter ...] [note_name ...]
+
+Options:
+%s
+  --dry-run             Simulate the action. The notes that are selected for
+                        deletion will be printed out to the screen but no note
+                        will really be deleted.
+
+  Filtering:
+    Filter notes by different criteria.
+
+    -b BOOK             Delete notes belonging to specified notebooks. It is a
+                        shortcut to option "-t" to specify notebooks more
+                        easily. For example, use "-b HGTTG" instead of "-t
+                        system:notebook:HGTTG". Use this option once for each
+                        desired book. By default, template notes are included
+                        so that the entire book is deleted.
+    -t TAG              Delete notes with specified tags. Use this option once
+                        for each desired tag. This option selects raw tags and
+                        could be useful for user-assigned tags.
+    --spare-templates   Do not delete template notes that get caught with a
+                        tag or book name.""" % default_options_help
+
 help_details_search = \
-"""Usage: app_name search -h
-       app_name search [-b <book name>[,...]|-t <tag>[,...]|--with-templates] <search_pattern> [note_name ...]
+"""Usage: app_name search (-h|--help)
+       app_name search [filter ...] <search_pattern> [note_name ...]
 
 Options:
 %s
@@ -405,7 +447,7 @@ Options:
 %s""" % (default_options_help, filtering_options_help % {"action": "Search"})
 
 help_details_version = \
-"""Usage: app_name version [-h]
+"""Usage: app_name version [-h|--help]
 
 Options:
 %s""" % (default_options_help, )

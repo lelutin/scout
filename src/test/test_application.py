@@ -55,7 +55,7 @@ import ConfigParser as configparser
 from tomtom import core, cli, plugins
 # Import the list action under a different name to avoid overwriting the list()
 # builtin function.
-from tomtom.actions import display, list as _list, search, version
+from tomtom.actions import display, list as _list, delete, search, version
 
 import test_data
 from test_utils import *
@@ -982,151 +982,153 @@ class TestCore(BasicMocking):
             tn.date
         )
 
-    def test_get_notes(self):
-        """Core: Note fetching entry point builds and filters a list."""
+    def verify_get_notes(self, tags=None, names=None, exclude=True, count=0):
+        """Test note retrieval."""
+        if tags is None:
+            expected_tags = []
+        else:
+            expected_tags = tags
+        if names is None:
+            expected_names = []
+        else:
+            expected_names = names
+
+        if tags is not None and "system:template" in tags:
+            should_exclude = False
+        else:
+            should_exclude = exclude
+
         tt = self.wrap_subject(core.Tomtom, "get_notes")
 
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        notes = test_data.full_list_of_notes(self.m)
 
-        # Only verify calls here, results are tested separately
+        fake_filtered_list = [
+            self.m.CreateMockAnything(),
+            self.m.CreateMockAnything(),
+            self.m.CreateMockAnything(),
+            self.m.CreateMockAnything(),
+            self.m.CreateMockAnything(),
+        ]
+
         tt.build_note_list()\
-            .AndReturn(list_of_notes)
-        tt.filter_notes(list_of_notes)
+            .AndReturn(notes)
+
+        tt.filter_notes(
+            notes,
+            names=expected_names,
+            tags=expected_tags,
+            exclude_templates=should_exclude
+        ).AndReturn(fake_filtered_list)
 
         self.m.ReplayAll()
 
-        tt.get_notes()
+        result = tt.get_notes(
+            tags=tags,
+            names=names,
+            exclude_templates=exclude,
+            count_limit=count
+        )
 
         self.m.VerifyAll()
+
+        return result
+
+    def test_get_notes(self):
+        """Core: No filtering but templates removed."""
+        self.verify_get_notes()
+
+    def test_get_notes_number_limited(self):
+        """Core: No filtering but templates removed."""
+        list_of_notes = self.verify_get_notes(count=3)
+
+        self.assertEqual(
+            3,
+            len(list_of_notes)
+        )
+
+    def test_get_notes_with_templates(self):
+        """Core: Filtered notes but templates included."""
+        self.verify_get_notes(
+            tags=["sometag", "othertag"],
+            names=["note1", "note2"],
+            exclude=False
+        )
+
+    def test_get_notes_template_as_a_tag(self):
+        """Core: Specifying templates as a tag should include them."""
+        self.verify_get_notes( tags=["system:template", "someothertag"] )
+
+    def verify_filter_notes(self, tags, names, exclude=True):
+        """Test note filtering."""
+        tt = self.wrap_subject(core.Tomtom, "filter_notes")
+
+        notes = test_data.full_list_of_notes(self.m)
+
+        if tags or names:
+            expected_list = [
+                n for n in notes
+                if set(n.tags).intersection( set(tags) )
+                   or n.title == "addressbook"
+            ]
+        else:
+            expected_list = notes
+
+        if exclude:
+            expected_list = [
+                n for n in expected_list
+                if "system:template" not in n.tags
+            ]
+
+        self.m.ReplayAll()
+
+        result = tt.filter_notes(
+            notes,
+            tags=tags,
+            names=names,
+            exclude_templates=exclude
+        )
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            expected_list,
+            result
+        )
 
     def test_filter_notes(self):
         """Core: Note filtering."""
-        tt = self.wrap_subject(core.Tomtom, "filter_notes")
-
-        notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
-        tags = [self.m.CreateMockAnything()]
-        fake_filtered_list = self.m.CreateMockAnything()
-
-        # Only test calls here, results are tested elsewhere
-        tt.filter_by_tags(notes, tags)\
-            .AndReturn(fake_filtered_list)
-        tt.filter_out_templates(fake_filtered_list)
-
-        self.m.ReplayAll()
-
-        tt.filter_notes(notes, tags=tags)
-
-        self.m.VerifyAll()
-
-    def test_filter_notes_by_names(self):
-        """Core: Filter notes by names."""
-        """No template filtering should occur if names were given.
-
-        If names were given, the user will expect to see templates if they were
-        explicitly named. Thus, filtering should not happen in this case.
-
-        """
-        tt = self.wrap_subject(core.Tomtom, "filter_notes")
-
-        list_of_notes = test_data.full_list_of_notes(self.m)
-
-        notes = [
-            list_of_notes[4],
-            # A template is requested: it should be returned
-            list_of_notes[13],
-        ]
-
-        names = ["python-work", "New note template"]
-
-        self.m.ReplayAll()
-
-        self.assertEqual(
-            notes,
-            tt.filter_notes(notes, names=names)
+        self.verify_filter_notes(
+            tags=["system:notebook:projects"],
+            names=["addressbook"]
         )
-
-        self.m.VerifyAll()
-
-    def test_fiter_notes_template_as_a_tag(self):
-        """Core: Specifying templates as a tag should include them."""
-        tt = self.wrap_subject(core.Tomtom, "filter_notes")
-
-        notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
-        tags = ["system:template", "someothertag"]
-
-        fake_filtered_list = self.m.CreateMockAnything()
-
-        # Only test calls here, results are tested elsewhere
-        tt.filter_by_tags(notes, tags)\
-            .AndReturn(fake_filtered_list)
-
-        self.m.ReplayAll()
-
-        tt.filter_notes(notes, tags=tags)
-
-        self.m.VerifyAll()
 
     def test_fiter_notes_with_templates(self):
         """Core: Do not exclude templates."""
-        tt = self.wrap_subject(core.Tomtom, "filter_notes")
-
-        notes = [self.m.CreateMockAnything(), self.m.CreateMockAnything()]
-        tags = []
-
-        fake_filtered_list = self.m.CreateMockAnything()
-
-        self.m.ReplayAll()
-
-        tt.filter_notes(notes, tags=tags, exclude_templates=False)
-
-        self.m.VerifyAll()
-
-    def test_filter_by_tags(self):
-        """Core: Filter notes by tags."""
-        tt = self.wrap_subject(core.Tomtom, "filter_by_tags")
-
-        list_of_notes = test_data.full_list_of_notes(self.m)
-
-        notes = [
-            list_of_notes[0],
-            list_of_notes[1],
-            list_of_notes[10],
-            # Doesn't have the tags
-            list_of_notes[12],
-        ]
-        tag_list = ["system:notebook:pim", "projects"]
-
-        expected_result = notes[:-1]
-
-        self.m.ReplayAll()
-
-        self.assertEqual(
-            expected_result,
-            tt.filter_by_tags(notes, tag_list=tag_list)
+        self.verify_filter_notes(
+            tags=["system:notebook:projects"],
+            names=["addressbook"],
+            exclude=False
         )
 
-        self.m.VerifyAll()
+    def test_filter_notes_no_filtering(self):
+        """Core: No filtering gives the full list of notes."""
+        self.verify_filter_notes(
+            tags=[],
+            names=[],
+            exclude=False
+        )
 
-    def test_filter_out_templates(self):
-        """Core: Remove templates from a list of notes."""
-        tt = self.wrap_subject(core.Tomtom, "filter_out_templates")
+    def test_filter_notes_unknown_note(self):
+        """Core: Filtering encounters an unknown note name."""
+        tt = self.wrap_subject(core.Tomtom, "filter_notes")
 
-        list_of_notes = test_data.full_list_of_notes(self.m)
-
-        notes = [
-            list_of_notes[9],
-            list_of_notes[10],
-            # This one is a template
-            list_of_notes[13],
-        ]
-
-        expected_result = notes[:-1]
+        notes = test_data.full_list_of_notes(self.m)
 
         self.m.ReplayAll()
 
-        self.assertEqual(
-            expected_result,
-            tt.filter_out_templates(notes)
+        self.assertRaises(
+            core.NoteNotFound,
+            tt.filter_notes, notes, tags=[], names=["unknown"]
         )
 
         self.m.VerifyAll()
@@ -1156,7 +1158,7 @@ class TestCore(BasicMocking):
         } for n in notes]
 
         # Order is not important
-        for note in tt.build_note_list(names=note_names):
+        for note in tt.build_note_list():
             note_as_dict = {
                 "uri":note.uri,
                 "title":note.title,
@@ -1172,34 +1174,6 @@ class TestCore(BasicMocking):
                     """expectation: [%s]""" % (",".join(expectation), )
                 )
 
-    def test_build_note_list_by_names(self):
-        """Core: Tomtom gets a list of given named notes."""
-        tt = self.wrap_subject(core.Tomtom, "build_note_list")
-
-        tt.comm = self.m.CreateMockAnything()
-
-        list_of_notes = test_data.full_list_of_notes(self.m)
-
-        todo = list_of_notes[1]
-        recipes = list_of_notes[11]
-        notes = [todo, recipes]
-        names = [n.title for n in notes]
-
-        tt.get_uris_by_name(names)\
-            .AndReturn( [(n.uri, n.title) for n in notes] )
-
-        for note in notes:
-            tt.comm.GetNoteChangeDate(note.uri)\
-                .AndReturn(note.date)
-            tt.comm.GetTagsForNote(note.uri)\
-                .AndReturn(note.tags)
-
-        self.m.ReplayAll()
-
-        self.verify_note_list(tt, notes, note_names=names)
-
-        self.m.VerifyAll()
-
     def test_build_note_list(self):
         """Core: Tomtom gets a full list of notes."""
         tt = self.wrap_subject(core.Tomtom, "build_note_list")
@@ -1212,8 +1186,8 @@ class TestCore(BasicMocking):
             [note.uri for note in list_of_notes]
         )
 
-        tt.get_uris_for_n_notes(None)\
-            .AndReturn( [(u, None) for u in list_of_uris] )
+        tt.comm.ListAllNotes()\
+            .AndReturn(list_of_uris)
 
         for note in list_of_notes:
             tt.comm.GetNoteTitle(note.uri)\
@@ -1226,51 +1200,6 @@ class TestCore(BasicMocking):
         self.m.ReplayAll()
 
         self.verify_note_list(tt, list_of_notes)
-
-        self.m.VerifyAll()
-
-    def test_get_uris_by_name(self):
-        """Core: Tomtom determines uris by names."""
-        tt = self.wrap_subject(core.Tomtom, "get_uris_by_name")
-
-        tt.comm = self.m.CreateMockAnything()
-
-        list_of_notes = test_data.full_list_of_notes(self.m)
-
-        r_n_d = list_of_notes[12]
-        webpidgin = list_of_notes[9]
-        names = [r_n_d.title, webpidgin.title]
-
-        tt.comm.FindNote(r_n_d.title)\
-            .AndReturn(r_n_d.uri)
-        tt.comm.FindNote(webpidgin.title)\
-            .AndReturn(webpidgin.uri)
-
-        self.m.ReplayAll()
-
-        self.assertEqual(
-            [(r_n_d.uri, r_n_d.title), (webpidgin.uri, webpidgin.title)],
-            tt.get_uris_by_name(names)
-        )
-
-        self.m.VerifyAll()
-
-    def test_get_uris_by_name_unexistant(self):
-        """Core: Tomtom raises a NoteNotFound exception."""
-        tt = self.wrap_subject(core.Tomtom, "get_uris_by_name")
-
-        tt.comm = self.m.CreateMockAnything()
-
-        tt.comm.FindNote("unexistant")\
-            .AndReturn(dbus.String(""))
-
-        self.m.ReplayAll()
-
-        self.assertRaises(
-            core.NoteNotFound,
-            tt.get_uris_by_name,
-            ["unexistant"]
-        )
 
         self.m.VerifyAll()
 
@@ -1322,53 +1251,6 @@ class TestCore(BasicMocking):
 
 class TestList(BasicMocking, CLIMocking):
     """Tests for code that handles the notes and lists them."""
-    def test_get_uris_for_n_notes_no_limit(self):
-        """List: Given no limit, get all the notes' uris."""
-        tt = self.wrap_subject(core.Tomtom, "get_uris_for_n_notes")
-
-        tt.comm = self.m.CreateMockAnything()
-
-        list_of_notes = test_data.full_list_of_notes(self.m)
-
-        list_of_uris = dbus.Array(
-            [note.uri for note in list_of_notes]
-        )
-
-        tt.comm.ListAllNotes()\
-            .AndReturn( list_of_uris )
-
-        self.m.ReplayAll()
-
-        self.assertEqual(
-            [(uri, None) for uri in list_of_uris],
-            tt.get_uris_for_n_notes(None)
-        )
-
-        self.m.VerifyAll()
-
-    def test_get_uris_for_n_notes(self):
-        """List: Given a numerical limit, get the n latest notes' uris."""
-        tt = self.wrap_subject(core.Tomtom, "get_uris_for_n_notes")
-
-        tt.comm = self.m.CreateMockAnything()
-
-        list_of_notes = test_data.full_list_of_notes(self.m)
-
-        list_of_uris = dbus.Array(
-            [note.uri for note in list_of_notes]
-        )
-
-        tt.comm.ListAllNotes()\
-            .AndReturn( list_of_uris )
-
-        self.m.ReplayAll()
-
-        self.assertEqual(
-            [(uri, None) for uri in list_of_uris[:6] ],
-            tt.get_uris_for_n_notes(6)
-        )
-
-        self.m.VerifyAll()
 
     def test_listing(self):
         """List: Format information of a list of notes."""
@@ -1640,6 +1522,126 @@ class TestDisplay(BasicMocking, CLIMocking):
         self.assertEqual(
             test_data.display_no_note_name_error + os.linesep,
             sys.stderr.getvalue()
+        )
+
+class TestDelete(BasicMocking, CLIMocking):
+    """Tests for code that delete notes."""
+    def test_perform_action(self):
+        """Delete: perform_action executes successfully."""
+        del_ap = self.wrap_subject(delete.DeleteAction, "perform_action")
+        del_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+
+        fake_options = self.m.CreateMock(optparse.Values)
+        fake_options.tags = ["tag1", "tag2"]
+        fake_options.templates = True
+        fake_options.dry_run = False
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
+        notes = [ self.m.CreateMock(core.TomboyNote) ]
+
+        del_ap.tomboy_interface.get_notes(
+            names=["note1"],
+            tags=["tag1", "tag2"],
+            exclude_templates=False
+        ).AndReturn(notes)
+
+        del_ap.delete_notes(notes, False)
+
+        self.m.ReplayAll()
+
+        del_ap.perform_action(fake_config, fake_options, ["note1"])
+
+        self.m.VerifyAll()
+
+    def verify_delete_notes(self, dry_run):
+        """Test note deletion."""
+        del_ap = self.wrap_subject(delete.DeleteAction, "delete_notes")
+        del_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+        del_ap.tomboy_interface.comm = self.m.CreateMockAnything()
+
+        notes = [
+            n for n in test_data.full_list_of_notes(self.m)
+            if "system:notebook:pim" in n.tags
+               or n.title == "TDD"
+        ]
+
+        if not dry_run:
+            for note in notes:
+                del_ap.tomboy_interface.comm.DeleteNote(note.uri)
+
+        self.m.ReplayAll()
+
+        del_ap.delete_notes(notes, dry_run=dry_run)
+
+        self.m.VerifyAll()
+
+        if dry_run:
+            self.assertEqual(
+                test_data.delete_dry_run_list + os.linesep,
+                sys.stdout.getvalue()
+            )
+
+    def test_delete_notes(self):
+        """Delete: Delete all notes found in a list."""
+        self.verify_delete_notes(False)
+
+    def test_delete_notes_dry_run(self):
+        """Delete: Dry run for note deletion."""
+        self.verify_delete_notes(True)
+
+    def test_init_options(self):
+        """Delete: Delete's options initialization."""
+        del_ap = self.wrap_subject(delete.DeleteAction, "init_options")
+
+        fake_filtering_group = self.m.CreateMock(plugins.FilteringGroup)
+
+        self.m.StubOutWithMock(
+            plugins,
+            "FilteringGroup",
+            use_mock_anything=True
+        )
+        self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
+
+        fake_option = self.m.CreateMock(optparse.Option)
+        fake_option.help = "Help me out!"
+
+        new_template_option = self.m.CreateMock(optparse.Option)
+
+        del_ap.add_option(
+            "--dry-run",
+            dest="dry_run", action="store_true", default=False,
+            help="Simulate the action. The notes that are selected for """
+                """deletion will be printed out to the screen but no note """
+                """will really be deleted."""
+        )
+
+        plugins.FilteringGroup("Delete")\
+            .AndReturn(fake_filtering_group)
+
+        fake_filtering_group.get_option("-b")\
+            .AndReturn(fake_option)
+
+        fake_filtering_group.remove_option("--with-templates")
+
+        optparse.Option(
+            "--spare-templates",
+            dest="templates", action="store_false", default=True,
+            help="""Do not delete template notes that get caught with a """
+                """tag or book name."""
+        ).AndReturn(new_template_option)
+
+        fake_filtering_group.add_options( [new_template_option] )
+
+        del_ap.add_option_library(fake_filtering_group)
+
+        self.m.ReplayAll()
+
+        del_ap.init_options()
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            test_data.book_help_delete,
+            fake_option.help
         )
 
 class TestSearch(BasicMocking, CLIMocking):
@@ -2084,14 +2086,23 @@ class TestPlugins(BasicMocking):
         ]
 
         optparse.Option(
-            "-b", action="callback", dest="books",
+            "-b", action="callback", dest="books", metavar="BOOK",
             callback=book_callback, type="string",
-            help="""Murder only notes belonging to """ + \
+            help="""Murder notes belonging to """ + \
             """specified notebooks. It is a shortcut to option "-t" to """
             """specify notebooks more easily. For example, use"""
             """ "-b HGTTG" instead of "-t system:notebook:HGTTG". Use """
             """this option once for each desired book."""
         ).AndReturn( option_list[0] )
+
+        optparse.Option(
+            "-t",
+            dest="tags", action="append", default=[], metavar="TAG",
+            help="""Murder notes with """ + \
+            """specified tags. Use this option once for each desired """
+            """tag. This option selects raw tags and could be useful for """
+            """user-assigned tags."""
+        ).AndReturn( option_list[2] )
 
         optparse.Option(
             "--with-templates",
@@ -2102,15 +2113,6 @@ class TestPlugins(BasicMocking):
             """"using "--with-templates" without specifying tags for """
             """selection will include all notes and templates."""
         ).AndReturn( option_list[1] )
-
-        optparse.Option(
-            "-t",
-            dest="tags", action="append", default=[],
-            help="""Murder only notes with """ + \
-            """specified tags. Use this option once for each desired """
-            """tag. This option selects raw tags and could be useful for """
-            """user-assigned tags."""
-        ).AndReturn( option_list[2] )
 
         filter_group.add_options(option_list)
 
@@ -2142,3 +2144,78 @@ class TestPlugins(BasicMocking):
             ["already_here", "system:notebook:book1"],
             fake_parser.values.tags
         )
+
+    def verify_remove_option(self, option_found):
+        """Test option removal from a group."""
+        og = self.wrap_subject(plugins.OptionGroup, "remove_option")
+
+        fake_option1 = self.m.CreateMock(optparse.Option)
+        fake_option2 = self.m.CreateMock(optparse.Option)
+
+        og.options = [fake_option1, fake_option2]
+
+        if option_found:
+            expected_list = [fake_option1]
+            og.get_option("--some-option")\
+                .AndReturn(fake_option2)
+        else:
+            expected_list = [fake_option1, fake_option2]
+            og.get_option("--some-option")\
+                .AndReturn(None)
+
+        self.m.ReplayAll()
+
+        og.remove_option("--some-option")
+
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            expected_list,
+            og.options
+        )
+
+    def test_remove_option(self):
+        """Plugins: Remove an option from an option group."""
+        self.verify_remove_option(True)
+
+    def test_remove_option_not_found(self):
+        """Plugins: Remove an option from an option group."""
+        self.verify_remove_option(False)
+
+    def verify_get_option(self, found):
+        """Test option retrieval from a group."""
+        og = self.wrap_subject(plugins.OptionGroup, "get_option")
+
+        fake_option1 = self.m.CreateMock(optparse.Option)
+        fake_option1._short_opts = ["-a"]
+        fake_option1._long_opts = []
+        fake_option2 = self.m.CreateMock(optparse.Option)
+        fake_option2._short_opts = []
+        if found:
+            fake_option2._long_opts = ["--some-option", "--useless-string"]
+        else:
+            fake_option2._long_opts = ["--useless-string"]
+
+        og.options = [fake_option1, fake_option2]
+
+        if found:
+            expected_result = fake_option2
+        else:
+            expected_result = None
+
+        self.m.ReplayAll()
+
+        self.assertEqual(
+            expected_result,
+            og.get_option("--some-option")
+        )
+
+        self.m.VerifyAll()
+
+    def test_get_option(self):
+        """Plugins: Get an option by its option strings."""
+        self.verify_get_option(True)
+
+    def test_get_option_not_found(self):
+        """Plugins: Requested option is not found."""
+        self.verify_get_option(False)

@@ -141,24 +141,44 @@ class Tomtom(object):
 
         return success_list[0]
 
-    def get_notes(self, **kwargs):
+    def get_notes(self, names=None, count_limit=0, tags=None,
+                  exclude_templates=True):
         """Get a list of notes from the application.
 
         This function gets a list of notes that match the given selection
         options. Notes are automatically filtered. Keyword arguments used in
-        the note building part are "names" and  "count_limit". The rest of the
+        the note building part are "names" and "count_limit". The rest of the
         arguments will be useful to the filtering method.
 
         Arguments:
-            **kwargs -- Map of arguments used for getting and filtering notes.
+            names -- a list of note names to include
+            count_limit -- the maximum number of notes returned. 0 for no limit
+            tags -- a list of tag names to filter by
+            exclude_templates -- boolean, exclude templates (default: True)
 
         """
-        # Consumes "count_limit" and uses "names".
-        notes = self.build_note_list(**kwargs)
-        kwargs.pop("count_limit", 0)
+        notes = self.build_note_list()
 
-        # "names" is still needed for filter_notes
-        return self.filter_notes(notes, **kwargs)
+        if names is None:
+            names = []
+        if tags is None:
+            tags = []
+
+        # Force templates to be included in listing if the tag is requested.
+        if "system:template" in tags:
+            exclude_templates = False
+
+        notes = self.filter_notes(
+            notes,
+            names=names,
+            tags=tags,
+            exclude_templates=exclude_templates
+        )
+
+        if count_limit > 0:
+            return notes[:count_limit]
+
+        return notes
 
     def get_note_content(self, note):
         """Get the content of a note.
@@ -179,79 +199,16 @@ class Tomtom(object):
 
         return os.linesep.join(lines)
 
-    def get_uris_for_n_notes(self, count_max):
-        """Find the URIs for the `count_max` latest notes.
-
-        This method retrieves URIs of notes. If count_max is None, it gets URIs
-        for all notes. Otherwise, it gets `count_max` number of URIs.
-
-        Arguments:
-            count_max -- Maximum number of notes to lookup
-
-        """
-        uris = self.comm.ListAllNotes()
-
-        if count_max != None:
-            uris = uris[:count_max]
-
-        return [(u, None) for u in uris]
-
-    def get_uris_by_name(self, names):
-        """Search for all the notes with the given names.
-
-        This method retreives URIs of notes by searching for them by names. It
-        searches for all names that are in the `names` list.
-
-        Arguments:
-            names -- a list of note names
-
-        """
-        uris = []
-
-        for name in names:
-            uri = self.comm.FindNote(name)
-            if uri == dbus.String(""):
-                raise NoteNotFound(name)
-
-            uris.append( (uri, name) )
-
-        return uris
-
-    def filter_by_tags(self, notes, tag_list):
-        """Remove notes from the list if they have no tags from the list."""
-        tags = set(tag_list)
-
-        return [
-            note for note in notes
-            if tags.intersection( set(note.tags) )
-        ]
-
-    def filter_out_templates(self, notes):
-        """Take out those annoying templates from display."""
-        return [n for n in notes if "system:template" not in n.tags]
-
-    def build_note_list(self, **kwargs):
+    def build_note_list(self):
         """Find notes and build a list of TomboyNote objects.
 
         This method gets a list of notes from the application and converts them
         to TomboyNote objects. It then returns the notes in a list.
 
         """
-        names = kwargs.pop("names", [])
-        count_limit = kwargs.pop("count_limit", None)
-
-        if names:
-            pairs = self.get_uris_by_name(names)
-        else:
-            pairs = self.get_uris_for_n_notes(count_limit)
-
         list_of_notes = []
-        for pair in pairs:
-            uri = pair[0]
-            note_title = pair[1]
-
-            if note_title is None:
-                note_title = self.comm.GetNoteTitle(uri)
+        for uri in self.comm.ListAllNotes():
+            note_title = self.comm.GetNoteTitle(uri)
 
             list_of_notes.append(
                 TomboyNote(
@@ -264,38 +221,53 @@ class Tomtom(object):
 
         return list_of_notes
 
-    def filter_notes(self, notes, tags=[], names=[],
+    def filter_notes(self, notes, tags, names,
             exclude_templates=True):
         """Filter a list of notes according to some criteria.
 
-        Filter a list of TomboyNote objects according to a list of filtering
-        options. "names" will filter out any notes but those whose names are in
-        the list.
+        Filter a list of TomboyNote objects so that it contains only the notes
+        matching a set of filtering options.
 
         Arguments:
             notes -- list of note objects
             tags -- list of tag strings to filter by
-            names -- list of the only names to include
-            exclude_templates -- Boolean, exclude templates (default: True)
+            names -- list of note names to include
+            exclude_templates -- boolean, exclude templates (default: True)
 
         """
-        if tags:
-            notes = self.filter_by_tags(notes, tags)
+        if tags or names:
+            # Create the checker methods
+            name_was_required = lambda x: x.title in names
+            has_required_tag = lambda x: set(x.tags).intersection( set(tags) )
 
-        # Force templates to be included in listing if the tag is requested.
-        if "system:template" in tags:
-            exclude_templates = False
+            # Verify if an unknown note was requested
+            note_names = [n.title for n in notes]
+            for name in names:
+                if name not in note_names:
+                    raise NoteNotFound(name)
 
-        # Avoid filtering if names are specified. This makes it possible to
-        # select a template by name. Also avoid if template tag is specified.
-        if not names and exclude_templates:
-            return self.filter_out_templates(notes)
+            list_of_notes = [
+                n for n in notes
+                if name_was_required(n)
+                   or has_required_tag(n)
+            ]
+        else:
+            # Nothing to filter, keep list intact
+            list_of_notes = notes
 
-        return notes
+        if exclude_templates:
+            # Keep templates that were requested by name
+            list_of_notes = [
+                n for n in list_of_notes
+                if "system:template" not in n.tags
+                   or n.title in names
+            ]
+
+        return list_of_notes
 
 class TomboyNote(object):
     """Object corresponding to a Tomboy or Gnote note coming from dbus."""
-    def __init__(self, uri, title="", date=dbus.Int64(), tags=[]):
+    def __init__(self, uri, title="", date=dbus.Int64(), tags=None):
         """Constructor.
 
         This makes sure that instance attributes are set upon the note's
@@ -310,6 +282,10 @@ class TomboyNote(object):
 
         """
         super(TomboyNote, self).__init__()
+
+        if tags is None:
+            tags = []
+
         self.uri = uri
         self.title = title
         self.tags = tags

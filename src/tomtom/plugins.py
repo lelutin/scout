@@ -191,6 +191,21 @@ class OptionGroup(object):
 
             self.options.append(option)
 
+    def get_option(self, opt_string):
+        """Get the option that uses the supplied string."""
+        for option in self.options:
+            if opt_string in option._short_opts \
+                    or opt_string in option._long_opts:
+                return option
+
+        return None
+
+    def remove_option(self, opt_string):
+        """Remove the option that uses the supplied string."""
+        option = self.get_option(opt_string)
+        if option is not None:
+            self.options.remove( option )
+
 class FilteringGroup(OptionGroup):
     """An option group with all options for filtering notes."""
     def __init__(self, action_name):
@@ -203,13 +218,21 @@ class FilteringGroup(OptionGroup):
 
         options = [
             optparse.Option(
-                "-b", action="callback", dest="books",
+                "-b", action="callback", dest="books", metavar="BOOK",
                 callback=self.book_callback, type="string",
-                help="""%(action)s only notes belonging to """ % action_map + \
+                help="""%(action)s notes belonging to """ % action_map + \
                 """specified notebooks. It is a shortcut to option "-t" to """
                 """specify notebooks more easily. For example, use"""
                 """ "-b HGTTG" instead of "-t system:notebook:HGTTG". Use """
                 """this option once for each desired book."""
+            ),
+            optparse.Option(
+                "-t",
+                dest="tags", metavar="TAG", action="append", default=[],
+                help="""%(action)s notes with """ % action_map + \
+                """specified tags. Use this option once for each desired """
+                """tag. This option selects raw tags and could be useful for """
+                """user-assigned tags."""
             ),
             optparse.Option(
                 "--with-templates",
@@ -220,14 +243,6 @@ class FilteringGroup(OptionGroup):
                 """"using "--with-templates" without specifying tags for """
                 """selection will include all notes and templates."""
             ),
-            optparse.Option(
-                "-t",
-                dest="tags", action="append", default=[],
-                help="""%(action)s only notes with """ % action_map + \
-                """specified tags. Use this option once for each desired """
-                """tag. This option selects raw tags and could be useful for """
-                """user-assigned tags."""
-            )
         ]
 
         self.add_options(options)

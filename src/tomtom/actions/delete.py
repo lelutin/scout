@@ -51,71 +51,87 @@
 # is trying to stop its work. After the state is safe, the action should raise
 # the same exception again so that the application exits cleanly.
 #
-"""List information about all or the 10 latest notes.
+"""Delete notes by name or by other criteria.
 
-This is the "list" action. Its role is to display quick information about notes
-on the standard output stream. By default (if no argument is given), it will
-list all the notes. With the "-n" argument and an integer value, listed notes
-will be limited in number to the value given as an argument.
+The "delete" action does what its name implies. It removes notes from the notes
+application. Notes that are deleted can be specified by name as positional
+arguments to the action, by a filter with arguments or both. Notes are deleted
+permanently and, once it is done, their content is lost.
 
 """
 import os
+import optparse
 
 from tomtom import plugins
 
 DESC = __doc__.splitlines()[0]
 
-class ListAction(plugins.ActionPlugin):
-    """Plugin object for listing notes"""
+class DeleteAction(plugins.ActionPlugin):
+    """Plugin object for deleting notes"""
+
     short_description = DESC
     usage = os.linesep.join([
-        "%prog list (-h|--help)",
-        "       %prog list [-n <num>] [filter ...]"
+        "%prog delete -h",
+        "       %prog delete [filter ...] [note_name ...]",
     ])
 
     def init_options(self):
-        """Set the action's options."""
+        """Set action's options."""
         self.add_option(
-            "-n", type="int",
-            dest="max_notes", default=None,
-            help="Limit the number of notes listed."
+            "--dry-run",
+            dest="dry_run", action="store_true", default=False,
+            help="Simulate the action. The notes that are selected for """
+                """deletion will be printed out to the screen but no note """
+                """will really be deleted."""
         )
 
-        self.add_option_library( plugins.FilteringGroup("List") )
+        filter_group = plugins.FilteringGroup("Delete")
+
+        book_help_appendix = """ By default, template notes are included """ + \
+            """so that the entire book is deleted."""
+
+        book_opt = filter_group.get_option("-b")
+        book_opt.help = book_opt.help + book_help_appendix
+
+        # Replace --with-templates by --spare-templates to inverse the meaning
+        filter_group.remove_option("--with-templates")
+        filter_group.add_options([
+            optparse.Option(
+                "--spare-templates",
+                dest="templates", action="store_false", default=True,
+                help="""Do not delete template notes that get caught with a """
+                    """tag or book name."""
+            ),
+        ])
+
+        self.add_option_library( filter_group )
 
     def perform_action(self, config, options, positional):
-        """Use the tomtom object to list notes.
+        """Use the tomtom object to delete one or more notes.
 
-        This action prints modification date, title and tags of notes to the
-        screen.
-
-        The perform_action method gets processes options and hands them down
-        appropriately to the list_notes method.
+        This action deletes the requested notes from the application.
 
         Arguments:
             config -- a ConfigParser.SafeParser object representing config files
             options -- an optparse.Values object containing the parsed options
-            positional -- a list of strings of positional arguments. not used
+            positional -- a list of strings of positional arguments
 
         """
-        tags_to_select = options.tags
-
-        list_of_notes = self.tomboy_interface.get_notes(
-            count_limit=options.max_notes,
-            tags=tags_to_select,
+        notes = self.tomboy_interface.get_notes(
+            names=positional,
+            tags=options.tags,
             exclude_templates=not options.templates
         )
 
-        print self.listing(list_of_notes).encode('utf-8')
+        self.delete_notes(notes, options.dry_run)
 
-    def listing(self, notes):
-        """Format listing for a list of note objects.
+    def delete_notes(self, notes, dry_run=True):
+        """Delete each note in a list of notes."""
+        if dry_run:
+            print "The following notes are selected for deletion:"
 
-        Given a list of notes, this method collects listing information for
-        those notes and returns a global listing.
-
-        Arguments:
-            notes -- a list of TomboyNote objects
-
-        """
-        return os.linesep.join( [note.listing() for note in notes] )
+        for note in notes:
+            if dry_run:
+                print "  %s" % note.title
+            else:
+                self.tomboy_interface.comm.DeleteNote(note.uri)

@@ -65,7 +65,7 @@ DESC = __doc__.splitlines()[0]
 class VersionAction(ActionPlugin):
     """Action plugin that prints out Tomboy's version information."""
     short_description = DESC
-    usage = "%prog version [-h]"
+    usage = "%prog version [-h|--help]"
 
     def perform_action(self, config, options, positional):
         """Display Tomboy's version information.
@@ -73,7 +73,9 @@ class VersionAction(ActionPlugin):
         This action gets Tomboy's version via dbus and prints it out.
 
         Arguments:
-            args -- A list composed of action and file names
+            config -- a ConfigParser.SafeParser object representing config files
+            options -- an optparse.Values object containing the parsed options
+            positional -- a list of strings of positional arguments
 
         """
         msg = """Tomtom version %s using %s version %s"""
