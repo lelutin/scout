@@ -1,3 +1,23 @@
+Changes since 0.2:
+
+* New "version" action shows information about the note application's version
+* Fixed encoding issue on output
+* New option -v|--version (without an action) displays information about Tomtom
+* Actions are now setuptools plugins: makes it possible to compress the .egg
+* Libraries of options make it easier to centralize options for actions
+* Moved action code away from core.Tomtom
+* Reorganized code in core.py -- there is one less class
+* Created a "help" pseudo-action as an alias to 'action -h'
+* Added configuration files for easily running nosetests and pylint
+* Tighter control over what is done during tests
+* Added Gnote support over DBus as well
+* Tomtom now searches for global and user configuration files
+* Improved test coverage. Unit tests now cover 100% of the code
+* Refined and standardized actions' usage text
+* Cleaned up the test directory
+* Added a "delete" action to delete notes
+* Lots of code refactoring to make it easier to work with
+
 Changes since 0.1:
 
 * Fixed NoteNotFound handling (issue #1)

@@ -47,7 +47,7 @@ import time
 import os
 
 # This must be modified with all version bumps!
-TOMTOM_VERSION = "0.2"
+TOMTOM_VERSION = "0.3"
 
 class ConnectionError(Exception):
     """Simple exception raised dbus connection fails."""
