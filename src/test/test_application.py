@@ -84,12 +84,10 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
 
         self.m.ReplayAll()
 
-        # Catch the exception manually, else it will make the test runner exit.
-        try:
-            cli.exception_wrapped_main()
-        except KeyboardInterrupt:
-            # No output is expected, simply check if an exception goes through.
-            self.fail("KeyboardInterrupt got out of the program")
+        self.assertRaises(
+            SystemExit,
+            cli.exception_wrapped_main
+        )
 
         self.m.VerifyAll()
 

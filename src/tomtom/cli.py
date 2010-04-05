@@ -44,27 +44,33 @@ use "help" before the action name.
 Here is a list of all the available actions:
 
 """
-import sys
-import os
-import pkg_resources
-import optparse
-import ConfigParser as configparser
+try:
+    import sys
+    import os
+    import pkg_resources
+    import optparse
+    import ConfigParser as configparser
 
-from tomtom import core
-from tomtom.core import TOMTOM_VERSION, NoteNotFound, ConnectionError, \
-        AutoDetectionError
-from tomtom.plugins import ActionPlugin
+    from tomtom import core
+    from tomtom.core import TOMTOM_VERSION, NoteNotFound, ConnectionError, \
+            AutoDetectionError
+    from tomtom.plugins import ActionPlugin
 
-# Return codes sent on errors.
-# Codes between 100 and 199 are fatal errors
-# Codes between 200 and 254 are minor errors
-ACTION_NOT_FOUND = 100
-MALFORMED_ACTION = 101
-DBUS_CONNECTION_ERROR = 102
-ACTION_OPTION_TYPE_ERROR = 103
-TOO_FEW_ARGUMENTS_ERROR = 200
-NOTE_NOT_FOUND = 201
-AUTODETECTION_FAILED = 202
+    # Return codes sent on errors.
+    # Codes between 100 and 199 are fatal errors
+    # Codes between 200 and 254 are minor errors
+    ACTION_NOT_FOUND = 100
+    MALFORMED_ACTION = 101
+    DBUS_CONNECTION_ERROR = 102
+    ACTION_OPTION_TYPE_ERROR = 103
+    TOO_FEW_ARGUMENTS_ERROR = 200
+    NOTE_NOT_FOUND = 201
+    AUTODETECTION_FAILED = 202
+
+# Use a hardcoded error code, since constants may not be initialized at this
+# point.
+except KeyboardInterrupt:
+    raise SystemExit, 1
 
 class CommandLine(object):
     """Main entry point for Tomtom."""
@@ -401,11 +407,8 @@ class CommandLine(object):
 
 def exception_wrapped_main():
     """Wrap around main function to handle general exceptions."""
-    tomtom_cli = CommandLine()
-
     try:
-        tomtom_cli.main()
-    # Default handling.
-    # If it goes this far up, it probably means it is not such a big deal.
+        CommandLine().main()
+    # If it goes this far up, it means user asked for the program to exit.
     except KeyboardInterrupt:
-        pass
+        raise SystemExit, 1
