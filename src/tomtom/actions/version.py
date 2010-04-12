@@ -57,7 +57,7 @@ This is the "version" action. Its role is very simple: to display Tomboy's
 version number. It uses dbus to get the information from Tomboy.
 
 """
-from tomtom.core import TOMTOM_VERSION
+from tomtom import TOMTOM_VERSION
 from tomtom.plugins import ActionPlugin
 
 DESC = __doc__.splitlines()[0]

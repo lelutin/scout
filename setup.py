@@ -1,20 +1,17 @@
 # -*- coding: utf-8 -*-
-from ez_setup import use_setuptools
-use_setuptools()
-
 from setuptools import setup, find_packages
 
-from src.tomtom.core import TOMTOM_VERSION
+from src.tomtom import TOMTOM_VERSION
 
 setup(
     # General information
-    name = "Tomtom",
+    name = "tomtom",
     version = TOMTOM_VERSION,
     author = "Gabriel Filion",
     author_email = "lelutin@gmail.com",
-    description = "A CLI interface to Tomboy or Gnote via dbus",
+    description = "CLI interface to Tomboy or Gnote via DBus",
     long_description = \
-        """Tomtom is an interface to Tomboy notes or Gnote that uses dbus to """
+        """Tomtom is an interface to Tomboy notes or Gnote that uses DBus to """
         """communicate. It presents a command-line interface and """
         """tries to be as simple to use as possible. Different actions"""
         """can be taken to interact with Tomboy or Gnote. Actions are simple"""
