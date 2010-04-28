@@ -1,17 +1,25 @@
-tomtom : A CLI interface to Tomboy
+# Description
 
-Installing
-==========
+tomtom : A CLI interface to Tomboy notes and Gnote
 
-From source
------------
+Tomtom is an interface to Tomboy notes or Gnote that uses DBus to
+communicate. It presents a command-line interface and
+tries to be as simple to use as possible. Different actions
+can be taken to interact with Tomboy or Gnote. Actions are simple
+to create, making the application easily extensible.
+
+Current actions make it possible to list note names, display note contents,
+search for text inside notes and to delete notes.
+
+# Installing
+
+## From source
 
 To install tomtom from the source archive, use the setuptools installer:
 
     $ sudo python setup.py install
 
-Requirements
-------------
+## Requirements
 
 To run tomtom, you need to have dbus-python installed. On Debian or Ubuntu, use
 the following command:
@@ -70,7 +78,7 @@ configuration file. Here's how to list notes from Gnote:
 
     tomtom list --application=Gnote
 
-#Contributing
+# Contributing
 
 All contributions to the code are welcome. Contributed code should come with
 unit tests for added functions and acceptance tests for command line interface
@@ -116,7 +124,12 @@ use the following:
 
 # License
 
-Tomtom is licensed under the BSD license as mentioned in all source code files.
-A copy of the license should be available with the source code.
+Tomtom can be used, distributed and modified. All files are under a BSD license
+as mentioned in all source code files with the exception of the
+"format-subst.pl" script.  The latter is under a GPLv2 license.
+"format-subst.pl" was written by Avery Pennarun for the "bup" project.
+
+A copy of the BSD license should be available with the source code. Also, a
+short license notice can be found in all files.
 
 [Github]: http://github.com/lelutin/tomtom

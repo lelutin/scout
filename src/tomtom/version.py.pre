@@ -1,0 +1,2 @@
+TOMTOM_VERSION = "$Format:%d$"
+TOMTOM_DATE = "$Format:%ci$"

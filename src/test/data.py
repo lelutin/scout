@@ -41,7 +41,7 @@ to look at.
 import os
 import dbus
 from tomtom.core import TomboyNote
-from tomtom import TOMTOM_VERSION
+from tomtom.version import TOMTOM_VERSION
 
 # The following few values are for testing the "list" feature.
 expected_list = \

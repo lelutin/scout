@@ -51,7 +51,8 @@ try:
     import optparse
     import ConfigParser as configparser
 
-    from tomtom import core, TOMTOM_VERSION
+    from tomtom import core
+    from tomtom.version import TOMTOM_VERSION
     from tomtom.core import NoteNotFound, ConnectionError, \
             AutoDetectionError
     from tomtom.plugins import ActionPlugin

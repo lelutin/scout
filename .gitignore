@@ -2,3 +2,8 @@
 .*.swp
 .coverage
 tomtom.egg-info
+/doc/*.tmp
+/doc/*.1
+/doc/*.1.gz
+/src/tomtom/version.py
+/build
