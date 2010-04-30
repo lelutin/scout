@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ###############################################################################
-"""Test data for tomtom.
+"""Test data for scout.
 
 All the uglyness of testing data should be here.
 Although it is ugly by definition, it should be well organized in order to
@@ -40,8 +40,8 @@ to look at.
 """
 import os
 import dbus
-from tomtom.core import TomboyNote
-from tomtom.version import TOMTOM_VERSION
+from scout.core import TomboyNote
+from scout.version import SCOUT_VERSION
 
 # The following few values are for testing the "list" feature.
 expected_list = \
@@ -118,7 +118,7 @@ G.I. Jane (pager) - 555-1234
 John Doe (cell) - 555-5512""",
     "TODO-list": """TODO-list
 
-Build unit tests for tomtom
+Build unit tests for scout
 Chew up some gum
 Play pool with the queen of england""",
     "Bash": """Bash
@@ -358,7 +358,7 @@ def full_list_of_notes(mock_factory):
 
 # This value is the output of the "version" action
 tomboy_version_output = \
-    """Tomtom version %s """ % TOMTOM_VERSION + \
+    """Scout version %s """ % SCOUT_VERSION + \
     """using %s version 1.0.1"""
 
 # Help text and errors occuring in the main script
@@ -369,7 +369,7 @@ main_help = \
        app_name (-h|--help|help) [action]
        app_name (-v|--version)
 
-Tomtom is a command line interface to the note taking applications: Tomboy and
+Scout is a command line interface to the note taking applications: Tomboy and
 Gnote.
 
 Options depend on what action you are taking. To obtain details on options for
@@ -480,9 +480,9 @@ unknown_action = """app_name: unexistant_action is not a valid action. """ + \
 
 fake_traceback = \
     """Traceback (most recent call last):
-  File "/home/gabster/tomtom/src/tomtom/cli.py", line 112, in dispatch
+  File "/home/gabster/scout/src/scout/cli.py", line 112, in dispatch
     action.perform_action(arguments, [])
-  File "/home/gabster/tomtom/src/tomtom/actions/list.py", line 83, in perform_action
+  File "/home/gabster/scout/src/scout/actions/list.py", line 83, in perform_action
     raise Exception
 Exception"""
 
@@ -506,11 +506,11 @@ option_type_error_message = \
     """of the types optparse.Option or optparse.OptionGroup"""
 
 version_and_license_info = \
-"""Tomtom version %s
+"""Scout version %s
 Copyright © 2010 Gabriel Filion
 License: BSD
 This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.""" % TOMTOM_VERSION
+There is NO WARRANTY, to the extent permitted by law.""" % SCOUT_VERSION
 
 module1_description = \
     """This is action1 and it does something."""

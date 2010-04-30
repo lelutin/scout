@@ -1,20 +1,20 @@
-% tomtom(1) Tomtom %TOMTOM_VERSION%
+% scout(1) Scout %SCOUT_VERSION%
 % Gabriel Filion <lelutin@gmail.com>
 % 2010-03-25
 
 # NAME
 
-tomtom - CLI interface to Tomboy or Gnote via DBus
+scout - CLI interface to Tomboy or Gnote via DBus
 
 # SYNOPSIS
 
-tomtom (h|--help) [command]
+scout (h|--help) [command]
 
-tomtom \<command\> [options...]
+scout \<command\> [options...]
 
 # DESCRIPTION
 
-`tomtom` is an interface to note-taking applications `Tomboy notes` and `Gnote`
+`scout` is an interface to note-taking applications `Tomboy notes` and `Gnote`
 that uses DBus to communicate with them. It presents a command-line interface
 and tries to be as simple to use as possible. Different actions can be taken to
 interact with Tomboy or Gnote. Actions are simple to create, making the
@@ -34,26 +34,28 @@ by the subcommand name.
 `delete`
 :   Delete one or more notes, or an entire book.
 `version`
-:   Show version tags from Tomtom and the application it connects to.
+:   Show version tags from Scout and the application it connects to.
 
 # EXAMPLES
 
 List the 10 notes last modified
-:   tomtom list -n 10
+:   scout list -n 10
 Display the contents of note "thing X"
-:   tomtom display "thing X"
+:   scout display "thing X"
 Search for "needle" in notes of the "haystack" book
-:   tomtom search -b haystack needle
+:   scout search -b haystack needle
 Delete notes with the tag "old_and_busted"
-:   tomtom delete -t old_and_busted
+:   scout delete -t old_and_busted
 
 # SEE ALSO
 
-See the *README.markdown* file for more information.
+See the *README.md* file for more information.
 
-The project's page is situated at <http://github.com/lelutin/tomtom>.
+The project's page is situated at <http://github.com/lelutin/scout>.
 
 # BUGS
 
 To report issues, go to the "issues" section of the projet's page:
-<http://github.com/lelutin/tomtom/issues>.
+<http://github.com/lelutin/scout/issues>. You can also discuss any problem you
+have by sending an e-mail to the mailing list on
+<http://groups.google.com/group/scout-list>.

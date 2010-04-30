@@ -30,11 +30,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ###############################################################################
-"""Usage: %(tomtom)s <action> [-h|--help] [options]
-       %(tomtom)s (-h|--help|help) [action]
-       %(tomtom)s (-v|--version)
+"""Usage: %(scout)s <action> [-h|--help] [options]
+       %(scout)s (-h|--help|help) [action]
+       %(scout)s (-v|--version)
 
-Tomtom is a command line interface to the note taking applications: Tomboy and
+Scout is a command line interface to the note taking applications: Tomboy and
 Gnote.
 
 Options depend on what action you are taking. To obtain details on options for
@@ -51,11 +51,11 @@ try:
     import optparse
     import ConfigParser as configparser
 
-    from tomtom import core
-    from tomtom.version import TOMTOM_VERSION
-    from tomtom.core import NoteNotFound, ConnectionError, \
+    from scout import core
+    from scout.version import SCOUT_VERSION
+    from scout.core import NoteNotFound, ConnectionError, \
             AutoDetectionError
-    from tomtom.plugins import ActionPlugin
+    from scout.plugins import ActionPlugin
 
     # Return codes sent on errors.
     # Codes between 100 and 199 are fatal errors
@@ -74,10 +74,10 @@ except KeyboardInterrupt:
     raise SystemExit, 1
 
 class CommandLine(object):
-    """Main entry point for Tomtom."""
+    """Main entry point for Scout."""
 
     # config file general settings
-    core_config_section = "tomtom"
+    core_config_section = "scout"
     core_options = [
         "application",
     ]
@@ -113,11 +113,11 @@ class CommandLine(object):
 
         Get an action's list of options and groups. Flat out options from the
         special "None" group and instantiate optparse.OptionGroup objects out of
-        tomtom.plugins.OptionGroup objects.
+        scout.plugins.OptionGroup objects.
 
         Arguments:
             parser -- The optparse.OptionParser needed to instantiate groups
-            action -- A subclass of tomtom.plugins.ActionPlugin
+            action -- A subclass of scout.plugins.ActionPlugin
 
         """
         options = self.default_options()
@@ -162,7 +162,7 @@ class CommandLine(object):
         resulting optparse.Values and list of positional arguments.
 
         Arguments:
-            action -- A sub-class of tomtom.plugins.ActionPlugin
+            action -- A sub-class of scout.plugins.ActionPlugin
             arguments -- The list of string arguments from the command line.
 
         """
@@ -209,9 +209,9 @@ class CommandLine(object):
         # Find out which application to use
         application = self.determine_connection_app(configuration, options)
 
-        # Create a Tomtom object and put a reference to it in the action
+        # Create a Scout object and put a reference to it in the action
         try:
-            action.tomboy_interface = core.Tomtom(application)
+            action.tomboy_interface = core.Scout(application)
         except ConnectionError, exc:
             print >> sys.stderr, "%s: Error: %s" % (
                 os.path.basename(sys.argv[0]),
@@ -264,15 +264,15 @@ class CommandLine(object):
         config_parser = configparser.SafeConfigParser()
 
         config_parser.read([
-            "/etc/tomtom.cfg",
-            os.path.expanduser("~/.tomtom/config"),
-            os.path.expanduser("~/.config/tomtom/config"),
+            "/etc/scout.cfg",
+            os.path.expanduser("~/.scout/config"),
+            os.path.expanduser("~/.config/scout/config"),
         ])
 
         return self.sanitized_config(config_parser)
 
     def sanitized_config(self, parser):
-        """Reject every unknown configuration in tomtom sectionself."""
+        """Reject every unknown configuration in scout sectionself."""
         # If the core section is not there, add an empty one.
         if not parser.has_section(self.core_config_section):
             parser.add_section(self.core_config_section)
@@ -304,7 +304,7 @@ class CommandLine(object):
         Return a list of classes corresponding to all the plugins.
 
         """
-        group = "tomtom.actions"
+        group = "scout.actions"
         action_list = []
 
         for entrypoint in pkg_resources.iter_entry_points(group=group):
@@ -354,7 +354,7 @@ class CommandLine(object):
 
         """
         if len(sys.argv) < 2:
-            app_name_map = { "tomtom": os.path.basename(sys.argv[0]) }
+            app_name_map = { "scout": os.path.basename(sys.argv[0]) }
 
             # Use the docstring's first [significant] lines to display usage
             usage_output =  (os.linesep * 2).join([
@@ -383,7 +383,7 @@ class CommandLine(object):
             else:
                 # Use the script's docstring for the basic help message. Also
                 # get a list of available actions and display it.
-                msg_map = {"tomtom": os.path.basename(sys.argv[0]) }
+                msg_map = {"scout": os.path.basename(sys.argv[0]) }
                 help_msg = __doc__[:-1] % msg_map
                 action_list = os.linesep.join( self.action_short_summaries() )
 
@@ -393,7 +393,7 @@ class CommandLine(object):
 
         elif action in ["-v", "--version"]:
             version_info =  os.linesep.join([
-                """Tomtom version %s""" % TOMTOM_VERSION,
+                """Scout version %s""" % SCOUT_VERSION,
                 """Copyright © 2010 Gabriel Filion""",
                 """License: BSD""",
                 """This is free software: you are free to change and """

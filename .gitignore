@@ -1,10 +1,10 @@
 *.pyc
 .*.swp
 .coverage
-tomtom.egg-info
+scout.egg-info
 /doc/*.tmp
 /doc/*.1
 /doc/*.1.gz
-/src/tomtom/version.py
+/src/scout/version.py
 /build
 /dist

@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ###############################################################################
-"""Acceptance tests for Tomtom.
+"""Acceptance tests for Scout.
 
 This defines the use cases and expected results.
 
@@ -45,8 +45,8 @@ import ConfigParser as configparser
 from . import data as test_data
 from . import bases
 
-from tomtom import cli
-from tomtom import plugins
+from scout import cli
+from scout import plugins
 
 class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
     """Acceptance tests.
@@ -87,26 +87,26 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         configparser.SafeConfigParser()\
             .AndReturn(fake_parser)
 
-        os.path.expanduser("~/.tomtom/config")\
-            .AndReturn("/home/bobby/.tomtom/config")
-        os.path.expanduser("~/.config/tomtom/config")\
-            .AndReturn("/home/bobby/.config/tomtom/config")
+        os.path.expanduser("~/.scout/config")\
+            .AndReturn("/home/bobby/.scout/config")
+        os.path.expanduser("~/.config/scout/config")\
+            .AndReturn("/home/bobby/.config/scout/config")
 
         fake_parser.read([
-            "/etc/tomtom.cfg",
-            "/home/bobby/.tomtom/config",
-            "/home/bobby/.config/tomtom/config",
+            "/etc/scout.cfg",
+            "/home/bobby/.scout/config",
+            "/home/bobby/.config/scout/config",
         ])
 
-        fake_parser.has_section("tomtom")\
+        fake_parser.has_section("scout")\
             .AndReturn(False)
 
-        fake_parser.add_section("tomtom")
+        fake_parser.add_section("scout")
 
-        fake_parser.options("tomtom")\
+        fake_parser.options("scout")\
             .AndReturn( [] )
 
-        fake_parser.has_option("tomtom", "application")\
+        fake_parser.has_option("scout", "application")\
             .AndReturn(False)
 
     def mock_out_dbus(self, application=None):
@@ -179,7 +179,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
                 .AndReturn(note.tags)
 
     def test_no_argument(self):
-        """Acceptance: tomtom called without arguments must print usage."""
+        """Acceptance: scout called without arguments must print usage."""
         # No dbus interaction for this test
         self.remove_mocks()
 
@@ -458,7 +458,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         for fake_class in fake_classes:
             fake_class.__bases__ = ( plugins.ActionPlugin, )
 
-        pkg_resources.iter_entry_points(group="tomtom.actions")\
+        pkg_resources.iter_entry_points(group="scout.actions")\
             .AndReturn( (x for x in fake_plugin_list) )
 
         for index, entry_point in enumerate(fake_plugin_list):
@@ -476,7 +476,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
 
         self.m.VerifyAll()
 
-        # The help should be displayed using tomtom's docstring.
+        # The help should be displayed using scout's docstring.
         self.assertEquals(
             cli.__doc__[:-1] + os.linesep.join(fake_list) + os.linesep,
             sys.stdout.getvalue()

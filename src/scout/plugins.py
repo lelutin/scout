@@ -30,9 +30,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ###############################################################################
-"""Plugin library for Tomtom.
+"""Plugin library for Scout.
 
-This module defines base code for Tomtom plugins. The actions use the classes
+This module defines base code for Scout plugins. The actions use the classes
 present here to simplify their work.
 
 Classes:
@@ -56,7 +56,7 @@ class ActionPlugin(object):
         to actually create a group (which would feel paradoxal).
 
         The attribute "tomboy_interface" is not instantiated here. Some
-        situations require that we do not instantiate a Tomtom object (thus
+        situations require that we do not instantiate a Scout object (thus
         opening a DBus connection to the Tomboy application). One such example
         is displaying an action's help text. Instantiation occurs just before
         the action's "perform_action" method is called.
@@ -123,15 +123,15 @@ class ActionPlugin(object):
 
         Add an option library (a group of predefined options) in the list of
         groups of options. The library must of a subclass of
-        tomtom.plugins.OptionGroup. If the name of the library is already
+        scout.plugins.OptionGroup. If the name of the library is already
         present in option groups, no action is taken.
 
         Arguments:
-            library -- An instance of a subclass of tomtom.plugins.OptionGroup
+            library -- An instance of a subclass of scout.plugins.OptionGroup
 
         """
         if not isinstance(library, OptionGroup):
-            msg = "Librairies must be of type tomtom.plugins.OptionGroup"
+            msg = "Librairies must be of type scout.plugins.OptionGroup"
             raise TypeError, msg
 
         if library.name not in [g.name for g in self.option_groups]:

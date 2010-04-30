@@ -32,13 +32,13 @@
 ###############################################################################
 #
 # This is an action module. Action modules are subclasses of
-# tomtom.plugins.ActionPlugin. Their entry point is the object's
-# "perform_action" method. It can import tomtom classes and any other packages
-# to help in its task. An action should use tomtom to get or send information
+# scout.plugins.ActionPlugin. Their entry point is the object's
+# "perform_action" method. It can import scout classes and any other packages
+# to help in its task. An action should use scout to get or send information
 # from or to Tomboy and use the standard input, output and error streams as its
 # interface with the user.
 #
-# Actions are listed dynamically in tomtom's basic help message. Actions'
+# Actions are listed dynamically in scout's basic help message. Actions'
 # descriptions are taken from the first line of the action module's docstring.
 # Make sure to keep it short but precise, the entire line (two spaces for
 # indentation, the action's name and its description) should fit in less than
@@ -61,7 +61,7 @@ will be limited in number to the value given as an argument.
 """
 import os
 
-from tomtom import plugins
+from scout import plugins
 
 DESC = __doc__.splitlines()[0]
 
@@ -84,7 +84,7 @@ class ListAction(plugins.ActionPlugin):
         self.add_option_library( plugins.FilteringGroup("List") )
 
     def perform_action(self, config, options, positional):
-        """Use the tomtom object to list notes.
+        """Use the scout object to list notes.
 
         This action prints modification date, title and tags of notes to the
         screen.

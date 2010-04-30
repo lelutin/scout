@@ -52,10 +52,10 @@ import traceback
 import optparse
 import ConfigParser as configparser
 
-from tomtom import core, cli, plugins
+from scout import core, cli, plugins
 # Import the list action under a different name to avoid overwriting the list()
 # builtin function.
-from tomtom.actions import display, list as _list, delete, search, version
+from scout.actions import display, list as _list, delete, search, version
 
 from . import data as test_data
 from . import bases
@@ -196,8 +196,8 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         """Main: "help" pseudo-action displays details about an action."""
         self.verify_help_argument_reversing("help")
 
-    def test_display_tomtom_version(self):
-        """Main: -v option displays Tomtom's version and license information."""
+    def test_display_scout_version(self):
+        """Main: -v option displays Scout's version and license information."""
         self.verify_exit_from_main(
             ["-v"],
             test_data.version_and_license_info,
@@ -231,10 +231,10 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
             plugins.ActionPlugin,
             # The last one on the list is not a subclass of ActionPlugin and
             # should get discarded
-            core.Tomtom,
+            core.Scout,
         ]
 
-        pkg_resources.iter_entry_points(group="tomtom.actions")\
+        pkg_resources.iter_entry_points(group="scout.actions")\
             .AndReturn(entry_points)
 
         for (index, entry_point) in enumerate(entry_points):
@@ -342,9 +342,9 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         """Mock out calls in dispatch that we go through in all cases."""
         command_line = self.wrap_subject(cli.CommandLine, "dispatch")
 
-        fake_tomtom = self.m.CreateMock(core.Tomtom)
+        fake_scout = self.m.CreateMock(core.Scout)
 
-        self.m.StubOutWithMock(core, "Tomtom", use_mock_anything=True)
+        self.m.StubOutWithMock(core, "Scout", use_mock_anything=True)
 
         action_name = "some_action"
         fake_action = self.m.CreateMock(plugins.ActionPlugin)
@@ -367,12 +367,12 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
             .AndReturn(app_name)
 
         if exception_class in [core.ConnectionError, core.AutoDetectionError]:
-            core.Tomtom(app_name)\
+            core.Scout(app_name)\
                 .AndRaise( exception_class(exception_argument) )
             return (command_line, action_name, fake_action, arguments)
         else:
-            core.Tomtom(app_name)\
-                .AndReturn( fake_tomtom )
+            core.Scout(app_name)\
+                .AndReturn( fake_scout )
 
         if exception_class:
             fake_action.perform_action(
@@ -401,7 +401,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
     def test_dispatch_with_gnote(self):
-        """Main: Dispatch instantiates Tomtom for Gnote."""
+        """Main: Dispatch instantiates Scout for Gnote."""
         command_line, action_name, fake_action, arguments = \
             self.mock_out_dispatch(None, None, "Gnote")
 
@@ -774,15 +774,15 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         configparser.SafeConfigParser()\
             .AndReturn(fake_parser)
 
-        os.path.expanduser("~/.tomtom/config")\
-            .AndReturn("/home/borg/.tomtom/config")
-        os.path.expanduser("~/.config/tomtom/config")\
-            .AndReturn("/home/borg/.config/tomtom/config")
+        os.path.expanduser("~/.scout/config")\
+            .AndReturn("/home/borg/.scout/config")
+        os.path.expanduser("~/.config/scout/config")\
+            .AndReturn("/home/borg/.config/scout/config")
 
         fake_parser.read([
-            "/etc/tomtom.cfg",
-            "/home/borg/.tomtom/config",
-            "/home/borg/.config/tomtom/config",
+            "/etc/scout.cfg",
+            "/home/borg/.scout/config",
+            "/home/borg/.config/scout/config",
         ])
 
         command_line.sanitized_config(fake_parser)\
@@ -834,9 +834,9 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
 class TestCore(bases.BasicMocking):
     """Tests for general code."""
 
-    def verify_Tomtom_constructor(self, application):
-        """Test Tomtom's constructor."""
-        tt = self.wrap_subject(core.Tomtom, "__init__")
+    def verify_Scout_constructor(self, application):
+        """Test Scout's constructor."""
+        tt = self.wrap_subject(core.Scout, "__init__")
 
         session_bus = self.m.CreateMock(dbus.SessionBus)
         dbus_interface = self.m.CreateMock(dbus.Interface)
@@ -889,21 +889,21 @@ class TestCore(bases.BasicMocking):
             self.assertEqual(dbus_interface, tt.comm)
             self.assertEqual(app_name, tt.application)
 
-    def test_Tomtom_constructor(self):
-        """Core: Tomtom's dbus interface is initialized."""
-        self.verify_Tomtom_constructor("the_application")
+    def test_Scout_constructor(self):
+        """Core: Scout's dbus interface is initialized."""
+        self.verify_Scout_constructor("the_application")
 
-    def test_Tomtom_constructor_with_autodetection(self):
-        """Core: Tomtom's dbus interface is autodetected and initialized."""
-        self.verify_Tomtom_constructor(None)
+    def test_Scout_constructor_with_autodetection(self):
+        """Core: Scout's dbus interface is autodetected and initialized."""
+        self.verify_Scout_constructor(None)
 
-    def test_Tomtom_constructor_application_fails(self):
-        """Core: Tomtom's dbus interface is unavailable."""
-        self.verify_Tomtom_constructor("fail_app")
+    def test_Scout_constructor_application_fails(self):
+        """Core: Scout's dbus interface is unavailable."""
+        self.verify_Scout_constructor("fail_app")
 
     def test_dbus_Tomboy_communication_problem(self):
         """Core: Raise an exception if linking dbus with Tomboy failed."""
-        tt = self.wrap_subject(core.Tomtom, "__init__")
+        tt = self.wrap_subject(core.Scout, "__init__")
 
         session_bus = self.m.CreateMock(dbus.SessionBus)
 
@@ -996,7 +996,7 @@ class TestCore(bases.BasicMocking):
         else:
             should_exclude = exclude
 
-        tt = self.wrap_subject(core.Tomtom, "get_notes")
+        tt = self.wrap_subject(core.Scout, "get_notes")
 
         notes = test_data.full_list_of_notes(self.m)
 
@@ -1058,7 +1058,7 @@ class TestCore(bases.BasicMocking):
 
     def verify_filter_notes(self, tags, names, exclude=True):
         """Test note filtering."""
-        tt = self.wrap_subject(core.Tomtom, "filter_notes")
+        tt = self.wrap_subject(core.Scout, "filter_notes")
 
         notes = test_data.full_list_of_notes(self.m)
 
@@ -1118,7 +1118,7 @@ class TestCore(bases.BasicMocking):
 
     def test_filter_notes_unknown_note(self):
         """Core: Filtering encounters an unknown note name."""
-        tt = self.wrap_subject(core.Tomtom, "filter_notes")
+        tt = self.wrap_subject(core.Scout, "filter_notes")
 
         notes = test_data.full_list_of_notes(self.m)
 
@@ -1132,10 +1132,10 @@ class TestCore(bases.BasicMocking):
         self.m.VerifyAll()
 
     def verify_note_list(self, tt, notes, note_names=[]):
-        """Verify the outcome of Tomtom.get_notes().
+        """Verify the outcome of Scout.get_notes().
 
         This function verifies if notes received from calling
-        Tomtom.get_notes are what we expect them to be. It provokes
+        Scout.get_notes are what we expect them to be. It provokes
         the unit test to fail in case of discordance.
 
         TomboyNotes are unhashable so we need to convert them to dictionaries
@@ -1143,7 +1143,7 @@ class TestCore(bases.BasicMocking):
 
         Arguments:
             self       -- The TestCase instance
-            tt         -- Tomtom mock object instance
+            tt         -- Scout mock object instance
             notes      -- list of TomboyNote objects
             note_names -- list of note names to pass to get_notes
 
@@ -1173,8 +1173,8 @@ class TestCore(bases.BasicMocking):
                 )
 
     def test_build_note_list(self):
-        """Core: Tomtom gets a full list of notes."""
-        tt = self.wrap_subject(core.Tomtom, "build_note_list")
+        """Core: Scout gets a full list of notes."""
+        tt = self.wrap_subject(core.Scout, "build_note_list")
 
         tt.comm = self.m.CreateMockAnything()
 
@@ -1203,7 +1203,7 @@ class TestCore(bases.BasicMocking):
 
     def verify_autodetect_app(self, expected_apps):
         """Test autodetection of the dbus application to use."""
-        tt = self.wrap_subject(core.Tomtom, "_autodetect_app")
+        tt = self.wrap_subject(core.Scout, "_autodetect_app")
 
         fake_bus = self.m.CreateMock(dbus.SessionBus)
         fake_object = self.m.CreateMock(dbus.proxies.ProxyObject)
@@ -1370,7 +1370,7 @@ class TestList(bases.BasicMocking, bases.CLIMocking):
 
         """
         lst_ap = self.wrap_subject(_list.ListAction, "perform_action")
-        lst_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+        lst_ap.tomboy_interface = self.m.CreateMock(core.Scout)
 
         tags = ["whatever"]
 
@@ -1414,12 +1414,12 @@ class TestList(bases.BasicMocking, bases.CLIMocking):
 class TestDisplay(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that display notes' content."""
     def test_get_display_for_notes(self):
-        """Display: Tomtom returns notes' contents, separated a marker."""
+        """Display: Scout returns notes' contents, separated a marker."""
         dsp_ap = self.wrap_subject(
             display.DisplayAction,
             "format_display_for_notes"
         )
-        dsp_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+        dsp_ap.tomboy_interface = self.m.CreateMock(core.Scout)
 
         list_of_notes = test_data.full_list_of_notes(self.m)
 
@@ -1449,9 +1449,9 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
 
         self.m.VerifyAll()
 
-    def test_Tomtom_get_note_content(self):
+    def test_Scout_get_note_content(self):
         """Display: Using the communicator, get one note's content."""
-        tt = self.wrap_subject(core.Tomtom, "get_note_content")
+        tt = self.wrap_subject(core.Scout, "get_note_content")
 
         tt.comm = self.m.CreateMockAnything()
 
@@ -1478,7 +1478,7 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
     def test_perform_action(self):
         """Display: perform_action executes successfully."""
         dsp_ap = self.wrap_subject(display.DisplayAction, "perform_action")
-        dsp_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+        dsp_ap.tomboy_interface = self.m.CreateMock(core.Scout)
 
         fake_options = self.m.CreateMock(optparse.Values)
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
@@ -1528,7 +1528,7 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
     def verify_perform_action(self, tags, names, all_notes):
         """Test delete's entry point."""
         del_ap = self.wrap_subject(delete.DeleteAction, "perform_action")
-        del_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+        del_ap.tomboy_interface = self.m.CreateMock(core.Scout)
 
         fake_options = self.m.CreateMock(optparse.Values)
         fake_options.tags = tags
@@ -1593,7 +1593,7 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
     def verify_delete_notes(self, dry_run):
         """Test note deletion."""
         del_ap = self.wrap_subject(delete.DeleteAction, "delete_notes")
-        del_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+        del_ap.tomboy_interface = self.m.CreateMock(core.Scout)
         del_ap.tomboy_interface.comm = self.m.CreateMockAnything()
 
         notes = [
@@ -1697,9 +1697,9 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
 class TestSearch(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that perform a textual search within notes."""
     def test_search_for_text(self):
-        """Search: Tomtom triggers a search through requested notes."""
+        """Search: Scout triggers a search through requested notes."""
         srch_ap = self.wrap_subject(search.SearchAction, "search_for_text")
-        srch_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+        srch_ap.tomboy_interface = self.m.CreateMock(core.Scout)
 
         note_contents = {}
 
@@ -1763,7 +1763,7 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
         """
         pass
         srch_ap = self.wrap_subject(search.SearchAction, "perform_action")
-        srch_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+        srch_ap.tomboy_interface = self.m.CreateMock(core.Scout)
 
         tags = ["something"]
 
@@ -1834,7 +1834,7 @@ class TestVersion(bases.BasicMocking, bases.CLIMocking):
     def test_perform_action(self):
         """Version: perform_action prints out Tomboy's version."""
         vrsn_ap = self.wrap_subject(version.VersionAction, "perform_action")
-        vrsn_ap.tomboy_interface = self.m.CreateMock(core.Tomtom)
+        vrsn_ap.tomboy_interface = self.m.CreateMock(core.Scout)
         vrsn_ap.tomboy_interface.comm = self.m.CreateMockAnything()
         vrsn_ap.tomboy_interface.application = "some_app"
 
@@ -1917,7 +1917,7 @@ class TestPlugins(bases.BasicMocking):
         self.m.VerifyAll()
 
     def test_add_group(self):
-        """Plugins: A tomtom.plugins.OptionGroup object is inserted."""
+        """Plugins: A scout.plugins.OptionGroup object is inserted."""
         ap = self.wrap_subject(plugins.ActionPlugin, "add_group")
         self.m.StubOutWithMock(plugins, "OptionGroup", use_mock_anything=True)
 
@@ -2000,7 +2000,7 @@ class TestPlugins(bases.BasicMocking):
         )
 
     def test_option_library_TypeError(self):
-        """Plugins: Option library is not a tomtom.plugins.OptionGroup."""
+        """Plugins: Option library is not a scout.plugins.OptionGroup."""
         ap = self.wrap_subject(plugins.ActionPlugin, "add_option_library")
 
         wrong_object = self.m.CreateMock(optparse.OptionGroup)

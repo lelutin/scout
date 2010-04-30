@@ -37,8 +37,8 @@ Exceptions:
     NoteNotFound    -- A note searched by name was not found.
 
 Classes:
-    Tomtom             -- Communication object to Tomboy or Gnote
-    TomboyNote         -- Object representation of a Tomboy or Gnote note.
+    Scout       -- Communication object to Tomboy or Gnote
+    TomboyNote  -- Object representation of a Tomboy or Gnote note.
 
 """
 import dbus
@@ -58,8 +58,8 @@ class AutoDetectionError(Exception):
     """Raised when autodetection of available applications failed."""
     pass
 
-class Tomtom(object):
-    """Application class for Tomtom.
+class Scout(object):
+    """Application class for Scout.
 
     This class holds the dbus contact object and the methods to fetch
     information from it. The most useful methods are get_notes and
@@ -74,7 +74,7 @@ class Tomtom(object):
             application -- string name of either Tomboy or Gnote.
 
         """
-        super(Tomtom, self).__init__()
+        super(Scout, self).__init__()
 
         try:
             tb_bus = dbus.SessionBus()
@@ -131,7 +131,7 @@ class Tomtom(object):
             if len(success_list) > 1:
                 error_message = \
                     """More than one application is currently """ + \
-                    """installed on your system. Tomtom could not """ + \
+                    """installed on your system. Scout could not """ + \
                     """decide on which one to favor."""
 
             raise AutoDetectionError(error_message)
