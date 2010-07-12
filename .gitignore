@@ -7,3 +7,4 @@ tomtom.egg-info
 /doc/*.1.gz
 /src/tomtom/version.py
 /build
+/dist
