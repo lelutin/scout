@@ -1,6 +1,6 @@
 % scout(1) Scout %SCOUT_VERSION%
 % Gabriel Filion <lelutin@gmail.com>
-% 2010-03-25
+% %SCOUT_DATE%
 
 # NAME
 

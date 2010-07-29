@@ -1,11 +1,14 @@
-"""Scout code package.
+"""Scout -- CLI interface to Tomboy and Gnote.
 
-All code for Scout resides under this package. Main application entry point,
-called by the script invoked by users is defined in module "cli". Entry points
-for actions are defined in code residing under the "actions" package.
+With Scout, you can interact on a terminal with the current running instance of
+Tomboy or Gnote on your computer. One example of this being useful is to be
+able to list, display and delete notes, and to search for text via an ssh
+connexion to your computer.
 
-The "version" module is generated automatically by git to extract version
-information. The format used for this extraction is defined in the
-version.py.pre file.
+For more information, use the help provided by the command itself:
+
+    $ scout --help search
+
+or consult the `scout' man page.
 
 """
