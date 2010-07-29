@@ -19,6 +19,9 @@ To install scout from the source archive, use the setuptools installer:
 
     scout$ sudo python setup.py install
 
+To see a short summary of what has changed between versions, consult the
+[changelog wiki page][ChangeLog].
+
 ## Requirements
 
 To run scout, you need to have dbus-python installed. On Debian or Ubuntu, use
@@ -151,3 +154,4 @@ short license notice can be found in all files.
 
 [Github]: http://github.com/lelutin/scout
 [mailing list]: http://groups.google.com/group/scout-list
+[ChangeLog]:http://wiki.github.com/lelutin/scout/changelog
