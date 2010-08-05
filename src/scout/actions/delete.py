@@ -14,14 +14,14 @@ import optparse
 from scout import plugins
 from scout.cli import TOO_FEW_ARGUMENTS_ERROR
 
-DESC = __doc__.splitlines()[0]
 
 class DeleteAction(plugins.ActionPlugin):
     """Plugin object for deleting notes"""
 
-    short_description = DESC
-    usage = os.linesep.join([
-        "%prog delete -h",
+    short_description = __doc__.splitlines()[0]
+
+    usage = ''.join([
+        "%prog delete -h\n",
         "       %prog delete [filter ...] [note_name ...]",
     ])
 
@@ -37,8 +37,8 @@ class DeleteAction(plugins.ActionPlugin):
 
         filter_group = plugins.FilteringGroup("Delete")
 
-        book_help_appendix = """ By default, template notes are included """ + \
-            """so that the entire book is deleted."""
+        book_help_appendix = (""" By default, template notes are included """ +
+            """so that the entire book is deleted.""")
 
         book_opt = filter_group.get_option("-b")
         book_opt.help = book_opt.help + book_help_appendix
@@ -75,8 +75,8 @@ class DeleteAction(plugins.ActionPlugin):
 
         """
         # Nothing was requested, so do nothing.
-        if not positional and not options.tags and not options.erase_all:
-            msg = (os.linesep * 2).join([
+        if not (positional or options.tags or options.erase_all):
+            msg = '\n\n'.join([
                 """error: No filters or note names given.""",
                 """To delete notes, you must specify a filtering option, """
                     """note names, or both.""",
@@ -91,22 +91,18 @@ class DeleteAction(plugins.ActionPlugin):
             options.tags = []
             positional = []
 
-        notes = self.tomboy_interface.get_notes(
+        notes = self.interface.get_notes(
             names=positional,
             tags=options.tags,
             exclude_templates=not options.templates
         )
 
-        self.delete_notes(notes, options.dry_run)
-
-    def delete_notes(self, notes, dry_run=True):
-        """Delete each note in a list of notes."""
-        if dry_run:
+        if options.dry_run:
             msg = "The following notes are selected for deletion:"
             print msg.encode('utf-8')
 
         for note in notes:
-            if dry_run:
+            if options.dry_run:
                 print ("  %s" % note.title).encode('utf-8')
             else:
-                self.tomboy_interface.comm.DeleteNote(note.uri)
+                self.interface.comm.DeleteNote(note.uri)

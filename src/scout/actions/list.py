@@ -11,13 +11,14 @@ import os
 
 from scout import plugins
 
-DESC = __doc__.splitlines()[0]
 
 class ListAction(plugins.ActionPlugin):
     """Plugin object for listing notes"""
-    short_description = DESC
-    usage = os.linesep.join([
-        "%prog list (-h|--help)",
+
+    short_description = __doc__.splitlines()[0]
+
+    usage = ''.join([
+        "%prog list (-h|--help)\n",
         "       %prog list [-n <num>] [filter ...]"
     ])
 
@@ -46,24 +47,11 @@ class ListAction(plugins.ActionPlugin):
             positional -- a list of strings of positional arguments. not used
 
         """
-        tags_to_select = options.tags
-
-        list_of_notes = self.tomboy_interface.get_notes(
+        list_of_notes = self.interface.get_notes(
             count_limit=options.max_notes,
-            tags=tags_to_select,
+            tags=options.tags,
             exclude_templates=not options.templates
         )
 
-        print self.listing(list_of_notes).encode('utf-8')
-
-    def listing(self, notes):
-        """Format listing for a list of note objects.
-
-        Given a list of notes, this method collects listing information for
-        those notes and returns a global listing.
-
-        Arguments:
-            notes -- a list of TomboyNote objects
-
-        """
-        return os.linesep.join( [note.listing() for note in notes] )
+        for n in list_of_notes:
+            print n.listing().encode('utf-8')

@@ -24,7 +24,7 @@ class ActionPlugin(object):
         automatically so that action can be placed in no group without having
         to actually create a group (which would feel paradoxal).
 
-        The attribute "tomboy_interface" is not instantiated here. Some
+        The attribute "interface" is not instantiated here. Some
         situations require that we do not instantiate a Scout object (thus
         opening a DBus connection to the Tomboy application). One such example
         is displaying an action's help text. Instantiation occurs just before

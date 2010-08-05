@@ -15,13 +15,14 @@ import re
 from scout import plugins
 from scout.cli import TOO_FEW_ARGUMENTS_ERROR
 
-DESC = __doc__.splitlines()[0]
 
 class SearchAction(plugins.ActionPlugin):
     """Plugin object for searching text in notes"""
-    short_description = DESC
-    usage = """%prog search (-h|--help)""" + os.linesep + \
-        """       %prog search [filter ...] <search_pattern> [note_name ...]"""
+
+    short_description = __doc__.splitlines()[0]
+
+    usage = ("""%prog search (-h|--help)\n""" +
+        """       %prog search [filter ...] <search_pattern> [note_name ...]""")
 
     def init_options(self):
         """Set action's options."""
@@ -47,7 +48,7 @@ class SearchAction(plugins.ActionPlugin):
         search_pattern = positional[0]
         note_names = positional[1:]
 
-        notes = self.tomboy_interface.get_notes(
+        notes = self.interface.get_notes(
             names=note_names,
             tags=options.tags,
             exclude_templates=not options.templates
@@ -74,7 +75,7 @@ class SearchAction(plugins.ActionPlugin):
         search_results = []
 
         for note in notes:
-            content = self.tomboy_interface.get_note_content(note)
+            content = self.interface.get_note_content(note)
             lines = content.splitlines()[1:]
             for index, line in enumerate(lines):
                 # Perform case-independant search of each word on each line

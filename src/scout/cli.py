@@ -180,7 +180,7 @@ class CommandLine(object):
 
         # Create a Scout object and put a reference to it in the action
         try:
-            action.tomboy_interface = core.Scout(application)
+            action.interface = core.Scout(application)
         except ConnectionError, exc:
             print >> sys.stderr, "%s: Error: %s" % (
                 os.path.basename(sys.argv[0]),

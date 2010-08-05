@@ -1219,38 +1219,6 @@ class TestCore(bases.BasicMocking):
 class TestList(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that handles the notes and lists them."""
 
-    def test_listing(self):
-        """List: Format information of a list of notes."""
-        lst_ap = self.wrap_subject(_list.ListAction, "listing")
-
-        list_of_notes = test_data.full_list_of_notes(self.m)
-        # Forget about the last note (a template)
-        list_of_notes = list_of_notes[:-1]
-
-        for note in list_of_notes:
-            tag_text = ""
-            if len(note.tags):
-                tag_text = "  (" + ", ".join(note.tags) + ")"
-
-            note.listing()\
-                .AndReturn("%(date)s | %(title)s%(tags)s" %
-                    {
-                        "date": datetime.datetime.fromtimestamp(note.date)\
-                                    .isoformat()[:10],
-                        "title": note.title,
-                        "tags": tag_text
-                    }
-                )
-
-        self.m.ReplayAll()
-
-        self.assertEqual(
-            test_data.expected_list + os.linesep + test_data.list_appendix,
-            lst_ap.listing(list_of_notes)
-        )
-
-        self.m.VerifyAll()
-
     def verify_note_listing(self, title, tags, new_title, expected_tag_text):
         """Test note listing with a given set of title and tags.
 
@@ -1339,7 +1307,7 @@ class TestList(bases.BasicMocking, bases.CLIMocking):
 
         """
         lst_ap = self.wrap_subject(_list.ListAction, "perform_action")
-        lst_ap.tomboy_interface = self.m.CreateMock(core.Scout)
+        lst_ap.interface = self.m.CreateMock(core.Scout)
 
         tags = ["whatever"]
 
@@ -1347,28 +1315,48 @@ class TestList(bases.BasicMocking, bases.CLIMocking):
         # Duplicate the list to avoid modification by later for loop
         fake_options.tags = list(tags)
         fake_options.templates = with_templates
-        fake_options.max_notes = 5
+        fake_options.max_notes = 5  # the value doesn't really matter here
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
         list_of_notes = test_data.full_list_of_notes(self.m)
+        if not with_templates:
+            # Forget about the last note (a template)
+            list_of_notes = list_of_notes[:-1]
 
-        lst_ap.tomboy_interface.get_notes(
+
+        lst_ap.interface.get_notes(
             count_limit=5,
             tags=tags,
             exclude_templates=not with_templates
         ).AndReturn(list_of_notes)
 
-        lst_ap.listing(list_of_notes)\
-            .AndReturn(test_data.expected_list)
+        for note in list_of_notes:
+            tag_text = ""
+            if len(note.tags):
+                tag_text = "  (" + ", ".join(note.tags) + ")"
+
+            note.listing()\
+                .AndReturn("%(date)s | %(title)s%(tags)s" %
+                    {
+                        "date": datetime.datetime.fromtimestamp(note.date)\
+                                    .isoformat()[:10],
+                        "title": note.title,
+                        "tags": tag_text
+                    }
+                )
 
         self.m.ReplayAll()
-
         lst_ap.perform_action(fake_config, fake_options, [])
-
         self.m.VerifyAll()
 
+        expected_result = "\n".join([test_data.expected_list,
+                                     test_data.list_appendix])
+        if with_templates:
+            expected_result = "\n".join([expected_result,
+                                         test_data.normally_hidden_template])
+
         self.assertEqual(
-            test_data.expected_list + os.linesep,
+            expected_result + os.linesep,
             sys.stdout.getvalue()
         )
 
@@ -1388,7 +1376,7 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
             display.DisplayAction,
             "format_display_for_notes"
         )
-        dsp_ap.tomboy_interface = self.m.CreateMock(core.Scout)
+        dsp_ap.interface = self.m.CreateMock(core.Scout)
 
         list_of_notes = test_data.full_list_of_notes(self.m)
 
@@ -1400,9 +1388,9 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
         note1_content = test_data.note_contents_from_dbus[ notes[0].title ]
         note2_content = test_data.note_contents_from_dbus[ notes[1].title ]
 
-        dsp_ap.tomboy_interface.get_note_content(notes[0])\
+        dsp_ap.interface.get_note_content(notes[0])\
             .AndReturn(note1_content)
-        dsp_ap.tomboy_interface.get_note_content(notes[1])\
+        dsp_ap.interface.get_note_content(notes[1])\
             .AndReturn(note2_content)
 
         self.m.ReplayAll()
@@ -1447,13 +1435,13 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
     def test_perform_action(self):
         """Display: perform_action executes successfully."""
         dsp_ap = self.wrap_subject(display.DisplayAction, "perform_action")
-        dsp_ap.tomboy_interface = self.m.CreateMock(core.Scout)
+        dsp_ap.interface = self.m.CreateMock(core.Scout)
 
         fake_options = self.m.CreateMock(optparse.Values)
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
         notes = [ self.m.CreateMock(core.TomboyNote) ]
 
-        dsp_ap.tomboy_interface.get_notes(names=["addressbook"])\
+        dsp_ap.interface.get_notes(names=["addressbook"])\
             .AndReturn(notes)
 
         dsp_ap.format_display_for_notes(notes)\
@@ -1494,39 +1482,44 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
 class TestDelete(bases.BasicMocking, bases.CLIMocking):
     """Tests for code that delete notes."""
 
-    def verify_perform_action(self, tags, names, all_notes):
+    def verify_perform_action(self, tags, names, all_notes, dry_run):
         """Test delete's entry point."""
         del_ap = self.wrap_subject(delete.DeleteAction, "perform_action")
-        del_ap.tomboy_interface = self.m.CreateMock(core.Scout)
+        del_ap.interface = self.m.CreateMock(core.Scout)
+        del_ap.interface.comm = self.m.CreateMockAnything()
 
         fake_options = self.m.CreateMock(optparse.Values)
         fake_options.tags = tags
         fake_options.templates = True
-        fake_options.dry_run = False
+        fake_options.dry_run = dry_run
         fake_options.erase_all = all_notes
 
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
-        notes = [ self.m.CreateMock(core.TomboyNote) ]
+        notes = [
+            n for n in test_data.full_list_of_notes(self.m)
+            if "system:notebook:pim" in n.tags
+               or n.title == "TDD"
+        ]
+
 
         if all_notes:
-            del_ap.tomboy_interface.get_notes(
+            del_ap.interface.get_notes(
                 names=[],
                 tags=[],
                 exclude_templates=False
             ).AndReturn(notes)
-
-            del_ap.delete_notes(notes, False)
         elif names or tags:
-            del_ap.tomboy_interface.get_notes(
+            del_ap.interface.get_notes(
                 names=names,
                 tags=tags,
                 exclude_templates=False
             ).AndReturn(notes)
 
-            del_ap.delete_notes(notes, False)
+        if not dry_run and (all_notes or names or tags):
+            for note in notes:
+                del_ap.interface.comm.DeleteNote(note.uri)
 
         self.m.ReplayAll()
-
         if all_notes or names or tags:
             del_ap.perform_action(fake_config, fake_options, names)
         else:
@@ -1534,9 +1527,13 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
                 SystemExit,
                 del_ap.perform_action, fake_config, fake_options, names
             )
-
         self.m.VerifyAll()
 
+        if dry_run:
+            self.assertEqual(
+                test_data.delete_dry_run_list + os.linesep,
+                sys.stdout.getvalue()
+            )
         if not names and not tags and not all_notes:
             self.assertEqual(
                 test_data.delete_no_argument_msg + os.linesep,
@@ -1548,52 +1545,24 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
         self.verify_perform_action(
             tags=["tag1", "tag2"],
             names=["note1"],
-            all_notes=False
+            all_notes=False,
+            dry_run=False
         )
 
     def test_perform_action_no_argument(self):
         """Delete: No filtering or note names given."""
-        self.verify_perform_action( tags=[], names=[], all_notes=False )
+        self.verify_perform_action(
+            tags=[], names=[], all_notes=False, dry_run=False)
 
     def test_perform_action_all_notes(self):
         """Delete: All notes requested for deletion."""
-        self.verify_perform_action( tags=[], names=[], all_notes=True )
+        self.verify_perform_action(
+            tags=[], names=[], all_notes=True, dry_run=False)
 
-    def verify_delete_notes(self, dry_run):
-        """Test note deletion."""
-        del_ap = self.wrap_subject(delete.DeleteAction, "delete_notes")
-        del_ap.tomboy_interface = self.m.CreateMock(core.Scout)
-        del_ap.tomboy_interface.comm = self.m.CreateMockAnything()
-
-        notes = [
-            n for n in test_data.full_list_of_notes(self.m)
-            if "system:notebook:pim" in n.tags
-               or n.title == "TDD"
-        ]
-
-        if not dry_run:
-            for note in notes:
-                del_ap.tomboy_interface.comm.DeleteNote(note.uri)
-
-        self.m.ReplayAll()
-
-        del_ap.delete_notes(notes, dry_run=dry_run)
-
-        self.m.VerifyAll()
-
-        if dry_run:
-            self.assertEqual(
-                test_data.delete_dry_run_list + os.linesep,
-                sys.stdout.getvalue()
-            )
-
-    def test_delete_notes(self):
-        """Delete: Delete all notes found in a list."""
-        self.verify_delete_notes(False)
-
-    def test_delete_notes_dry_run(self):
-        """Delete: Dry run for note deletion."""
-        self.verify_delete_notes(True)
+    def test_perform_action_dry_run(self):
+        """Delete: Dry run of deletion for all notes."""
+        self.verify_perform_action(
+            tags=[], names=[], all_notes=True, dry_run=True)
 
     def test_init_options(self):
         """Delete: Delete's options initialization."""
@@ -1668,7 +1637,7 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
     def test_search_for_text(self):
         """Search: Scout triggers a search through requested notes."""
         srch_ap = self.wrap_subject(search.SearchAction, "search_for_text")
-        srch_ap.tomboy_interface = self.m.CreateMock(core.Scout)
+        srch_ap.interface = self.m.CreateMock(core.Scout)
 
         note_contents = {}
 
@@ -1689,7 +1658,7 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
         expected_result = test_data.search_structure
 
         for note in list_of_notes:
-            srch_ap.tomboy_interface.get_note_content(note)\
+            srch_ap.interface.get_note_content(note)\
                 .AndReturn(note_contents[note.title])
 
         self.m.ReplayAll()
@@ -1732,7 +1701,7 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
         """
         pass
         srch_ap = self.wrap_subject(search.SearchAction, "perform_action")
-        srch_ap.tomboy_interface = self.m.CreateMock(core.Scout)
+        srch_ap.interface = self.m.CreateMock(core.Scout)
 
         tags = ["something"]
 
@@ -1745,7 +1714,7 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
         fake_options.templates = with_templates
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
-        srch_ap.tomboy_interface.get_notes(
+        srch_ap.interface.get_notes(
             names=["note1", "note2"],
             tags=["something"],
             exclude_templates=not with_templates
@@ -1803,14 +1772,14 @@ class TestVersion(bases.BasicMocking, bases.CLIMocking):
     def test_perform_action(self):
         """Version: perform_action prints out Tomboy's version."""
         vrsn_ap = self.wrap_subject(version.VersionAction, "perform_action")
-        vrsn_ap.tomboy_interface = self.m.CreateMock(core.Scout)
-        vrsn_ap.tomboy_interface.comm = self.m.CreateMockAnything()
-        vrsn_ap.tomboy_interface.application = "some_app"
+        vrsn_ap.interface = self.m.CreateMock(core.Scout)
+        vrsn_ap.interface.comm = self.m.CreateMockAnything()
+        vrsn_ap.interface.application = "some_app"
 
         fake_options = self.m.CreateMock(optparse.Values)
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
-        vrsn_ap.tomboy_interface.comm.Version()\
+        vrsn_ap.interface.comm.Version()\
             .AndReturn("1.0.1")
 
         self.m.ReplayAll()

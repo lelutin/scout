@@ -8,11 +8,12 @@ version number. It uses dbus to get the information from Tomboy.
 from scout.version import SCOUT_VERSION
 from scout.plugins import ActionPlugin
 
-DESC = __doc__.splitlines()[0]
 
 class VersionAction(ActionPlugin):
     """Action plugin that prints out Tomboy's version information."""
-    short_description = DESC
+
+    short_description = __doc__.splitlines()[0]
+
     usage = "%prog version [-h|--help]"
 
     def perform_action(self, config, options, positional):
@@ -27,12 +28,10 @@ class VersionAction(ActionPlugin):
 
         """
         msg = """Scout version %s using %s version %s"""
-        dbus_communicator = self.tomboy_interface.comm
         version_map = (
             SCOUT_VERSION,
-            self.tomboy_interface.application,
-            dbus_communicator.Version()
+            self.interface.application,
+            self.interface.comm.Version()
         )
 
         print (msg % version_map).encode('utf-8')
-

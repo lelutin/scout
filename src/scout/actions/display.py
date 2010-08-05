@@ -14,16 +14,18 @@ import os
 from scout.plugins import ActionPlugin
 from scout.cli import TOO_FEW_ARGUMENTS_ERROR
 
-DESC = __doc__.splitlines()[0]
 
 class DisplayAction(ActionPlugin):
     """Plugin object for displaying notes' contents"""
-    short_description = DESC
-    usage = os.linesep.join([
-        "%prog display (-h|--help)",
+
+    short_description = __doc__.splitlines()[0]
+
+    usage = ''.join([
+        "%prog display (-h|--help)\n",
         "       %prog display [note_name ...]",
     ])
-    note_separator = "=========================="
+
+    note_separator = "\n==========================\n"
 
     def perform_action(self, config, options, positional):
         """Use the scout object to print the content of one or more notes.
@@ -41,8 +43,9 @@ class DisplayAction(ActionPlugin):
                 "Error: You need to specify a note name to display it"
             sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
-        notes = self.tomboy_interface.get_notes(names=positional)
+        notes = self.interface.get_notes(names=positional)
 
+        #FIXME this _will_ bust the memory if too much notes are required
         print self.format_display_for_notes(notes).encode('utf-8')
 
     def format_display_for_notes(self, notes):
@@ -55,8 +58,6 @@ class DisplayAction(ActionPlugin):
             notes -- list of notes to display
 
         """
-        separator = os.linesep + self.note_separator + os.linesep
-
-        return separator.join(
-            [self.tomboy_interface.get_note_content(note) for note in notes]
+        return self.note_separator.join(
+            [self.interface.get_note_content(note) for note in notes]
         )
