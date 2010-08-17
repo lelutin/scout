@@ -57,6 +57,17 @@ class BasicMocking(unittest.TestCase):
 
         return mock
 
+    def n_mocks(self, num, cls=None):
+        """Return a list of 'num' mocks of 'cls' or MockAnything if no class."""
+        L = []
+        for i in range(num):
+            if cls:
+                mock = self.m.CreateMock(cls)
+            else:
+                mock = self.m.CreateMockAnything()
+            L.append(mock)
+        return L
+
 class CLIMocking(unittest.TestCase):
     """Automatic mocking of standard streams.
 

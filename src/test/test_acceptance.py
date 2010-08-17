@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """Acceptance tests for Scout.
 
-This defines the use cases and expected results.
+This defines the use cases and expected interaction with users.
 
 """
 import sys
 import os
-import mox
 import dbus
 import pkg_resources
 import ConfigParser as configparser
@@ -17,6 +16,7 @@ from . import bases
 from scout import cli
 from scout import plugins
 
+#TODO split this up in smaller classes
 class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
     """Acceptance tests.
 
@@ -27,22 +27,14 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
 
     """
     def setUp(self):
-        """Unit test preparation.
-
-        Mock out the default dbus interaction: that of creating an object that
-        establishes contact with Tomboy via dbus.
-
-        """
+        # Nearly all tests need to mock out Scout's initialization
         super(AcceptanceTests, self).setUp()
 
-        # fake absence of configuration
         self.mock_out_app_config()
-
-        # mock out dbus interaction with application discovery
         self.mock_out_dbus()
 
     def mock_out_app_config(self):
-        """Mock out the getting the application on the configuration file."""
+        """Mock out configuration parsing."""
         fake_parser = self.m.CreateMock(configparser.SafeConfigParser)
 
         self.m.StubOutWithMock(
@@ -79,7 +71,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
             .AndReturn(False)
 
     def mock_out_dbus(self, application=None):
-        """Mock out dbus interaction with the specified application."""
+        """Mock out DBus interaction with the specified application."""
         self.m.StubOutWithMock(dbus, "SessionBus", use_mock_anything=True)
         self.m.StubOutWithMock(dbus, "Interface", use_mock_anything=True)
         session_bus = self.m.CreateMockAnything()
@@ -89,13 +81,12 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         dbus.SessionBus()\
             .AndReturn(session_bus)
 
-        # Forced application
         if application is not None:
+            # choice of application forced
             session_bus.get_object(
                 "org.gnome.%s" % application,
                 "/org/gnome/%s/RemoteControl" % application
             ).AndReturn(dbus_object)
-        # Application detection: fake successful detection
         else:
             application = "Tomboy"
 
@@ -114,12 +105,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         ).AndReturn(self.dbus_interface)
 
     def mock_out_listing(self, notes):
-        """Create mocks for note listing via dbus.
-
-        Arguments:
-            notes -- a list of TomboyNote objects
-
-        """
+        """Mock out retrieval of 'notes' from DBus."""
         self.dbus_interface.ListAllNotes()\
             .AndReturn([n.uri for n in notes])
         for note in notes:
@@ -131,12 +117,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
                 .AndReturn(note.tags)
 
     def mock_out_get_notes_by_names(self, notes):
-        """Create mocks for searching for notes by their names.
-
-        Arguments:
-            notes -- a list of TomboyNote objects
-
-        """
+        """Mock out searching for 'notes' by their names."""
         for note in notes:
             self.dbus_interface.FindNote(note.title)\
                 .AndReturn(note.uri)
@@ -259,7 +240,6 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
             test_data.note_contents_from_dbus["python-work"]
         ]
 
-        list_of_notes = test_data.full_list_of_notes(self.m)
         self.mock_out_listing(list_of_notes)
 
         self.dbus_interface.GetNoteContents(todo.uri)\
@@ -408,20 +388,12 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
             "  action3 : No description available.",
         ]
 
-        fake_plugin_list = [
-            self.m.CreateMockAnything(),
-            self.m.CreateMockAnything(),
-            self.m.CreateMockAnything(),
-        ]
+        fake_plugin_list = self.n_mocks(3)
         fake_plugin_list[0].name = "action1"
         fake_plugin_list[1].name = "action2"
         fake_plugin_list[2].name = "action3"
 
-        fake_classes = [
-            self.m.CreateMock(plugins.ActionPlugin),
-            self.m.CreateMock(plugins.ActionPlugin),
-            self.m.CreateMock(plugins.ActionPlugin),
-        ]
+        fake_classes = self.n_mocks(3, plugins.ActionPlugin)
         fake_classes[0].short_description = "this action does something"
         fake_classes[1].short_description = "this one too"
         for fake_class in fake_classes:
@@ -525,17 +497,8 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         )
 
     def verify_help_text(self, args, text):
-        """Mock out help messages.
-
-        Mimic things to expect the application to exit while printing a
-        specified help text.
-
-        Arguments:
-            args -- a list of meuh
-            text -- the text to verify against
-
-        """
-        # No dbus interaction should occur if we get a help text.
+        """Mock out printing a help text before exiting."""
+        # No DBus interaction should occur if we get a help text.
         self.remove_mocks()
 
         sys.argv = args
@@ -614,12 +577,10 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.dbus_interface.Version()\
             .AndReturn(u'1.0.1')
 
-        self.m.ReplayAll()
-
-        # Call function and make assertions here
         sys.argv = ["app_name", "version"]
-        cli.exception_wrapped_main()
 
+        self.m.ReplayAll()
+        cli.exception_wrapped_main()
         self.m.VerifyAll()
 
         self.assertEqual(

@@ -1,63 +1,51 @@
 # -*- coding: utf-8 -*-
 """Utility classes for communicating with Tomboy or Gnote over dbus.
 
-Exceptions:
-    ConnectionError -- A dbus connection problem occured.
-    NoteNotFound    -- A note searched by name was not found.
-
-Classes:
-    Scout       -- Communication object to Tomboy or Gnote
-    TomboyNote  -- Object representation of a Tomboy or Gnote note.
+These classes abstract all interaction with DBus.
 
 """
 import dbus
-import datetime
 import time
 import os
+from datetime import datetime
+
 
 class ConnectionError(Exception):
-    """Simple exception raised dbus connection fails."""
+    """A dbus connection problem occured."""
     pass
 
 class NoteNotFound(Exception):
-    """Simple exception raised when a specific note does not exist."""
+    """A note searched by name was not found."""
     pass
 
 class AutoDetectionError(Exception):
-    """Raised when autodetection of available applications failed."""
+    """Autodetection of available applications failed."""
     pass
 
-class Scout(object):
-    """Application class for Scout.
 
-    This class holds the dbus contact object and the methods to fetch
-    information from it. The most useful methods are get_notes and
-    get_note_contents which get a list of notes according to a series of
-    criteria, and get the contents of one note, respectively.
+class Scout(object):
+    """An interface to Tomboy or Gnote.
+
+    A DBus connection is established with the application as soon as an
+    instance of this class is created.
 
     """
     def __init__(self, application):
-        """Create a link to Tomboy or Gnote upon instantiation.
-
-        Arguments:
-            application -- string name of either Tomboy or Gnote.
-
-        """
         super(Scout, self).__init__()
 
         try:
             tb_bus = dbus.SessionBus()
         except dbus.DBusException, exc:
-            msg = os.linesep.join([
-                """Could not establish connection with %s""" + os.linesep,
-                """%s""",
-                """If you are not in an X session, did you forget to set """,
-                """the DISLAY environment variable?"""
+            msg = '\n'.join([
+                "Could not establish connection with %s\n",
+                "%s",
+                "If you are not in an X session, did you forget to set",
+                "the DISLAY environment variable?"
             ])
             msg_map = (application, exc)
             raise ConnectionError(msg % msg_map)
 
-        if application is None:
+        if not application:
             (application, tb_object) = self._autodetect_app(tb_bus)
         else:
             try:
@@ -66,8 +54,8 @@ class Scout(object):
                     "/org/gnome/%s/RemoteControl" % application
                 )
             except dbus.DBusException, exc:
-                msg = """Application %s is not publishing any dbus """ + \
-                      """object. It is possibly not installed."""
+                msg = ''.join(["Application %s is not publishing any dbus ",
+                               "object. It is possibly not installed."])
                 raise ConnectionError(msg % application)
 
         self.application = application
@@ -78,9 +66,14 @@ class Scout(object):
         )
 
     def _autodetect_app(self, bus):
-        """Determine only one of Tomboy and Gnote is present."""
+        """Return a DBus object if one of Tomboy and Gnote is present.
+
+        If none or both are present, raise an AutoDetectionError exception
+
+        """
         success_list = []
 
+        #FIXME this has the tendancy to start applications if they are installed
         for app in ["Tomboy", "Gnote"]:
             try:
                 obj = bus.get_object(
@@ -91,18 +84,14 @@ class Scout(object):
             except dbus.DBusException:
                 pass
 
-        if len(success_list) != 1:
-            if len(success_list) == 0:
-                error_message = \
-                    """No applications were found. Verify that one of """ + \
-                    """Tomboy or Gnote are installed."""
-
-            if len(success_list) > 1:
-                error_message = \
-                    """More than one application is currently """ + \
-                    """installed on your system. Scout could not """ + \
-                    """decide on which one to favor."""
-
+        if not success_list:
+            error_message = ''.join(["No applications were found. Verify that ",
+                                     "one of Tomboy or Gnote are installed."])
+            raise AutoDetectionError(error_message)
+        elif len(success_list) > 1:
+            error_message = ''.join(["More than one application is currently ",
+                                     "installed on your system. Scout could ",
+                                     "not decide on which one to favor."])
             raise AutoDetectionError(error_message)
 
         return success_list[0]
@@ -111,16 +100,7 @@ class Scout(object):
                   exclude_templates=True):
         """Get a list of notes from the application.
 
-        This function gets a list of notes that match the given selection
-        options. Notes are automatically filtered. Keyword arguments used in
-        the note building part are "names" and "count_limit". The rest of the
-        arguments will be useful to the filtering method.
-
-        Arguments:
-            names -- a list of note names to include
-            count_limit -- the maximum number of notes returned. 0 for no limit
-            tags -- a list of tag names to filter by
-            exclude_templates -- boolean, exclude templates (default: True)
+        Notes are automatically filtered when necessary. (see filter_notes())
 
         """
         notes = self.build_note_list()
@@ -147,14 +127,10 @@ class Scout(object):
         return notes
 
     def get_note_content(self, note):
-        """Get the content of a note.
+        """Get the content of 'note'.
 
-        This method returns the content of one note. The note must be a
-        TomboyNote object. Tags are added after the note name in the returned
-        content.
-
-        Arguments:
-            note -- A TomboyNote object
+        The note must be a Note instance. The list of tags in 'note' is
+        displayed after the note name in the returned string.
 
         """
         lines = self.comm.GetNoteContents(note.uri).splitlines()
@@ -166,10 +142,9 @@ class Scout(object):
         return os.linesep.join(lines)
 
     def build_note_list(self):
-        """Find notes and build a list of TomboyNote objects.
+        """Return a list of all notes found in the application.
 
-        This method gets a list of notes from the application and converts them
-        to TomboyNote objects. It then returns the notes in a list.
+        Returns a list of Note objects.
 
         """
         list_of_notes = []
@@ -177,7 +152,7 @@ class Scout(object):
             note_title = self.comm.GetNoteTitle(uri)
 
             list_of_notes.append(
-                TomboyNote(
+                Note(
                     uri=uri,
                     title=note_title,
                     date=self.comm.GetNoteChangeDate(uri),
@@ -188,17 +163,17 @@ class Scout(object):
         return list_of_notes
 
     def filter_notes(self, notes, tags, names,
-            exclude_templates=True):
-        """Filter a list of notes according to some criteria.
+                     exclude_templates=True):
+        """Filter a list of notes accordingly.
 
-        Filter a list of TomboyNote objects so that it contains only the notes
-        matching a set of filtering options.
+        The list of notes can be narrowed down to only those whose names are
+        found in  'names'.
 
-        Arguments:
-            notes -- list of note objects
-            tags -- list of tag strings to filter by
-            names -- list of note names to include
-            exclude_templates -- boolean, exclude templates (default: True)
+        A maximum of 'count_limit' notes is returned, or all if 0.
+
+        When non-empty, notes that do not have one of the tags in 'tags' are
+        filtered out. Also, templates (notes with the special tag
+        "system:template") are included or not based on 'exclude_templates'.
 
         """
         if tags or names:
@@ -231,23 +206,16 @@ class Scout(object):
 
         return list_of_notes
 
-class TomboyNote(object):
-    """Object corresponding to a Tomboy or Gnote note coming from dbus."""
+
+class Note(object):
+    """A Tomboy or Gnote note.
+
+    A note's date attribute can either be a dbus.Int64 object or a datetime
+    object.
+
+    """
     def __init__(self, uri, title="", date=dbus.Int64(), tags=None):
-        """Constructor.
-
-        This makes sure that instance attributes are set upon the note's
-        instantiation. The date can either be a dbus.Int64 object or a datetime
-        object.
-
-        Arguments:
-            uri -- A string representing the note's URI
-            title -- A string representing the note's title
-            date -- Can either be a dbus.Int64 or datetime object
-            tags -- A list of strings that represent tags
-
-        """
-        super(TomboyNote, self).__init__()
+        super(Note, self).__init__()
 
         if tags is None:
             tags = []
@@ -256,31 +224,22 @@ class TomboyNote(object):
         self.title = title
         self.tags = tags
 
-        if isinstance(date, datetime.datetime):
-            self.date = dbus.Int64( time.mktime(date.timetuple()) )
+        if isinstance(date, datetime):
+            self.date = dbus.Int64(time.mktime(date.timetuple()))
         else:
             self.date = date
 
-    def listing(self):
-        """Get a listing for this note.
-
-        This method returns listing information about the note represented by
-        this object.
-
-        """
-        printable_title = self.title
+    def __repr__(self):
         if not self.title:
-            printable_title = "_note doesn't have a name_"
+            title = "_note doesn't have a name_"
+        else:
+            title = self.title
 
-        printable_tags = ""
-        if len(self.tags):
-            printable_tags = "  (" + ", ".join(self.tags) + ")"
+        if self.tags:
+            tags = "  (%s)" % ", ".join(self.tags)
+        else:
+            tags = ""
 
-        return "%(date)s | %(title)s%(tags)s" % \
-            {
-                "date": datetime.datetime.fromtimestamp(self.date)\
-                            .isoformat()[:10],
-                "title": printable_title,
-                "tags": printable_tags,
-            }
+        date = datetime.fromtimestamp(self.date).isoformat()[:10]
 
+        return "%s | %s%s" % (date, title, tags)

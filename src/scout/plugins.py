@@ -209,7 +209,7 @@ class FilteringGroup(OptionGroup):
                 help="""Include template notes. This option is """
                 """different from using "-t system:template" in that the """
                 """latter used alone will only include the templates, while """
-                """"using "--with-templates" without specifying tags for """
+                """using "--with-templates" without specifying tags for """
                 """selection will include all notes and templates."""
             ),
         ]
