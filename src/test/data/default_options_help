@@ -1,0 +1,4 @@
+  -h, --help            show this help message and exit
+  --application=APPLICATION
+                        Choose the application to connect to. APPLICATION must
+                        be one of Tomboy or Gnote.

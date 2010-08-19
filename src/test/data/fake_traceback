@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/gabster/scout/src/scout/cli.py", line 112, in dispatch
+    action.perform_action(arguments, [])
+  File "/home/gabster/scout/src/scout/actions/list.py", line 83, in perform_action
+    raise Exception
+Exception

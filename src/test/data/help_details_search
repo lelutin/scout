@@ -1,0 +1,7 @@
+Usage: app_name search (-h|--help)
+       app_name search [filter ...] <search_pattern> [note_name ...]
+
+Options:
+{% include default_options_help %}
+
+{% include filtering_options_help %}

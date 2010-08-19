@@ -1,0 +1,12 @@
+Usage: app_name <action> [-h|--help] [options]
+       app_name (-h|--help|help) [action]
+       app_name (-v|--version)
+
+Scout is a command line interface to the note taking applications: Tomboy and
+Gnote.
+
+Options depend on what action you are taking. To obtain details on options for
+a particular action, combine one of "-h" or "--help" with the action name or
+use "help" before the action name.
+
+Here is a list of all the available actions:

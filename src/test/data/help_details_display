@@ -1,0 +1,5 @@
+Usage: app_name display (-h|--help)
+       app_name display [note_name ...]
+
+Options:
+{% include default_options_help %}

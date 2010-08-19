@@ -1,0 +1,16 @@
+  Filtering:
+    Filter notes by different criteria.
+
+    -b BOOK             %(action)s notes belonging to specified notebooks. It is a
+                        shortcut to option "-t" to specify notebooks more
+                        easily. For example, use "-b HGTTG" instead of "-t
+                        system:notebook:HGTTG". Use this option once for each
+                        desired book.
+    -t TAG              %(action)s notes with specified tags. Use this option once
+                        for each desired tag. This option selects raw tags and
+                        could be useful for user-assigned tags.
+    --with-templates    Include template notes. This option is different from
+                        using "-t system:template" in that the latter used
+                        alone will only include the templates, while using
+                        "--with-templates" without specifying tags for
+                        selection will include all notes and templates.

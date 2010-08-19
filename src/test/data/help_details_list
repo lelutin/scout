@@ -1,0 +1,8 @@
+Usage: app_name list (-h|--help)
+       app_name list [-n <num>] [filter ...]
+
+Options:
+{% include default_options_help %}
+  -n MAX_NOTES          Limit the number of notes listed.
+
+{% include filtering_options_help %}

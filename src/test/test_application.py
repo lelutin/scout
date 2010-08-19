@@ -11,15 +11,15 @@ import optparse
 import ConfigParser as configparser
 
 from scout import core, cli, plugins
+from scout.version import SCOUT_VERSION
 # Import the list action under a different name to avoid overwriting the list()
 # builtin function.
 from scout.actions import display, list as list_, delete, search, version
 
-from . import data as test_data
-from . import bases
+from .utils import BasicMocking, CLIMocking, data
 
 
-class TestMain(bases.BasicMocking, bases.CLIMocking):
+class TestMain(BasicMocking, CLIMocking):
     """Tests for functions in the main script."""
 
     def test_KeyboardInterrupt_is_handled(self):
@@ -78,7 +78,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            "%s\n" % expected_text,
+            expected_text,
             output_stream.getvalue()
         )
 
@@ -86,7 +86,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         """Main: main() called with too few arguments gives an error."""
         self.verify_exit_from_main(
             [],
-            test_data.too_few_arguments_error,
+            data("too_few_arguments_error"),
             output_stream=sys.stderr
         )
 
@@ -94,10 +94,11 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         """Test that help exits and displays the main help."""
         command_line = self.wrap_subject(cli.CommandLine, "main")
 
+        m_desc = data("module_descriptions")
         sys.argv = ["app_name", argument]
 
         command_line.action_short_summaries()\
-            .AndReturn(test_data.module_descriptions)
+                .AndReturn(m_desc.splitlines())
 
         self.m.ReplayAll()
         self.assertRaises(
@@ -107,8 +108,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            "%s%s\n" % (test_data.main_help,
-                        '\n'.join(test_data.module_descriptions)),
+            ''.join([data("main_help"), m_desc]),
             sys.stdout.getvalue()
         )
 
@@ -148,7 +148,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         """Main: -v option displays Scout's version and license information."""
         self.verify_exit_from_main(
             ["-v"],
-            test_data.version_and_license_info,
+            data("version_and_license_info") % SCOUT_VERSION,
             output_stream=sys.stdout
         )
 
@@ -241,7 +241,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         )
 
         self.assertEqual(
-            "%s\n" % test_data.unknown_action,
+            data("unknown_action"),
             sys.stderr.getvalue()
         )
 
@@ -256,7 +256,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
 
         action1 = self.m.CreateMockAnything()
         action1.name = "action1"
-        action1.short_description = test_data.module1_description
+        action1.short_description = data("module1_description")[:-1]
         action2 = self.m.CreateMockAnything()
         action2.name = "otheraction"
         action2.short_description = None
@@ -267,7 +267,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         self.m.ReplayAll()
 
         self.assertEqual(
-            test_data.module_descriptions,
+            data("module_descriptions").splitlines(),
             command_line.action_short_summaries()
         )
 
@@ -400,7 +400,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
             core.ConnectionError,
             exception_out=SystemExit,
             exception_argument="there was a problem",
-            expected_text="%s\n" % test_data.connection_error_message
+            expected_text=data("connection_error_message")
         )
 
     def test_dispatch_handles_NoteNotFound(self):
@@ -410,7 +410,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
             core.NoteNotFound,
             exception_out=SystemExit,
             exception_argument="unexistant",
-            expected_text="%s\n" % test_data.unexistant_note_error
+            expected_text=data("unexistant_note_error")
         )
 
     def test_dispatch_handles_AutoDetectionError(self):
@@ -420,12 +420,12 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
             core.AutoDetectionError,
             exception_out=SystemExit,
             exception_argument="autodetection failed for some reason",
-            expected_text="%s\n" % test_data.autodetection_error
+            expected_text=data("autodetection_error")
         )
 
     def print_traceback(self):
         """Fake an output of an arbitrary traceback on sys.stderr"""
-        print >> sys.stderr, test_data.fake_traceback
+        print >> sys.stderr, data("fake_traceback")
 
     def test_dispatch_handles_action_exceptions(self):
         """Main: All unknown exceptions from actions are handled."""
@@ -469,7 +469,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
             .AndReturn(fake_config)
 
         command_line.parse_options(fake_action, arguments)\
-            .AndRaise( TypeError(test_data.option_type_error_message) )
+            .AndRaise(TypeError(data("option_type_error_message")[:-1]))
 
         self.m.ReplayAll()
 
@@ -481,7 +481,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            "%s\n" % test_data.option_type_error_message,
+            data("option_type_error_message"),
             sys.stderr.getvalue()
         )
 
@@ -760,7 +760,7 @@ class TestMain(bases.BasicMocking, bases.CLIMocking):
         self.verify_sanitized_config(False)
 
 
-class TestCore(bases.BasicMocking):
+class TestCore(BasicMocking):
     """Tests for general code."""
 
     def verify_Scout_constructor(self, application):
@@ -927,7 +927,7 @@ class TestCore(bases.BasicMocking):
 
         tt = self.wrap_subject(core.Scout, "get_notes")
 
-        notes = test_data.full_list_of_notes(self.m)
+        notes = self.full_list_of_notes()
 
         fake_filtered_list = self.n_mocks(5)
 
@@ -983,7 +983,7 @@ class TestCore(bases.BasicMocking):
         """Test note filtering."""
         tt = self.wrap_subject(core.Scout, "filter_notes")
 
-        notes = test_data.full_list_of_notes(self.m)
+        notes = self.full_list_of_notes()
 
         if tags or names:
             expected_list = [
@@ -1043,7 +1043,7 @@ class TestCore(bases.BasicMocking):
         """Core: Filtering encounters an unknown note name."""
         tt = self.wrap_subject(core.Scout, "filter_notes")
 
-        notes = test_data.full_list_of_notes(self.m)
+        notes = self.full_list_of_notes()
 
         self.m.ReplayAll()
 
@@ -1093,7 +1093,7 @@ class TestCore(bases.BasicMocking):
 
         tt.comm = self.m.CreateMockAnything()
 
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         list_of_uris = dbus.Array(
             [note.uri for note in list_of_notes]
@@ -1163,7 +1163,7 @@ class TestCore(bases.BasicMocking):
         self.verify_autodetect_app( ["Tomboy", "Gnote"] )
 
 
-class TestList(bases.BasicMocking, bases.CLIMocking):
+class TestList(BasicMocking, CLIMocking):
     """Tests for the list action."""
 
     def verify_note_listing(self, title, tags, new_title, expected_tag_text):
@@ -1245,7 +1245,7 @@ class TestList(bases.BasicMocking, bases.CLIMocking):
         fake_options.max_notes = 5  # the value doesn't really matter here
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
-        list_of_notes = test_data.full_list_of_notes(self.m, real=True)
+        list_of_notes = self.full_list_of_notes(real=True)
         if not with_templates:
             # Forget about the last note (a template)
             list_of_notes = list_of_notes[:-1]
@@ -1260,14 +1260,14 @@ class TestList(bases.BasicMocking, bases.CLIMocking):
         lst_ap.perform_action(fake_config, fake_options, [])
         self.m.VerifyAll()
 
-        expected_result = "\n".join([test_data.expected_list,
-                                     test_data.list_appendix])
+        expected_result = ''.join([data("expected_list"),
+                                   data("list_appendix")])
         if with_templates:
-            expected_result = "\n".join([expected_result,
-                                         test_data.normally_hidden_template])
+            expected_result = ''.join([expected_result,
+                                       data("normally_hidden_template")])
 
         self.assertEqual(
-            "%s\n" % expected_result,
+            expected_result,
             sys.stdout.getvalue()
         )
 
@@ -1280,7 +1280,7 @@ class TestList(bases.BasicMocking, bases.CLIMocking):
         self.verify_perform_action(with_templates=True)
 
 
-class TestDisplay(bases.BasicMocking, bases.CLIMocking):
+class TestDisplay(BasicMocking, CLIMocking):
     """Tests for the display action."""
 
     def test_get_display_for_notes(self):
@@ -1291,15 +1291,15 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
         )
         dsp_ap.interface = self.m.CreateMock(core.Scout)
 
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         notes = [
             list_of_notes[10],
             list_of_notes[8]
         ]
         note_names = [n.title for n in notes]
-        note1_content = test_data.note_contents_from_dbus[ notes[0].title ]
-        note2_content = test_data.note_contents_from_dbus[ notes[1].title ]
+        note1_content = data("notes/%s" % notes[0].title)
+        note2_content = data("notes/%s" % notes[1].title)
 
         dsp_ap.interface.get_note_content(notes[0])\
             .AndReturn(note1_content)
@@ -1311,7 +1311,7 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
         self.assertEqual(
             "\n".join([
                 note1_content,
-                test_data.display_separator,
+                data("display_separator")[:-1],
                 note2_content,
             ]),
             dsp_ap.format_display_for_notes(notes)
@@ -1325,15 +1325,15 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
 
         tt.comm = self.m.CreateMockAnything()
 
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         note = list_of_notes[12]
-        raw_content = test_data.note_contents_from_dbus[note.title]
+        raw_content = data("notes/%s" %note.title)
         lines = raw_content.splitlines()
-        lines[0] = "%s%s" % (
+        lines[0] = ''.join([
             lines[0],
             "  (system:notebook:reminders, training)"
-        )
+        ])
         expected_result = "\n".join(lines)
 
         tt.comm.GetNoteContents(note.uri)\
@@ -1357,7 +1357,7 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
 
         dsp_ap.format_display_for_notes(notes)\
             .AndReturn(
-                test_data.note_contents_from_dbus["addressbook"].decode("utf-8")
+                (data("notes/addressbook")[:-1]).decode("utf-8")
             )
 
         self.m.ReplayAll()
@@ -1365,7 +1365,7 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            "%s\n" % test_data.note_contents_from_dbus["addressbook"],
+            data("notes/addressbook"),
             sys.stdout.getvalue()
         )
 
@@ -1384,12 +1384,12 @@ class TestDisplay(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            "%s\n" % test_data.display_no_note_name_error,
+            data("display_no_note_name_error"),
             sys.stderr.getvalue()
         )
 
 
-class TestDelete(bases.BasicMocking, bases.CLIMocking):
+class TestDelete(BasicMocking, CLIMocking):
     """Tests for code that delete notes."""
 
     def verify_perform_action(self, tags, names, all_notes, dry_run):
@@ -1406,7 +1406,7 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
 
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
         notes = [
-            n for n in test_data.full_list_of_notes(self.m)
+            n for n in self.full_list_of_notes()
             if "system:notebook:pim" in n.tags
                or n.title == "TDD"
         ]
@@ -1440,12 +1440,12 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
 
         if dry_run:
             self.assertEqual(
-                "%s\n" % test_data.delete_dry_run_list,
+                data("delete_dry_run_list"),
                 sys.stdout.getvalue()
             )
         if not names and not tags and not all_notes:
             self.assertEqual(
-                "%s\n" % test_data.delete_no_argument_msg,
+                data("delete_no_argument_msg"),
                 sys.stdout.getvalue()
             )
 
@@ -1532,18 +1532,16 @@ class TestDelete(bases.BasicMocking, bases.CLIMocking):
         del_ap.add_option_library(fake_filtering_group)
 
         self.m.ReplayAll()
-
         del_ap.init_options()
-
         self.m.VerifyAll()
 
         self.assertEqual(
-            test_data.book_help_delete,
+            data("book_help_delete")[:-1],
             fake_option.help
         )
 
 
-class TestSearch(bases.BasicMocking, bases.CLIMocking):
+class TestSearch(BasicMocking, CLIMocking):
     """Tests for the search action."""
 
     def test_search_for_text(self):
@@ -1553,12 +1551,25 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
 
         note_contents = {}
 
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        search_structure = [
+            {
+                "title": "addressbook",
+                "line": 5,
+                "text": "John Doe (cell) - 555-5512",
+            },
+            {
+                "title": "business contacts",
+                "line": 7,
+                "text": "John Doe Sr. (office) - 555-5534",
+            },
+        ]
+
+        list_of_notes = self.full_list_of_notes()
         # Forget about the last note (a template)
         list_of_notes = list_of_notes[:-1]
 
         for note in list_of_notes:
-            content = test_data.note_contents_from_dbus[note.title]
+            content = data("notes/%s" %note.title)
 
             if note.tags:
                 lines = content.splitlines()
@@ -1567,7 +1578,7 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
 
             note_contents[note.title] = content
 
-        expected_result = test_data.search_structure
+        expected_result = search_structure
 
         for note in list_of_notes:
             srch_ap.interface.get_note_content(note)\
@@ -1607,7 +1618,20 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
 
         tags = ["something"]
 
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        search_structure = [
+            {
+                "title": "addressbook",
+                "line": 5,
+                "text": "John Doe (cell) - 555-5512",
+            },
+            {
+                "title": "business contacts",
+                "line": 7,
+                "text": "John Doe Sr. (office) - 555-5534",
+            },
+        ]
+
+        list_of_notes = self.full_list_of_notes()
         # Forget about the last note (a template)
         list_of_notes = list_of_notes[:-1]
 
@@ -1623,7 +1647,7 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
         ).AndReturn(list_of_notes)
 
         srch_ap.search_for_text("findme", list_of_notes)\
-            .AndReturn(test_data.search_structure)
+            .AndReturn(search_structure)
 
         self.m.ReplayAll()
 
@@ -1636,7 +1660,7 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            "%s\n" % test_data.search_results,
+            data("search_results"),
             sys.stdout.getvalue()
         )
 
@@ -1665,12 +1689,12 @@ class TestSearch(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            "%s\n" % test_data.search_no_argument_error,
+            data("search_no_argument_error"),
             sys.stderr.getvalue()
         )
 
 
-class TestVersion(bases.BasicMocking, bases.CLIMocking):
+class TestVersion(BasicMocking, CLIMocking):
     """Tests for the version action."""
 
     def test_perform_action(self):
@@ -1693,12 +1717,12 @@ class TestVersion(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            "%s\n" % (test_data.tomboy_version_output % "some_app"),
+            data("tomboy_version_output") % (SCOUT_VERSION, "some_app"),
             sys.stdout.getvalue()
         )
 
 
-class TestPlugins(bases.BasicMocking):
+class TestPlugins(BasicMocking):
     """Tests for the basis of plugins."""
 
     def test_ActionPlugin_constructor(self):

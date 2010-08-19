@@ -1,0 +1,5 @@
+Usage: app_name <action> [-h|--help] [options]
+       app_name (-h|--help|help) [action]
+       app_name (-v|--version)
+
+{% include help_more_details %}

@@ -1,0 +1,12 @@
+dell 750
+
+$ apt-cache search lxc
+libclxclient-dev - Development file for libclxclient
+libclxclient3 - X Window System C++ access library
+lxc - Linux containers userspace tools
+libvirt-bin - the programs for the libvirt library
+libvirt-dev - development files for the libvirt library
+libvirt-doc - documentation for the libvirt library
+libvirt0-dbg - library for interfacing with different virtualization systems
+python-libvirt - libvirt Python bindings
+libopencascade-ocaf-6.3.0 - OpenCASCADE CAE platform shared library

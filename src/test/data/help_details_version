@@ -1,0 +1,4 @@
+Usage: app_name version [-h|--help]
+
+Options:
+{% include default_options_help %}

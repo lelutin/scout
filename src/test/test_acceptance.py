@@ -10,14 +10,14 @@ import dbus
 import pkg_resources
 import ConfigParser as configparser
 
-from . import data as test_data
-from . import bases
+from .utils import BasicMocking, CLIMocking, data
 
 from scout import cli
 from scout import plugins
+from scout.version import SCOUT_VERSION
 
 #TODO split this up in smaller classes
-class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
+class AcceptanceTests(BasicMocking, CLIMocking):
     """Acceptance tests.
 
     Define what the expected behaviour is from the user's point of view.
@@ -135,7 +135,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
 
         sys.argv = ["app_name", ]
         old_docstring = cli.__doc__
-        cli.__doc__ = os.linesep.join([
+        cli.__doc__ = "\n".join([
             "command -h",
             "command action",
             "",
@@ -155,10 +155,10 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
 
         # Test that usage comes from the script's docstring.
         self.assertEqual(
-            (os.linesep * 2).join([
-                os.linesep.join( cli.__doc__.splitlines()[:3]),
-                test_data.help_more_details
-            ]) + os.linesep,
+            ("\n" * 2).join([
+                "\n".join(cli.__doc__.splitlines()[:3]),
+                data("help_more_details")
+            ]),
             sys.stderr.getvalue()
         )
 
@@ -177,13 +177,13 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            test_data.unknown_action + os.linesep,
+            data("unknown_action"),
             sys.stderr.getvalue()
         )
 
     def test_action_list(self):
         """Acceptance: Action "list -n" prints a list of the last n notes."""
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         self.mock_out_listing(list_of_notes[:10])
 
@@ -195,13 +195,13 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEquals(
-            test_data.expected_list + os.linesep,
+            data("expected_list"),
             sys.stdout.getvalue()
         )
 
     def test_full_list(self):
         """Acceptance: Action "list" alone produces a list of all notes."""
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         self.mock_out_listing(list_of_notes)
 
@@ -213,22 +213,18 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEquals(
-            os.linesep.join([
-                test_data.expected_list,
-                test_data.list_appendix
-            ]) + os.linesep,
+            ''.join([data("expected_list"), data("list_appendix")]),
             sys.stdout.getvalue()
         )
 
     def test_notes_displaying(self):
         """Acceptance: Action "display" prints the content given note names."""
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         todo = list_of_notes[1]
         python_work = list_of_notes[4]
-        separator = os.linesep + "==========================" + os.linesep
-        note_lines = test_data.note_contents_from_dbus["TODO-list"]\
-                        .splitlines()
+        separator = "\n==========================\n"
+        note_lines = data("notes/TODO-list").splitlines()
 
         note_lines[0] = \
             "%s  (system:notebook:reminders, system:notebook:pim)" % (
@@ -236,16 +232,16 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
             )
 
         expected_result_list = [
-            os.linesep.join(note_lines),
-            test_data.note_contents_from_dbus["python-work"]
+            "\n".join(note_lines),
+            data("notes/python-work")[:-1]
         ]
 
         self.mock_out_listing(list_of_notes)
 
         self.dbus_interface.GetNoteContents(todo.uri)\
-            .AndReturn(test_data.note_contents_from_dbus["TODO-list"])
+            .AndReturn(data("notes/TODO-list"))
         self.dbus_interface.GetNoteContents(python_work.uri)\
-            .AndReturn(test_data.note_contents_from_dbus["python-work"])
+            .AndReturn(data("notes/python-work"))
 
         self.m.ReplayAll()
 
@@ -255,13 +251,13 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEquals(
-            separator.join(expected_result_list) + os.linesep,
+            "%s\n" % separator.join(expected_result_list),
             sys.stdout.getvalue()
         )
 
     def test_note_does_not_exist(self):
         """Acceptance: Specified note non-existant: display an error."""
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
         self.mock_out_listing(list_of_notes)
 
         self.m.ReplayAll()
@@ -270,7 +266,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.assertRaises(SystemExit, cli.exception_wrapped_main)
 
         self.assertEquals(
-            test_data.unexistant_note_error + os.linesep,
+            data("unexistant_note_error"),
             sys.stderr.getvalue()
         )
 
@@ -290,20 +286,20 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEquals(
-            test_data.display_no_note_name_error + os.linesep,
+            data("display_no_note_name_error"),
             sys.stderr.getvalue()
         )
 
     def test_search(self):
         """Acceptance: Action "search" searches in all notes, case-indep."""
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         self.mock_out_listing(list_of_notes)
 
         # Forget about the last note (a template)
         for note in list_of_notes[:-1]:
             self.dbus_interface.GetNoteContents(note.uri)\
-                .AndReturn(test_data.note_contents_from_dbus[note.title])
+                .AndReturn(data("notes/%s" % note.title))
 
         self.m.ReplayAll()
 
@@ -313,13 +309,13 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEquals(
-            test_data.search_results + os.linesep,
+            data("search_results"),
             sys.stdout.getvalue()
         )
 
     def test_search_specific_notes(self):
         """Acceptance: Action "search" restricts the search to given notes."""
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         requested_notes = [
             list_of_notes[3],
@@ -327,12 +323,11 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
             list_of_notes[6],
         ]
 
-        list_of_notes = test_data.full_list_of_notes(self.m)
         self.mock_out_listing(list_of_notes)
 
         for note in requested_notes:
             self.dbus_interface.GetNoteContents(note.uri)\
-                .AndReturn(test_data.note_contents_from_dbus[note.title])
+                .AndReturn(data("notes/%s" % note.title))
 
         self.m.ReplayAll()
 
@@ -343,7 +338,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEquals(
-            test_data.specific_search_results + os.linesep,
+            data("specific_search_results"),
             sys.stdout.getvalue()
         )
 
@@ -361,7 +356,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEquals(
-            test_data.search_no_argument_error + os.linesep,
+            data("search_no_argument_error"),
             sys.stderr.getvalue()
         )
 
@@ -374,7 +369,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.StubOutWithMock(pkg_resources, "iter_entry_points")
 
         old_docstring = cli.__doc__
-        cli.__doc__ = os.linesep.join([
+        cli.__doc__ = "\n".join([
             "some",
             "non-",
             "useful",
@@ -419,7 +414,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
 
         # The help should be displayed using scout's docstring.
         self.assertEquals(
-            cli.__doc__[:-1] + os.linesep.join(fake_list) + os.linesep,
+            "%s%s\n" % (cli.__doc__[:-1], "\n".join(fake_list)),
             sys.stdout.getvalue()
         )
 
@@ -435,7 +430,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
 
     def test_filter_notes_with_templates(self):
         """Acceptance: Using "--with-templates" lists notes and templates."""
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         self.mock_out_listing(list_of_notes)
 
@@ -450,15 +445,15 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            test_data.expected_list + os.linesep +
-                test_data.list_appendix + os.linesep +
-                test_data.normally_hidden_template + os.linesep,
+            ''.join([data("expected_list"),
+                     data("list_appendix"),
+                     data("normally_hidden_template")]),
             sys.stdout.getvalue()
         )
 
     def test_filter_notes_by_tags(self):
         """Acceptance: Using "-t" limits the notes by tags."""
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         self.mock_out_listing(list_of_notes)
 
@@ -474,13 +469,13 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            test_data.tag_limited_list + os.linesep,
+            data("tag_limited_list"),
             sys.stdout.getvalue()
         )
 
     def test_filter_notes_by_books(self):
         """Acceptance: Using "-b" limits the notes by notebooks."""
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         self.mock_out_listing(list_of_notes)
 
@@ -492,7 +487,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            test_data.book_limited_list + os.linesep,
+            data("book_limited_list"),
             sys.stdout.getvalue()
         )
 
@@ -511,7 +506,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
 
         self.assertRaises(SystemExit, cli.exception_wrapped_main)
         self.assertEquals(
-            text + os.linesep,
+            text,
             sys.stdout.getvalue()
         )
 
@@ -525,7 +520,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
                 "-h",
                 "list"
             ],
-            test_data.help_details_list
+            data("help_details_list") % {"action": "List"}
         )
 
     def test_help_pseudo_action_before_action_name(self):
@@ -536,7 +531,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
                 "help",
                 "version"
             ],
-            test_data.help_details_version
+            data("help_details_version")
         )
 
     def test_help_display_specific(self):
@@ -547,7 +542,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
                 "display",
                 "--help"
             ],
-            test_data.help_details_display
+            data("help_details_display")
         )
 
     def test_help_list_specific(self):
@@ -558,7 +553,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
                 "list",
                 "--help"
             ],
-            test_data.help_details_list
+            data("help_details_list") % {"action": "List"}
         )
 
     def test_help_search_specific(self):
@@ -569,7 +564,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
                 "search",
                 "--help"
             ],
-            test_data.help_details_search
+            data("help_details_search") % {"action": "Search"}
         )
 
     def test_tomboy_version(self):
@@ -584,7 +579,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEqual(
-            test_data.tomboy_version_output % "Tomboy" + os.linesep,
+            data("tomboy_version_output") % (SCOUT_VERSION, "Tomboy"),
             sys.stdout.getvalue()
         )
 
@@ -596,7 +591,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
                 "version",
                 "--help"
             ],
-            test_data.help_details_version
+            data("help_details_version")
         )
 
     def test_list_using_gnote(self):
@@ -606,7 +601,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
 
         self.mock_out_dbus("Gnote")
 
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         self.mock_out_listing(list_of_notes[:10])
 
@@ -623,13 +618,13 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         self.m.VerifyAll()
 
         self.assertEquals(
-            test_data.expected_list + os.linesep,
+            data("expected_list"),
             sys.stdout.getvalue()
         )
 
     def verify_delete_notes(self, tags, names, all_notes, dry_run):
         """Test note deletion."""
-        list_of_notes = test_data.full_list_of_notes(self.m)
+        list_of_notes = self.full_list_of_notes()
 
         if all_notes or tags or names:
             self.mock_out_listing(list_of_notes)
@@ -698,7 +693,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         )
 
         self.assertEqual(
-            test_data.delete_dry_run_list + os.linesep,
+            data("delete_dry_run_list"),
             sys.stdout.getvalue()
         )
 
@@ -712,7 +707,7 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
         )
 
         self.assertEqual(
-            test_data.delete_no_argument_msg + os.linesep,
+            data("delete_no_argument_msg"),
             sys.stdout.getvalue()
         )
 
@@ -733,5 +728,5 @@ class AcceptanceTests(bases.BasicMocking, bases.CLIMocking):
                 "delete",
                 "--help"
             ],
-            test_data.help_details_delete
+            data("help_details_delete")
         )
