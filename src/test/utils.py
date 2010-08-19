@@ -19,7 +19,7 @@ def data(file_name):
     if not dat:
         base_path = os.path.dirname(__file__)
         f =  open(os.path.join(base_path, "data", file_name), "r")
-        # Cache temporarily to ensure we don't fall in infine include loops.
+        # Cache temporarily to ensure we don't fall in infinite include loops.
         _data_cache[file_name] = dat = f.read()
         f.close()
 
