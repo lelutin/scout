@@ -7,14 +7,19 @@ setuptools' setup function.
 It creates entry points for actions to use, and generates the "scout" script.
 
 """
-import sys, os
+import sys
 from subprocess import Popen
+from setuptools import setup, find_packages
+from glob import glob
+
+from src.scout.version import SCOUT_VERSION
+
 
 command = None
 if len(sys.argv) > 1:
     command = sys.argv[1]
 
-# Create the version.py module
+# Generate the version.py module
 out = open("src/scout/version.py", "w")
 Popen(["./format-subst.pl", "src/scout/version.py.pre"], stdout=out)
 out.close()
@@ -23,11 +28,13 @@ if command:
     # Compile documentation
     Popen(["make", command ], cwd="doc")
 
-from setuptools import setup, find_packages
-from glob import glob
-from src.scout.version import SCOUT_VERSION
+    if command in ["develop", "test"]:
+        # while developing, we don't want to call 'setup.py develop' after each
+        # commit because the version tag has changed.
+        SCOUT_VERSION = "%s-dev" % SCOUT_VERSION.split('-',1)[0]
 
-DESCRIPTION = """
+
+DESCRIPTION = """\
 Scout is an interface to Tomboy notes or Gnote that uses DBus to
 communicate. It presents a command-line interface and
 tries to be as simple to use as possible. Different actions
