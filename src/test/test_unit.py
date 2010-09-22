@@ -835,30 +835,53 @@ class CoreTests(BasicMocking):
             should_exclude = exclude
 
         tt = self.wrap_subject(core.Scout, "get_notes")
+        tt.comm = self.m.CreateMockAnything()
+        self.m.StubOutWithMock(core, "Note", use_mock_anything=True)
 
         notes = self.full_list_of_notes()
-
+        uris = dbus.Array(
+            [note.uri for note in notes]
+        )
         fake_filtered_list = self.n_mocks(5)
 
-        tt.build_note_list()\
-            .AndReturn(notes)
+        tt.comm.ListAllNotes()\
+            .AndReturn(uris)
+
+        fake_notes = []
+        for note in notes:
+            tt.comm.GetNoteTitle(note.uri)\
+                .AndReturn(note.title)
+            tt.comm.GetNoteChangeDate(note.uri)\
+                .AndReturn(note.date)
+            tt.comm.GetTagsForNote(note.uri)\
+                .AndReturn(note.tags)
+
+            fake_note = self.m.CreateMock(core.Note)
+            fake_note.uri = note.uri
+            fake_note.title = note.title
+            fake_note.date = note.date
+            fake_note.tags = note.tags
+            fake_notes.append(fake_note)
+
+            core.Note(
+                date=note.date, title=note.title, tags=note.tags,
+                uri=note.uri
+            ).AndReturn(fake_note)
 
         tt.filter_notes(
-            notes,
+            fake_notes,
             names=expected_names,
             tags=expected_tags,
             exclude_templates=should_exclude
         ).AndReturn(fake_filtered_list)
 
         self.m.ReplayAll()
-
         result = tt.get_notes(
             tags=tags,
             names=names,
             exclude_templates=exclude,
             count_limit=count
         )
-
         self.m.VerifyAll()
 
         return result
@@ -871,10 +894,7 @@ class CoreTests(BasicMocking):
         """U Core: No filtering but templates removed."""
         list_of_notes = self.verify_get_notes(count=3)
 
-        self.assertEqual(
-            3,
-            len(list_of_notes)
-        )
+        self.assertEqual(3, len(list_of_notes))
 
     def test_get_notes_with_templates(self):
         """U Core: Filtered notes but templates included."""
@@ -960,68 +980,6 @@ class CoreTests(BasicMocking):
             core.NoteNotFound,
             tt.filter_notes, notes, tags=[], names=["unknown"]
         )
-
-        self.m.VerifyAll()
-
-    def verify_note_list(self, tt, notes, note_names=[]):
-        """Verify the outcome of Scout.build_note_list().
-
-        Notes are unhashable so we need to convert them to dictionaries
-        and check for list membership to be able to compare them.
-
-        """
-        expectation = [{
-            "uri":n.uri,
-            "title":n.title,
-            "date":n.date,
-            "tags":n.tags,
-        } for n in notes]
-
-        # Order is not important
-        for note in tt.build_note_list():
-            note_as_dict = {
-                "uri":note.uri,
-                "title":note.title,
-                "date":note.date,
-                "tags":note.tags
-            }
-
-            if note_as_dict not in expectation:
-                self.fail(
-                    ''.join([
-                        "Note named %s dated %s " % (note.title, note.date),
-                        "with uri %s and " % (note.uri, ),
-                        "tags [%s] not found in " % (",".join(note.tags), ),
-                        "expectation: [%s]" % (",".join(expectation), )
-                    ])
-                )
-
-    def test_build_note_list(self):
-        """U Core: Scout gets a full list of notes."""
-        tt = self.wrap_subject(core.Scout, "build_note_list")
-
-        tt.comm = self.m.CreateMockAnything()
-
-        list_of_notes = self.full_list_of_notes()
-
-        list_of_uris = dbus.Array(
-            [note.uri for note in list_of_notes]
-        )
-
-        tt.comm.ListAllNotes()\
-            .AndReturn(list_of_uris)
-
-        for note in list_of_notes:
-            tt.comm.GetNoteTitle(note.uri)\
-                .AndReturn(note.title)
-            tt.comm.GetNoteChangeDate(note.uri)\
-                .AndReturn(note.date)
-            tt.comm.GetTagsForNote(note.uri)\
-                .AndReturn(note.tags)
-
-        self.m.ReplayAll()
-
-        self.verify_note_list(tt, list_of_notes)
 
         self.m.VerifyAll()
 

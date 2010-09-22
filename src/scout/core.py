@@ -102,7 +102,18 @@ class Scout(object):
         Notes are automatically filtered when necessary. (see filter_notes())
 
         """
-        notes = self.build_note_list()
+        notes = []
+        for uri in self.comm.ListAllNotes():
+            note_title = self.comm.GetNoteTitle(uri)
+
+            notes.append(
+                Note(
+                    uri=uri,
+                    title=note_title,
+                    date=self.comm.GetNoteChangeDate(uri),
+                    tags=self.comm.GetTagsForNote(uri)
+                )
+            )
 
         if names is None:
             names = []
@@ -139,27 +150,6 @@ class Scout(object):
             lines[0] = "%s  (%s)" % (lines[0], ", ".join(note.tags))
 
         return "\n".join(lines)
-
-    def build_note_list(self):
-        """Return a list of all notes found in the application.
-
-        Returns a list of Note objects.
-
-        """
-        list_of_notes = []
-        for uri in self.comm.ListAllNotes():
-            note_title = self.comm.GetNoteTitle(uri)
-
-            list_of_notes.append(
-                Note(
-                    uri=uri,
-                    title=note_title,
-                    date=self.comm.GetNoteChangeDate(uri),
-                    tags=self.comm.GetTagsForNote(uri)
-                )
-            )
-
-        return list_of_notes
 
     def filter_notes(self, notes, tags, names,
                      exclude_templates=True):
