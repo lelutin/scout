@@ -19,11 +19,11 @@ from scout.actions import display, list as list_, delete, search, version
 from .utils import BasicMocking, CLIMocking, data
 
 
-class TestMain(BasicMocking, CLIMocking):
+class MainTests(BasicMocking, CLIMocking):
     """Tests for functions in the main script."""
 
     def test_arguments_converted_to_unicode(self):
-        """Main: Arguments to action are converted to unicode objects."""
+        """U Main: Arguments to action are converted to unicode objects."""
         # This is the default main() behaviour.
         self.m.StubOutWithMock(cli.CommandLine, "dispatch")
 
@@ -49,7 +49,7 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
     def test_not_enough_arguments(self):
-        """Main: main() called with too few arguments gives an error."""
+        """U Main: main() called with too few arguments gives an error."""
         self.verify_exit_from_main(
             [],
             data("too_few_arguments_error"),
@@ -75,11 +75,11 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
     def test_main_help(self):
-        """Main: using only -h prints help and list of actions."""
+        """U Main: using only -h prints help and list of actions."""
         self.verify_main_help("-h")
 
     def test_main_help_from_help_pseudo_action(self):
-        """Main: "help" pseudo-action alone should display main help."""
+        """U Main: "help" pseudo-action alone should display main help."""
         self.verify_main_help("help")
 
     def verify_help_argument_reversing(self, argument):
@@ -98,15 +98,15 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_help_before_action(self):
-        """Main: -h before action gets switched to normal help call."""
+        """U Main: -h before action gets switched to normal help call."""
         self.verify_help_argument_reversing("-h")
 
     def test_help_pseudo_action_before_action(self):
-        """Main: "help" pseudo-action displays details about an action."""
+        """U Main: "help" pseudo-action displays details about an action."""
         self.verify_help_argument_reversing("help")
 
     def test_display_scout_version(self):
-        """Main: -v option displays Scout's version and license information."""
+        """U Main: -v option displays Scout's version and license info."""
         self.verify_exit_from_main(
             ["-v"],
             data("version_and_license_info") % SCOUT_VERSION,
@@ -114,7 +114,7 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
     def test_list_of_actions(self):
-        """Main: list_of_actions returns classes of action plugins."""
+        """U Main: list_of_actions returns classes of action plugins."""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "list_of_actions"
@@ -149,7 +149,7 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_load_action(self):
-        """Main: Initialize an action plugin instance."""
+        """U Main: Initialize an action plugin instance."""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "load_action"
@@ -178,7 +178,7 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_load_unknown_action(self):
-        """Main: Requested action name is invalid."""
+        """U Main: Requested action name is invalid."""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "load_action"
@@ -209,7 +209,7 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_action_short_summaries(self):
-        """Main: Extract short summaries from action plugins."""
+        """U Main: Extract short summaries from action plugins."""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "action_short_summaries"
@@ -287,7 +287,7 @@ class TestMain(BasicMocking, CLIMocking):
         return (command_line, action_name, fake_action, arguments)
 
     def test_dispatch(self):
-        """Main: Action calls are dispatched to the right action."""
+        """U Main: Action calls are dispatched to the right action."""
         command_line, action_name, fake_action, arguments = \
             self.mock_out_dispatch(None, None)
 
@@ -298,7 +298,7 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_dispatch_with_gnote(self):
-        """Main: Dispatch instantiates Scout for Gnote."""
+        """U Main: Dispatch instantiates Scout for Gnote."""
         command_line, action_name, fake_action, arguments = \
             self.mock_out_dispatch(None, None, "Gnote")
 
@@ -347,15 +347,15 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_dispatch_SystemExit_goes_through(self):
-        """Main: SystemExit exceptions pass through dispatch."""
+        """U Main: SystemExit exceptions pass through dispatch."""
         self.verify_dispatch_exception(SystemExit)
 
     def test_dispatch_KeyboardInterrupt_goes_through(self):
-        """Main: KeyboardInterrupt exceptions pass through dispatch."""
+        """U Main: KeyboardInterrupt exceptions pass through dispatch."""
         self.verify_dispatch_exception(KeyboardInterrupt)
 
     def test_dispatch_handles_ConnectionError(self):
-        """Main: ConnectionError should print an error message."""
+        """U Main: ConnectionError should print an error message."""
         sys.argv = ["app_name"]
         self.verify_dispatch_exception(
             core.ConnectionError,
@@ -365,7 +365,7 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
     def test_dispatch_handles_NoteNotFound(self):
-        """Main: NoteNotFound exceptions dont't go unhandled."""
+        """U Main: NoteNotFound exceptions dont't go unhandled."""
         sys.argv = ["app_name"]
         self.verify_dispatch_exception(
             core.NoteNotFound,
@@ -375,7 +375,7 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
     def test_dispatch_handles_AutoDetectionError(self):
-        """Main: No sensible application choice was identified."""
+        """U Main: No sensible application choice was identified."""
         sys.argv = ["app_name"]
         self.verify_dispatch_exception(
             core.AutoDetectionError,
@@ -389,7 +389,7 @@ class TestMain(BasicMocking, CLIMocking):
         print >> sys.stderr, data("fake_traceback")
 
     def test_dispatch_handles_action_exceptions(self):
-        """Main: All unknown exceptions from actions are handled."""
+        """U Main: All unknown exceptions from actions are handled."""
         command_line, action_name, fake_action, arguments = \
             self.mock_out_dispatch(Exception, "something happened")
 
@@ -413,7 +413,7 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_dispatch_handles_option_type_exceptions(self):
-        """Main: dispatch prints an error if an option is of the wrong type."""
+        """U Main: dispatch prints an error if an option is the wrong type."""
         command_line = self.wrap_subject(cli.CommandLine, "dispatch")
 
         action_name = "some_action"
@@ -446,7 +446,7 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
     def test_parse_options(self):
-        """Main: Parse an action's options and return them"""
+        """U Main: Parse an action's options and return them"""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "parse_options"
@@ -491,7 +491,7 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
     def test_retrieve_options(self):
-        """Main: Get a list of options from an action plugin."""
+        """U Main: Get a list of options from an action plugin."""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "retrieve_options"
@@ -543,7 +543,7 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
     def test_determine_connection_app_cli_argument(self):
-        """Main: Application specified on command line."""
+        """U Main: Application specified on command line."""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "determine_connection_app"
@@ -563,7 +563,7 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_determine_connection_app_configuration(self):
-        """Main: No user choice of application."""
+        """U Main: No user choice of application."""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "determine_connection_app"
@@ -590,7 +590,7 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_determine_connection_app_undecided(self):
-        """Main: No user choice of application."""
+        """U Main: No user choice of application."""
         command_line = self.wrap_subject(
             cli.CommandLine,
             "determine_connection_app"
@@ -661,15 +661,15 @@ class TestMain(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_get_config(self):
-        """Main: Retrieve configuration values from a file."""
+        """U Main: Retrieve configuration values from a file."""
         self.verify_get_config(True)
 
     def test_get_config_core_section_empty(self):
-        """Main: Retrieve config, core section is emtpy."""
+        """U Main: Retrieve config, core section is emtpy."""
         self.verify_get_config(False)
 
 
-class TestCore(BasicMocking):
+class CoreTests(BasicMocking):
     """Tests for general code."""
 
     def verify_Scout_constructor(self, application):
@@ -728,19 +728,19 @@ class TestCore(BasicMocking):
             self.assertEqual(app_name, tt.application)
 
     def test_Scout_constructor(self):
-        """Core: Scout's dbus interface is initialized."""
+        """U Core: Scout's dbus interface is initialized."""
         self.verify_Scout_constructor("the_application")
 
     def test_Scout_constructor_with_autodetection(self):
-        """Core: Scout's dbus interface is autodetected and initialized."""
+        """U Core: Scout's dbus interface is autodetected and initialized."""
         self.verify_Scout_constructor(None)
 
     def test_Scout_constructor_application_fails(self):
-        """Core: Scout's dbus interface is unavailable."""
+        """U Core: Scout's dbus interface is unavailable."""
         self.verify_Scout_constructor("fail_app")
 
     def test_dbus_Tomboy_communication_problem(self):
-        """Core: Raise an exception if linking dbus with Tomboy failed."""
+        """U Core: Raise an exception if linking dbus with Tomboy failed."""
         tt = self.wrap_subject(core.Scout, "__init__")
 
         session_bus = self.m.CreateMock(dbus.SessionBus)
@@ -769,7 +769,7 @@ class TestCore(BasicMocking):
         return tn
 
     def test_Note_constructor_all_args_int64(self):
-        """Core: Note initializes its instance variables. case 1."""
+        """U Core: Note initializes its instance variables. case 1."""
         uri1 = "note://something-like-this"
         title = "Name"
         date_int64 = dbus.Int64()
@@ -790,7 +790,7 @@ class TestCore(BasicMocking):
         self.assertEqual(set(tags), set(tn.tags))
 
     def test_Note_constructor_all_defaults(self):
-        """Core: Note initializes its instance variables. case 2."""
+        """U Core: Note initializes its instance variables. case 2."""
         uri2 = "note://another-false-uri"
 
         tn = self.verify_Note_constructor(uri=uri2)
@@ -802,7 +802,7 @@ class TestCore(BasicMocking):
         self.assertEqual(tn.tags, [])
 
     def test_Note_constructor_datetetime(self):
-        """Core: Note initializes its instance variables. case 3."""
+        """U Core: Note initializes its instance variables. case 3."""
         datetime_date = datetime.datetime(2009, 11, 13, 18, 42, 23)
 
         # case 3: the date can be entered with a datetime.datetime
@@ -864,11 +864,11 @@ class TestCore(BasicMocking):
         return result
 
     def test_get_notes(self):
-        """Core: No filtering but templates removed."""
+        """U Core: No filtering but templates removed."""
         self.verify_get_notes()
 
     def test_get_notes_number_limited(self):
-        """Core: No filtering but templates removed."""
+        """U Core: No filtering but templates removed."""
         list_of_notes = self.verify_get_notes(count=3)
 
         self.assertEqual(
@@ -877,7 +877,7 @@ class TestCore(BasicMocking):
         )
 
     def test_get_notes_with_templates(self):
-        """Core: Filtered notes but templates included."""
+        """U Core: Filtered notes but templates included."""
         self.verify_get_notes(
             tags=["sometag", "othertag"],
             names=["note1", "note2"],
@@ -885,7 +885,7 @@ class TestCore(BasicMocking):
         )
 
     def test_get_notes_template_as_a_tag(self):
-        """Core: Specifying templates as a tag should include them."""
+        """U Core: Specifying templates as a tag should include them."""
         self.verify_get_notes(tags=["system:template", "someothertag"])
 
     def verify_filter_notes(self, tags, names, exclude=True):
@@ -926,14 +926,14 @@ class TestCore(BasicMocking):
         )
 
     def test_filter_notes(self):
-        """Core: Note filtering."""
+        """U Core: Note filtering."""
         self.verify_filter_notes(
             tags=["system:notebook:projects"],
             names=["addressbook"]
         )
 
     def test_fiter_notes_with_templates(self):
-        """Core: Do not exclude templates."""
+        """U Core: Do not exclude templates."""
         self.verify_filter_notes(
             tags=["system:notebook:projects"],
             names=["addressbook"],
@@ -941,7 +941,7 @@ class TestCore(BasicMocking):
         )
 
     def test_filter_notes_no_filtering(self):
-        """Core: No filtering gives the full list of notes."""
+        """U Core: No filtering gives the full list of notes."""
         self.verify_filter_notes(
             tags=[],
             names=[],
@@ -949,7 +949,7 @@ class TestCore(BasicMocking):
         )
 
     def test_filter_notes_unknown_note(self):
-        """Core: Filtering encounters an unknown note name."""
+        """U Core: Filtering encounters an unknown note name."""
         tt = self.wrap_subject(core.Scout, "filter_notes")
 
         notes = self.full_list_of_notes()
@@ -997,7 +997,7 @@ class TestCore(BasicMocking):
                 )
 
     def test_build_note_list(self):
-        """Core: Scout gets a full list of notes."""
+        """U Core: Scout gets a full list of notes."""
         tt = self.wrap_subject(core.Scout, "build_note_list")
 
         tt.comm = self.m.CreateMockAnything()
@@ -1060,19 +1060,341 @@ class TestCore(BasicMocking):
         self.m.VerifyAll()
 
     def test_autodetect_app(self):
-        """Core: Autodetect, only one application is running."""
+        """U Core: Autodetect, only one application is running."""
         self.verify_autodetect_app(["Tomboy"])
 
     def test_autodetect_app_none(self):
-        """Core: Autodetection fails to find any application."""
+        """U Core: Autodetection fails to find any application."""
         self.verify_autodetect_app([])
 
     def test_autodetect_app_too_much(self):
-        """Core: Autodetection fails to find any application."""
+        """U Core: Autodetection fails to find any application."""
         self.verify_autodetect_app(["Tomboy", "Gnote"])
 
 
-class TestList(BasicMocking, CLIMocking):
+class PluginsTests(BasicMocking):
+    """Tests for the basis of plugins."""
+
+    def test_ActionPlugin_constructor(self):
+        """U Plugins: ActionPlugin's constructor sets initial values."""
+        action = self.wrap_subject(plugins.ActionPlugin, "__init__")
+        action.add_group(None)
+
+        self.m.ReplayAll()
+        action.__init__()
+        self.m.VerifyAll()
+
+        # add_option has been mocked out: this list should still be empty
+        self.assertEqual([], action.option_groups)
+
+    def test_add_option(self):
+        """U Plugins: ActionPlugin.add_option() inserts an option in a group."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_option")
+        self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
+
+        fake_group = self.m.CreateMock(plugins.OptionGroup)
+        fake_group.name = None
+        ap.option_groups = [fake_group]
+
+        fake_option = self.m.CreateMock(optparse.Option)
+
+        optparse.Option("-e", type="int", dest="eeee", help="eeehhh")\
+            .AndReturn(fake_option)
+        fake_group.add_options([fake_option])
+
+        self.m.ReplayAll()
+        ap.add_option("-e", type="int", dest="eeee", help="eeehhh")
+        self.m.VerifyAll()
+
+    def test_add_option_unexistant_group(self):
+        """U Plugins: KeyError is raised if requested group does not exist."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_option")
+
+        fake_group = self.m.CreateMock(plugins.OptionGroup)
+        fake_group.name = None
+        ap.option_groups = [fake_group]
+
+        self.m.ReplayAll()
+        self.assertRaises(
+            KeyError,
+            ap.add_option, "-s", group="group1", dest="sss"
+        )
+        self.m.VerifyAll()
+
+    def test_add_group(self):
+        """U Plugins: A scout.plugins.OptionGroup object is inserted."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_group")
+        self.m.StubOutWithMock(plugins, "OptionGroup", use_mock_anything=True)
+        ap.option_groups = []
+        fake_opt_group = self.m.CreateMock(plugins.OptionGroup)
+
+        plugins.OptionGroup("group1", "describe group1")\
+            .AndReturn(fake_opt_group)
+
+        self.m.ReplayAll()
+        ap.add_group("group1", "describe group1")
+        self.m.VerifyAll()
+
+        self.assertEqual([fake_opt_group], ap.option_groups)
+
+    def test_add_group_already_exists(self):
+        """U Plugins: Group added to a plugin already exists."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_group")
+        fake_opt_group = self.m.CreateMock(plugins.OptionGroup)
+        fake_opt_group.name = "group1"
+        ap.option_groups = [fake_opt_group]
+
+        self.m.ReplayAll()
+        ap.add_group("group1", "describe group1")
+        self.m.VerifyAll()
+
+        self.assertEqual([fake_opt_group], ap.option_groups)
+
+    def test_add_option_library(self):
+        """U Plugins: Option library is inserted in an action's groups."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_option_library")
+        ap.option_groups = []
+        group = self.m.CreateMock(plugins.OptionGroup)
+        group.name = "some_group"
+
+        self.m.ReplayAll()
+        ap.add_option_library(group)
+        self.m.VerifyAll()
+
+        self.assertEqual([group], ap.option_groups)
+
+    def test_option_library_already_inserted(self):
+        """U Plugins: Group name of option library is already present."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_option_library")
+        group = self.m.CreateMock(plugins.OptionGroup)
+        group.name = "some_group"
+        ap.option_groups = [group]
+
+        self.m.ReplayAll()
+        ap.add_option_library(group)
+        self.m.VerifyAll()
+
+        self.assertEqual([group], ap.option_groups)
+
+    def test_option_library_TypeError(self):
+        """U Plugins: Option library is not a scout.plugins.OptionGroup."""
+        ap = self.wrap_subject(plugins.ActionPlugin, "add_option_library")
+        wrong_object = self.m.CreateMock(optparse.OptionGroup)
+
+        self.m.ReplayAll()
+        self.assertRaises(
+            TypeError,
+            ap.add_option_library, wrong_object
+        )
+        self.m.VerifyAll()
+
+    def verify_method_does_nothing(self, cls, method_name, *args, **kwargs):
+        """Verify that 'cls's 'method_name' does nothing with arguments."""
+        obj = self.wrap_subject(cls, method_name)
+        func = getattr(obj, method_name)
+
+        self.m.ReplayAll()
+        self.assertEqual(None, func(*args, **kwargs))
+        self.m.VerifyAll()
+
+    def test_init_options(self):
+        """U Plugins: Default init_options does nothing."""
+        self.verify_method_does_nothing(plugins.ActionPlugin, "init_options")
+
+    def test_perform_action(self):
+        """U Plugins: Default perform_action does nothing."""
+        args = self.n_mocks(3)
+        self.verify_method_does_nothing(plugins.ActionPlugin, "perform_action",
+                                        *args)
+
+    def test_OptionGroup_constructor(self):
+        """U Plugins: OptionGroup's constructor sets default values."""
+        group = self.wrap_subject(plugins.OptionGroup, "__init__")
+
+        self.m.ReplayAll()
+        group.__init__("some_group", "description")
+        self.m.VerifyAll()
+
+        self.assertEqual("some_group", group.name)
+        self.assertEqual("description", group.description)
+        self.assertEqual([], group.options)
+
+    def test_group_add_options(self):
+        """U Plugins: A group of options are added to an OptionGroup."""
+        group = self.wrap_subject(plugins.OptionGroup, "add_options")
+        some_option = self.m.CreateMock(optparse.Option)
+        group.options = [some_option]
+
+        option_list = self.n_mocks(2, optparse.Option)
+
+        self.m.ReplayAll()
+        group.add_options(option_list)
+        self.m.VerifyAll()
+
+        self.assertEqual([some_option] + option_list, group.options)
+
+    def test_group_add_options_TypeError(self):
+        """U Plugins: Not all options added are optparse.Option objects."""
+        group = self.wrap_subject(plugins.OptionGroup, "add_options")
+        group.options = []
+
+        option_list = [
+            self.m.CreateMock(optparse.Option),
+            self.m.CreateMock(dict)
+        ]
+
+        self.m.ReplayAll()
+        self.assertRaises(
+            TypeError,
+            group.add_options, option_list
+        )
+        self.m.VerifyAll()
+
+    def test_FilteringGroup_initialization(self):
+        """U Plugins: A new FilteringGroup contains all of its options."""
+        filter_group = self.wrap_subject(plugins.FilteringGroup, "__init__")
+        book_callback = filter_group.book_callback
+
+        self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
+        self.m.StubOutWithMock(plugins.OptionGroup, "__init__")
+
+        option_list = self.n_mocks(3, optparse.Option)
+
+        plugins.OptionGroup.__init__(
+            "Filtering",
+            "Filter notes by different criteria."
+        )
+
+        optparse.Option(
+            "-b", action="callback", dest="books", metavar="BOOK",
+            callback=book_callback, type="string",
+            help=''.join(["Murder notes belonging to specified notebooks. It ",
+                          "is a shortcut to option \"-t\" to specify ",
+                          "notebooks more easily. For example, use ",
+                          "\"-b HGTTG\" instead of ",
+                          "\"-t system:notebook:HGTTG\". Use this option once ",
+                          "for each desired book."])
+        ).AndReturn(option_list[0])
+
+        optparse.Option(
+            "-t",
+            dest="tags", action="append", default=[], metavar="TAG",
+            help=''.join(["Murder notes with specified tags. Use this option ",
+                          "once for each desired tag. This option selects raw ",
+                          "tags and could be useful for user-assigned tags."])
+        ).AndReturn(option_list[1])
+
+        optparse.Option(
+            "--with-templates",
+            dest="templates", action="store_true", default=False,
+            help=''.join(["Include template notes. This option is different ",
+                          "from using \"-t system:template\" in that the ",
+                          "latter used alone will only include the ",
+                          "templates, while using \"--with-templates\" ",
+                          "without specifying tags for selection will include ",
+                          "all notes and templates."])
+        ).AndReturn(option_list[2])
+
+        filter_group.add_options(option_list)
+
+        self.m.ReplayAll()
+        filter_group.__init__("Murder")
+        self.m.VerifyAll()
+
+    def test_book_callback(self):
+        """U Plugins: callback for book option adds an entry in tags."""
+        filter_group = self.wrap_subject(
+            plugins.FilteringGroup,
+            "book_callback"
+        )
+
+        fake_option = self.m.CreateMock(optparse.Option)
+        fake_parser = self.m.CreateMock(optparse.OptionParser)
+        fake_parser.values = self.m.CreateMock(optparse.Values)
+        fake_parser.values.tags = ["already_here"]
+
+        self.m.ReplayAll()
+        filter_group.book_callback(fake_option, "-b", "book1", fake_parser)
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            ["already_here", "system:notebook:book1"],
+            fake_parser.values.tags
+        )
+
+    def verify_remove_option(self, option_found):
+        """Test option removal from a group."""
+        og = self.wrap_subject(plugins.OptionGroup, "remove_option")
+
+        fake_option1 = self.m.CreateMock(optparse.Option)
+        fake_option2 = self.m.CreateMock(optparse.Option)
+
+        og.options = [fake_option1, fake_option2]
+
+        if option_found:
+            expected_list = [fake_option1]
+            og.get_option("--some-option")\
+                .AndReturn(fake_option2)
+        else:
+            expected_list = [fake_option1, fake_option2]
+            og.get_option("--some-option")\
+                .AndReturn(None)
+
+        self.m.ReplayAll()
+        og.remove_option("--some-option")
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            expected_list,
+            og.options
+        )
+
+    def test_remove_option(self):
+        """U Plugins: Remove an option from an option group."""
+        self.verify_remove_option(True)
+
+    def test_remove_option_not_found(self):
+        """U Plugins: Remove an option from an option group."""
+        self.verify_remove_option(False)
+
+    def verify_get_option(self, found):
+        """Test option retrieval from a group."""
+        og = self.wrap_subject(plugins.OptionGroup, "get_option")
+
+        fake_option1 = self.m.CreateMock(optparse.Option)
+        fake_option1._short_opts = ["-a"]
+        fake_option1._long_opts = []
+        fake_option2 = self.m.CreateMock(optparse.Option)
+        fake_option2._short_opts = []
+        if found:
+            fake_option2._long_opts = ["--some-option", "--useless-string"]
+        else:
+            fake_option2._long_opts = ["--useless-string"]
+
+        og.options = [fake_option1, fake_option2]
+
+        if found:
+            expected_result = fake_option2
+        else:
+            expected_result = None
+
+        self.m.ReplayAll()
+        self.assertEqual(
+            expected_result,
+            og.get_option("--some-option")
+        )
+        self.m.VerifyAll()
+
+    def test_get_option(self):
+        """U Plugins: Get an option by its option strings."""
+        self.verify_get_option(True)
+
+    def test_get_option_not_found(self):
+        """U Plugins: Requested option is not found."""
+        self.verify_get_option(False)
+
+
+class ListTests(BasicMocking, CLIMocking):
     """Tests for the list action."""
 
     def verify_note_listing(self, title, tags, new_title, expected_tag_text):
@@ -1095,7 +1417,7 @@ class TestList(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_Note_listing(self):
-        """List: Print one note's information."""
+        """U List: Print one note's information."""
         self.verify_note_listing(
             "Test",
             ["tag1", "tag2"],
@@ -1104,7 +1426,7 @@ class TestList(BasicMocking, CLIMocking):
         )
 
     def test_Note_listing_no_title_no_tags(self):
-        """List: Verify listing format with no title and no tags."""
+        """U List: Verify listing format with no title and no tags."""
         self.verify_note_listing(
             "",
             [],
@@ -1113,7 +1435,7 @@ class TestList(BasicMocking, CLIMocking):
         )
 
     def test_init_options(self):
-        """List: options are initialized correctly."""
+        """U List: options are initialized correctly."""
         lst_ap = self.wrap_subject(list_.ListAction, "init_options")
         self.m.StubOutWithMock(
             plugins,
@@ -1181,19 +1503,19 @@ class TestList(BasicMocking, CLIMocking):
         )
 
     def test_perform_action(self):
-        """List: perform_action called without arguments."""
+        """U List: perform_action called without arguments."""
         self.verify_perform_action(with_templates=False)
 
     def test_perform_action_templates(self):
-        """List: perform_action called with a tag as filter."""
+        """U List: perform_action called with a tag as filter."""
         self.verify_perform_action(with_templates=True)
 
 
-class TestDisplay(BasicMocking, CLIMocking):
+class DisplayTests(BasicMocking, CLIMocking):
     """Tests for the display action."""
 
     def test_Scout_get_note_content(self):
-        """Display: Using the communicator, get one note's content."""
+        """U Display: Using the communicator, get one note's content."""
         tt = self.wrap_subject(core.Scout, "get_note_content")
 
         tt.comm = self.m.CreateMockAnything()
@@ -1217,7 +1539,7 @@ class TestDisplay(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_perform_action(self):
-        """Display: perform_action executes successfully."""
+        """U Display: perform_action executes successfully."""
         dsp_ap = self.wrap_subject(display.DisplayAction, "perform_action")
         dsp_ap.interface = self.m.CreateMock(core.Scout)
 
@@ -1253,7 +1575,7 @@ class TestDisplay(BasicMocking, CLIMocking):
         )
 
     def test_perform_action_too_few_arguments(self):
-        """Display: perform_action without any argument displays an error."""
+        """U Display: perform_action without any argument displays an error."""
         dsp_ap = self.wrap_subject(display.DisplayAction, "perform_action")
 
         fake_options = self.m.CreateMock(optparse.Values)
@@ -1272,7 +1594,7 @@ class TestDisplay(BasicMocking, CLIMocking):
         )
 
 
-class TestDelete(BasicMocking, CLIMocking):
+class DeleteTests(BasicMocking, CLIMocking):
     """Tests for code that delete notes."""
 
     def verify_perform_action(self, tags, names, all_notes, dry_run):
@@ -1333,7 +1655,7 @@ class TestDelete(BasicMocking, CLIMocking):
             )
 
     def test_perform_action(self):
-        """Delete: perform_action executes successfully."""
+        """U Delete: perform_action executes successfully."""
         self.verify_perform_action(
             tags=["tag1", "tag2"],
             names=["note1"],
@@ -1342,22 +1664,22 @@ class TestDelete(BasicMocking, CLIMocking):
         )
 
     def test_perform_action_no_argument(self):
-        """Delete: No filtering or note names given."""
+        """U Delete: No filtering or note names given."""
         self.verify_perform_action(tags=[], names=[], all_notes=False,
                                    dry_run=False)
 
     def test_perform_action_all_notes(self):
-        """Delete: All notes requested for deletion."""
+        """U Delete: All notes requested for deletion."""
         self.verify_perform_action(tags=[], names=[], all_notes=True,
                                    dry_run=False)
 
     def test_perform_action_dry_run(self):
-        """Delete: Dry run of deletion for all notes."""
+        """U Delete: Dry run of deletion for all notes."""
         self.verify_perform_action(tags=[], names=[], all_notes=True,
                                    dry_run=True)
 
     def test_init_options(self):
-        """Delete: Delete's options initialization."""
+        """U Delete: Delete's options initialization."""
         del_ap = self.wrap_subject(delete.DeleteAction, "init_options")
 
         fake_filtering_group = self.m.CreateMock(plugins.FilteringGroup)
@@ -1424,11 +1746,11 @@ class TestDelete(BasicMocking, CLIMocking):
         )
 
 
-class TestSearch(BasicMocking, CLIMocking):
+class SearchTests(BasicMocking, CLIMocking):
     """Tests for the search action."""
 
     def test_init_options(self):
-        """Search: Search options are initialized correctly."""
+        """U Search: Search options are initialized correctly."""
         fake_filtering_group = self.m.CreateMock(plugins.FilteringGroup)
 
         srch_ap = self.wrap_subject(search.SearchAction, "init_options")
@@ -1500,15 +1822,15 @@ class TestSearch(BasicMocking, CLIMocking):
         )
 
     def test_perform_action(self):
-        """Search: perform_action without filters."""
+        """U Search: perform_action without filters."""
         self.verify_perform_action(with_templates=False)
 
     def test_perform_action_templates(self):
-        """Search: perform_action with templates included."""
+        """U Search: perform_action with templates included."""
         self.verify_perform_action(with_templates=True)
 
     def test_perform_action_too_few_arguments(self):
-        """Search: perform_action, without any arguments."""
+        """U Search: perform_action, without any arguments."""
         srch_ap = self.wrap_subject(search.SearchAction, "perform_action")
 
         fake_options = self.m.CreateMock(optparse.Values)
@@ -1529,11 +1851,11 @@ class TestSearch(BasicMocking, CLIMocking):
         )
 
 
-class TestVersion(BasicMocking, CLIMocking):
+class VersionTests(BasicMocking, CLIMocking):
     """Tests for the version action."""
 
     def test_perform_action(self):
-        """Version: perform_action prints out Tomboy's version."""
+        """U Version: perform_action prints out Tomboy's version."""
         vrsn_ap = self.wrap_subject(version.VersionAction, "perform_action")
         vrsn_ap.interface = self.m.CreateMock(core.Scout)
         vrsn_ap.interface.comm = self.m.CreateMockAnything()
@@ -1555,325 +1877,3 @@ class TestVersion(BasicMocking, CLIMocking):
             data("tomboy_version_output") % (SCOUT_VERSION, "some_app"),
             sys.stdout.getvalue()
         )
-
-
-class TestPlugins(BasicMocking):
-    """Tests for the basis of plugins."""
-
-    def test_ActionPlugin_constructor(self):
-        """Plugins: ActionPlugin's constructor sets initial values."""
-        action = self.wrap_subject(plugins.ActionPlugin, "__init__")
-        action.add_group(None)
-
-        self.m.ReplayAll()
-        action.__init__()
-        self.m.VerifyAll()
-
-        # add_option has been mocked out: this list should still be empty
-        self.assertEqual([], action.option_groups)
-
-    def test_add_option(self):
-        """Plugins: ActionPlugin.add_option() inserts an option in a group."""
-        ap = self.wrap_subject(plugins.ActionPlugin, "add_option")
-        self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
-
-        fake_group = self.m.CreateMock(plugins.OptionGroup)
-        fake_group.name = None
-        ap.option_groups = [fake_group]
-
-        fake_option = self.m.CreateMock(optparse.Option)
-
-        optparse.Option("-e", type="int", dest="eeee", help="eeehhh")\
-            .AndReturn(fake_option)
-        fake_group.add_options([fake_option])
-
-        self.m.ReplayAll()
-        ap.add_option("-e", type="int", dest="eeee", help="eeehhh")
-        self.m.VerifyAll()
-
-    def test_add_option_unexistant_group(self):
-        """Plugins: KeyError is raised if requested group does not exist."""
-        ap = self.wrap_subject(plugins.ActionPlugin, "add_option")
-
-        fake_group = self.m.CreateMock(plugins.OptionGroup)
-        fake_group.name = None
-        ap.option_groups = [fake_group]
-
-        self.m.ReplayAll()
-        self.assertRaises(
-            KeyError,
-            ap.add_option, "-s", group="group1", dest="sss"
-        )
-        self.m.VerifyAll()
-
-    def test_add_group(self):
-        """Plugins: A scout.plugins.OptionGroup object is inserted."""
-        ap = self.wrap_subject(plugins.ActionPlugin, "add_group")
-        self.m.StubOutWithMock(plugins, "OptionGroup", use_mock_anything=True)
-        ap.option_groups = []
-        fake_opt_group = self.m.CreateMock(plugins.OptionGroup)
-
-        plugins.OptionGroup("group1", "describe group1")\
-            .AndReturn(fake_opt_group)
-
-        self.m.ReplayAll()
-        ap.add_group("group1", "describe group1")
-        self.m.VerifyAll()
-
-        self.assertEqual([fake_opt_group], ap.option_groups)
-
-    def test_add_group_already_exists(self):
-        """Plugins: Group added to a plugin already exists."""
-        ap = self.wrap_subject(plugins.ActionPlugin, "add_group")
-        fake_opt_group = self.m.CreateMock(plugins.OptionGroup)
-        fake_opt_group.name = "group1"
-        ap.option_groups = [fake_opt_group]
-
-        self.m.ReplayAll()
-        ap.add_group("group1", "describe group1")
-        self.m.VerifyAll()
-
-        self.assertEqual([fake_opt_group], ap.option_groups)
-
-    def test_add_option_library(self):
-        """Plugins: Option library is inserted in an action's groups."""
-        ap = self.wrap_subject(plugins.ActionPlugin, "add_option_library")
-        ap.option_groups = []
-        group = self.m.CreateMock(plugins.OptionGroup)
-        group.name = "some_group"
-
-        self.m.ReplayAll()
-        ap.add_option_library(group)
-        self.m.VerifyAll()
-
-        self.assertEqual([group], ap.option_groups)
-
-    def test_option_library_already_inserted(self):
-        """Plugins: Group name of option library is already present."""
-        ap = self.wrap_subject(plugins.ActionPlugin, "add_option_library")
-        group = self.m.CreateMock(plugins.OptionGroup)
-        group.name = "some_group"
-        ap.option_groups = [group]
-
-        self.m.ReplayAll()
-        ap.add_option_library(group)
-        self.m.VerifyAll()
-
-        self.assertEqual([group], ap.option_groups)
-
-    def test_option_library_TypeError(self):
-        """Plugins: Option library is not a scout.plugins.OptionGroup."""
-        ap = self.wrap_subject(plugins.ActionPlugin, "add_option_library")
-        wrong_object = self.m.CreateMock(optparse.OptionGroup)
-
-        self.m.ReplayAll()
-        self.assertRaises(
-            TypeError,
-            ap.add_option_library, wrong_object
-        )
-        self.m.VerifyAll()
-
-    def verify_method_does_nothing(self, cls, method_name, *args, **kwargs):
-        """Verify that 'cls's 'method_name' does nothing with arguments."""
-        obj = self.wrap_subject(cls, method_name)
-        func = getattr(obj, method_name)
-
-        self.m.ReplayAll()
-        self.assertEqual(None, func(*args, **kwargs))
-        self.m.VerifyAll()
-
-    def test_init_options(self):
-        """Plugins: Default init_options does nothing."""
-        self.verify_method_does_nothing(plugins.ActionPlugin, "init_options")
-
-    def test_perform_action(self):
-        """Plugins: Default perform_action does nothing."""
-        args = self.n_mocks(3)
-        self.verify_method_does_nothing(plugins.ActionPlugin, "perform_action",
-                                        *args)
-
-    def test_OptionGroup_constructor(self):
-        """Plugins: OptionGroup's constructor sets default values."""
-        group = self.wrap_subject(plugins.OptionGroup, "__init__")
-
-        self.m.ReplayAll()
-        group.__init__("some_group", "description")
-        self.m.VerifyAll()
-
-        self.assertEqual("some_group", group.name)
-        self.assertEqual("description", group.description)
-        self.assertEqual([], group.options)
-
-    def test_group_add_options(self):
-        """Plugins: A group of options are added to an OptionGroup."""
-        group = self.wrap_subject(plugins.OptionGroup, "add_options")
-        some_option = self.m.CreateMock(optparse.Option)
-        group.options = [some_option]
-
-        option_list = self.n_mocks(2, optparse.Option)
-
-        self.m.ReplayAll()
-        group.add_options(option_list)
-        self.m.VerifyAll()
-
-        self.assertEqual([some_option] + option_list, group.options)
-
-    def test_group_add_options_TypeError(self):
-        """Plugins: Not all options added are optparse.Option objects."""
-        group = self.wrap_subject(plugins.OptionGroup, "add_options")
-        group.options = []
-
-        option_list = [
-            self.m.CreateMock(optparse.Option),
-            self.m.CreateMock(dict)
-        ]
-
-        self.m.ReplayAll()
-        self.assertRaises(
-            TypeError,
-            group.add_options, option_list
-        )
-        self.m.VerifyAll()
-
-    def test_FilteringGroup_initialization(self):
-        """Plugins: A new FilteringGroup contains all of its options."""
-        filter_group = self.wrap_subject(plugins.FilteringGroup, "__init__")
-        book_callback = filter_group.book_callback
-
-        self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
-        self.m.StubOutWithMock(plugins.OptionGroup, "__init__")
-
-        option_list = self.n_mocks(3, optparse.Option)
-
-        plugins.OptionGroup.__init__(
-            "Filtering",
-            "Filter notes by different criteria."
-        )
-
-        optparse.Option(
-            "-b", action="callback", dest="books", metavar="BOOK",
-            callback=book_callback, type="string",
-            help=''.join(["Murder notes belonging to specified notebooks. It ",
-                          "is a shortcut to option \"-t\" to specify ",
-                          "notebooks more easily. For example, use ",
-                          "\"-b HGTTG\" instead of ",
-                          "\"-t system:notebook:HGTTG\". Use this option once ",
-                          "for each desired book."])
-        ).AndReturn(option_list[0])
-
-        optparse.Option(
-            "-t",
-            dest="tags", action="append", default=[], metavar="TAG",
-            help=''.join(["Murder notes with specified tags. Use this option ",
-                          "once for each desired tag. This option selects raw ",
-                          "tags and could be useful for user-assigned tags."])
-        ).AndReturn(option_list[1])
-
-        optparse.Option(
-            "--with-templates",
-            dest="templates", action="store_true", default=False,
-            help=''.join(["Include template notes. This option is different ",
-                          "from using \"-t system:template\" in that the ",
-                          "latter used alone will only include the ",
-                          "templates, while using \"--with-templates\" ",
-                          "without specifying tags for selection will include ",
-                          "all notes and templates."])
-        ).AndReturn(option_list[2])
-
-        filter_group.add_options(option_list)
-
-        self.m.ReplayAll()
-        filter_group.__init__("Murder")
-        self.m.VerifyAll()
-
-    def test_book_callback(self):
-        """Plugins: callback for book option adds an entry in tags."""
-        filter_group = self.wrap_subject(
-            plugins.FilteringGroup,
-            "book_callback"
-        )
-
-        fake_option = self.m.CreateMock(optparse.Option)
-        fake_parser = self.m.CreateMock(optparse.OptionParser)
-        fake_parser.values = self.m.CreateMock(optparse.Values)
-        fake_parser.values.tags = ["already_here"]
-
-        self.m.ReplayAll()
-        filter_group.book_callback(fake_option, "-b", "book1", fake_parser)
-        self.m.VerifyAll()
-
-        self.assertEqual(
-            ["already_here", "system:notebook:book1"],
-            fake_parser.values.tags
-        )
-
-    def verify_remove_option(self, option_found):
-        """Test option removal from a group."""
-        og = self.wrap_subject(plugins.OptionGroup, "remove_option")
-
-        fake_option1 = self.m.CreateMock(optparse.Option)
-        fake_option2 = self.m.CreateMock(optparse.Option)
-
-        og.options = [fake_option1, fake_option2]
-
-        if option_found:
-            expected_list = [fake_option1]
-            og.get_option("--some-option")\
-                .AndReturn(fake_option2)
-        else:
-            expected_list = [fake_option1, fake_option2]
-            og.get_option("--some-option")\
-                .AndReturn(None)
-
-        self.m.ReplayAll()
-        og.remove_option("--some-option")
-        self.m.VerifyAll()
-
-        self.assertEqual(
-            expected_list,
-            og.options
-        )
-
-    def test_remove_option(self):
-        """Plugins: Remove an option from an option group."""
-        self.verify_remove_option(True)
-
-    def test_remove_option_not_found(self):
-        """Plugins: Remove an option from an option group."""
-        self.verify_remove_option(False)
-
-    def verify_get_option(self, found):
-        """Test option retrieval from a group."""
-        og = self.wrap_subject(plugins.OptionGroup, "get_option")
-
-        fake_option1 = self.m.CreateMock(optparse.Option)
-        fake_option1._short_opts = ["-a"]
-        fake_option1._long_opts = []
-        fake_option2 = self.m.CreateMock(optparse.Option)
-        fake_option2._short_opts = []
-        if found:
-            fake_option2._long_opts = ["--some-option", "--useless-string"]
-        else:
-            fake_option2._long_opts = ["--useless-string"]
-
-        og.options = [fake_option1, fake_option2]
-
-        if found:
-            expected_result = fake_option2
-        else:
-            expected_result = None
-
-        self.m.ReplayAll()
-        self.assertEqual(
-            expected_result,
-            og.get_option("--some-option")
-        )
-        self.m.VerifyAll()
-
-    def test_get_option(self):
-        """Plugins: Get an option by its option strings."""
-        self.verify_get_option(True)
-
-    def test_get_option_not_found(self):
-        """Plugins: Requested option is not found."""
-        self.verify_get_option(False)

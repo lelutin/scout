@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """Acceptance tests for Scout.
 
-This defines the use cases and expected interaction with users.
+Define what the expected behaviour is from the user's point of view; so: use
+cases and expected interaction with users.
+
+Those tests are meant to verify correct functionality of the whole
+application, so they mock out external library dependencies only.
 
 """
 import sys
@@ -16,19 +20,13 @@ from scout import cli
 from scout import plugins
 from scout.version import SCOUT_VERSION
 
-#TODO split this up in smaller classes
-class AcceptanceTests(BasicMocking, CLIMocking):
-    """Acceptance tests.
 
-    Define what the expected behaviour is from the user's point of view.
+class FunctionalTests(BasicMocking, CLIMocking):
+    """Common behaviour for all functional tests."""
 
-    Those tests are meant to verify correct functionality of the whole
-    application, so they mock out external library dependencies only.
-
-    """
     def setUp(self):
         # Nearly all tests need to mock out Scout's initialization
-        super(AcceptanceTests, self).setUp()
+        super(FunctionalTests, self).setUp()
 
         self.mock_out_app_config()
         self.mock_out_dbus()
@@ -116,20 +114,28 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             self.dbus_interface.GetTagsForNote(note.uri)\
                 .AndReturn(note.tags)
 
-    def mock_out_get_notes_by_names(self, notes):
-        """Mock out searching for 'notes' by their names."""
-        for note in notes:
-            self.dbus_interface.FindNote(note.title)\
-                .AndReturn(note.uri)
+    def verify_help_text(self, args, text):
+        """Mock out printing a help text before exiting."""
+        # No DBus interaction should occur if we get a help text.
+        self.remove_mocks()
 
-        for note in notes:
-            self.dbus_interface.GetNoteChangeDate(note.uri)\
-                .AndReturn(note.date)
-            self.dbus_interface.GetTagsForNote(note.uri)\
-                .AndReturn(note.tags)
+        sys.argv = args
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEquals(
+            text,
+            sys.stdout.getvalue()
+        )
+
+
+class MainTests(FunctionalTests):
+    """Tests that verify the main program's behaviour."""
 
     def test_no_argument(self):
-        """Acceptance: scout called without arguments must print usage."""
+        """F Main: scout called without arguments must print usage."""
         # No dbus interaction for this test
         self.remove_mocks()
 
@@ -160,7 +166,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         cli.__doc__ = old_docstring
 
     def test_unknown_action(self):
-        """Acceptance: Giving an unknown action name must print an error."""
+        """F Main: Giving an unknown action name must print an error."""
         # No dbus interaction for this test
         self.remove_mocks()
         sys.argv = ["app_name", "unexistant_action"]
@@ -174,11 +180,21 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             sys.stderr.getvalue()
         )
 
-    def test_action_list(self):
-        """Acceptance: Action "list -n" prints a list of the last n notes."""
+    def test_using_gnote(self):
+        """F Main: Specifying --application forces connection."""
+        # Reset stubs and mocks. We need to mock out dbus differently.
+        self.remove_mocks()
+
+        self.mock_out_dbus("Gnote")
         list_of_notes = self.full_list_of_notes()
         self.mock_out_listing(list_of_notes[:10])
-        sys.argv = ["unused_prog_name", "list", "-n", "10"]
+
+        sys.argv = [
+            "unused_prog_name",
+            "list",
+            "-n", "10",
+            "--application", "Gnote"
+        ]
 
         self.m.ReplayAll()
         self.assertRaises(SystemExit, cli.main)
@@ -187,144 +203,6 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.assertEquals(
             data("expected_list"),
             sys.stdout.getvalue()
-        )
-
-    def test_full_list(self):
-        """Acceptance: Action "list" alone produces a list of all notes."""
-        list_of_notes = self.full_list_of_notes()
-        self.mock_out_listing(list_of_notes)
-        sys.argv = ["unused_prog_name", "list"]
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEquals(
-            ''.join([data("expected_list"), data("list_appendix")]),
-            sys.stdout.getvalue()
-        )
-
-    def test_notes_displaying(self):
-        """Acceptance: Action "display" prints the content given note names."""
-        list_of_notes = self.full_list_of_notes()
-
-        todo = list_of_notes[1]
-        python_work = list_of_notes[4]
-        note_lines = data("notes/TODO-list").splitlines()
-        note_lines[0] = (
-            "%s  (system:notebook:reminders, system:notebook:pim)" % (
-                note_lines[0],
-            )
-        )
-        note1_content = "%s\n" % "\n".join(note_lines)
-        note2_content = data("notes/python-work")
-        sys.argv = ["unused_prog_name", "display", "TODO-list", "python-work"]
-
-        self.mock_out_listing(list_of_notes)
-
-        self.dbus_interface.GetNoteContents(todo.uri)\
-            .AndReturn(data("notes/TODO-list")[:-1])
-        self.dbus_interface.GetNoteContents(python_work.uri)\
-            .AndReturn(data("notes/python-work")[:-1])
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEquals(
-            "\n".join([
-                note1_content,
-                data("display_separator"),
-                note2_content,
-            ]),
-            sys.stdout.getvalue()
-        )
-
-    def test_note_does_not_exist(self):
-        """Acceptance: Specified note non-existant: display an error."""
-        list_of_notes = self.full_list_of_notes()
-        self.mock_out_listing(list_of_notes)
-        sys.argv = ["app_name", "display", "unexistant"]
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEquals(
-            data("unexistant_note_error"),
-            sys.stderr.getvalue()
-        )
-
-    def test_display_zero_argument(self):
-        """Acceptance: Action "display" with no argument prints an error."""
-        sys.argv = ["app_name", "display"]
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEquals(
-            data("display_no_note_name_error"),
-            sys.stderr.getvalue()
-        )
-
-    def test_search(self):
-        """Acceptance: Action "search" searches in all notes, case-indep."""
-        list_of_notes = self.full_list_of_notes()
-        self.mock_out_listing(list_of_notes)
-        sys.argv = ["unused_prog_name", "search", "john doe"]
-
-        # Forget about the last note (a template)
-        for note in list_of_notes[:-1]:
-            self.dbus_interface.GetNoteContents(note.uri)\
-                .AndReturn(data("notes/%s" % note.title))
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEquals(
-            data("search_results"),
-            sys.stdout.getvalue()
-        )
-
-    def test_search_specific_notes(self):
-        """Acceptance: Action "search" restricts the search to given notes."""
-        list_of_notes = self.full_list_of_notes()
-        requested_notes = [
-            list_of_notes[3],
-            list_of_notes[4],
-            list_of_notes[6],
-        ]
-        sys.argv = (["unused_prog_name", "search", "python"] +
-                [n.title for n in requested_notes])
-
-        self.mock_out_listing(list_of_notes)
-
-        for note in requested_notes:
-            self.dbus_interface.GetNoteContents(note.uri)\
-                .AndReturn(data("notes/%s" % note.title))
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEquals(
-            data("specific_search_results"),
-            sys.stdout.getvalue()
-        )
-
-    def test_search_zero_arguments(self):
-        """Acceptance: Action "search" with no argument prints an error."""
-        sys.argv = ["unused_prog_name", "search"]
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEquals(
-            data("search_no_argument_error"),
-            sys.stderr.getvalue()
         )
 
     def verify_main_help(self, argument):
@@ -384,120 +262,219 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         cli.__doc__ = old_docstring
 
     def test_help_on_base_level(self):
-        """Acceptance: Using "-h" or "--help" alone prints basic help."""
+        """F main: Using "-h" or "--help" alone prints basic help."""
         self.verify_main_help("-h")
 
     def test_help_action(self):
-        """Acceptance: "help" as an action name."""
+        """F Main: "help" as an action name."""
         self.verify_main_help("help")
 
-    def test_filter_notes_with_templates(self):
-        """Acceptance: Using "--with-templates" lists notes and templates."""
-        list_of_notes = self.full_list_of_notes()
-        self.mock_out_listing(list_of_notes)
-        sys.argv = [
-            "app_name", "list",
-            "--with-templates"
-        ]
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEqual(
-            ''.join([data("expected_list"),
-                     data("list_appendix"),
-                     data("normally_hidden_template")]),
-            sys.stdout.getvalue()
-        )
-
-    def test_filter_notes_by_tags(self):
-        """Acceptance: Using "-t" limits the notes by tags."""
-        list_of_notes = self.full_list_of_notes()
-        self.mock_out_listing(list_of_notes)
-        sys.argv = [
-            "app_name", "list",
-            "-t", "system:notebook:pim",
-            "-t", "projects"
-        ]
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEqual(
-            data("tag_limited_list"),
-            sys.stdout.getvalue()
-        )
-
-    def test_filter_notes_by_books(self):
-        """Acceptance: Using "-b" limits the notes by notebooks."""
-        list_of_notes = self.full_list_of_notes()
-        self.mock_out_listing(list_of_notes)
-        sys.argv = ["app_name", "list", "-b", "pim", "-b", "reminders"]
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEqual(
-            data("book_limited_list"),
-            sys.stdout.getvalue()
-        )
-
-    def verify_help_text(self, args, text):
-        """Mock out printing a help text before exiting."""
-        # No DBus interaction should occur if we get a help text.
-        self.remove_mocks()
-
-        sys.argv = args
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEquals(
-            text,
-            sys.stdout.getvalue()
-        )
-
     def test_help_before_action_name(self):
-        """Acceptance: Using "-h" before an action displays detailed help."""
+        """F Main: Using "-h" before an action displays detailed help."""
         self.verify_help_text(
             ["app_name", "-h", "list"],
             data("help_details_list") % {"action": "List"}
         )
 
     def test_help_pseudo_action_before_action_name(self):
-        """Acceptance: Using "-h" before an action displays detailed help."""
+        """F Main: Using "-h" before an action displays detailed help."""
         self.verify_help_text(
             ["app_name", "help", "version"],
             data("help_details_version")
         )
 
-    def test_help_display_specific(self):
-        """Acceptance: Detailed help using "-h" after "display" action."""
-        self.verify_help_text(
-            ["app_name", "display", "--help"],
-            data("help_details_display")
+
+class ListTests(FunctionalTests):
+    """Tests for the 'list' action."""
+
+    def test_action_list(self):
+        """F List: Action "list -n" prints a list of the last n notes."""
+        list_of_notes = self.full_list_of_notes()
+        self.mock_out_listing(list_of_notes[:10])
+        sys.argv = ["unused_prog_name", "list", "-n", "10"]
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEquals(
+            data("expected_list"),
+            sys.stdout.getvalue()
+        )
+
+    def test_full_list(self):
+        """F List: Action "list" alone produces a list of all notes."""
+        list_of_notes = self.full_list_of_notes()
+        self.mock_out_listing(list_of_notes)
+        sys.argv = ["unused_prog_name", "list"]
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEquals(
+            ''.join([data("expected_list"), data("list_appendix")]),
+            sys.stdout.getvalue()
         )
 
     def test_help_list_specific(self):
-        """Acceptance: Detailed help using "-h" after "list" action."""
+        """F List: Detailed help using "-h" after "list" action."""
         self.verify_help_text(
             ["app_name", "list", "--help"],
             data("help_details_list") % {"action": "List"}
         )
 
+
+class DisplayTests(FunctionalTests):
+    """Tests for the 'display' action."""
+
+    def test_notes_displaying(self):
+        """F Display: Action "display" prints the content given note names."""
+        list_of_notes = self.full_list_of_notes()
+
+        todo = list_of_notes[1]
+        python_work = list_of_notes[4]
+        note_lines = data("notes/TODO-list").splitlines()
+        note_lines[0] = (
+            "%s  (system:notebook:reminders, system:notebook:pim)" % (
+                note_lines[0],
+            )
+        )
+        note1_content = "%s\n" % "\n".join(note_lines)
+        note2_content = data("notes/python-work")
+        sys.argv = ["unused_prog_name", "display", "TODO-list", "python-work"]
+
+        self.mock_out_listing(list_of_notes)
+
+        self.dbus_interface.GetNoteContents(todo.uri)\
+            .AndReturn(data("notes/TODO-list")[:-1])
+        self.dbus_interface.GetNoteContents(python_work.uri)\
+            .AndReturn(data("notes/python-work")[:-1])
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEquals(
+            "\n".join([
+                note1_content,
+                data("display_separator"),
+                note2_content,
+            ]),
+            sys.stdout.getvalue()
+        )
+
+    def test_note_does_not_exist(self):
+        """F Display: Specified note non-existant: display an error."""
+        list_of_notes = self.full_list_of_notes()
+        self.mock_out_listing(list_of_notes)
+        sys.argv = ["app_name", "display", "unexistant"]
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEquals(
+            data("unexistant_note_error"),
+            sys.stderr.getvalue()
+        )
+
+    def test_display_zero_argument(self):
+        """F Display: Action "display" with no argument prints an error."""
+        sys.argv = ["app_name", "display"]
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEquals(
+            data("display_no_note_name_error"),
+            sys.stderr.getvalue()
+        )
+
+    def test_help_display_specific(self):
+        """F Display: Detailed help using "-h" after "display" action."""
+        self.verify_help_text(
+            ["app_name", "display", "--help"],
+            data("help_details_display")
+        )
+
+
+class SearchTests(FunctionalTests):
+    """Tests for the 'search' action."""
+
+    def test_search(self):
+        """F Search: Action "search" searches in all notes, case-indep."""
+        list_of_notes = self.full_list_of_notes()
+        self.mock_out_listing(list_of_notes)
+        sys.argv = ["unused_prog_name", "search", "john doe"]
+
+        # Forget about the last note (a template)
+        for note in list_of_notes[:-1]:
+            self.dbus_interface.GetNoteContents(note.uri)\
+                .AndReturn(data("notes/%s" % note.title))
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEquals(
+            data("search_results"),
+            sys.stdout.getvalue()
+        )
+
+    def test_search_specific_notes(self):
+        """F Search: Action "search" restricts the search to given notes."""
+        list_of_notes = self.full_list_of_notes()
+        requested_notes = [
+            list_of_notes[3],
+            list_of_notes[4],
+            list_of_notes[6],
+        ]
+        sys.argv = (["unused_prog_name", "search", "python"] +
+                [n.title for n in requested_notes])
+
+        self.mock_out_listing(list_of_notes)
+
+        for note in requested_notes:
+            self.dbus_interface.GetNoteContents(note.uri)\
+                .AndReturn(data("notes/%s" % note.title))
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEquals(
+            data("specific_search_results"),
+            sys.stdout.getvalue()
+        )
+
+    def test_search_zero_arguments(self):
+        """F Search: Action "search" with no argument prints an error."""
+        sys.argv = ["unused_prog_name", "search"]
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEquals(
+            data("search_no_argument_error"),
+            sys.stderr.getvalue()
+        )
+
     def test_help_search_specific(self):
-        """Acceptance: Detailed help using "-h" after "search" action."""
+        """F Search: Detailed help using "-h" after "search" action."""
         self.verify_help_text(
             ["app_name", "search", "--help"],
             data("help_details_search") % {"action": "Search"}
         )
 
+
+class VersionTests(FunctionalTests):
+    """Tests for the 'version' action."""
+
     def test_tomboy_version(self):
-        """Acceptance: Get Tomboy's version."""
+        """F Version: Get Tomboy's version."""
         self.dbus_interface.Version()\
             .AndReturn(u'1.0.1')
 
@@ -513,36 +490,15 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         )
 
     def test_help_version_specific(self):
-        """Acceptance: Detailed help using "-h" after "version" action."""
+        """F Version: Detailed help using "-h" after "version" action."""
         self.verify_help_text(
             ["app_name", "version", "--help"],
             data("help_details_version")
         )
 
-    def test_list_using_gnote(self):
-        """Acceptance: Specifying --application forces connection."""
-        # Reset stubs and mocks. We need to mock out dbus differently.
-        self.remove_mocks()
 
-        self.mock_out_dbus("Gnote")
-        list_of_notes = self.full_list_of_notes()
-        self.mock_out_listing(list_of_notes[:10])
-
-        sys.argv = [
-            "unused_prog_name",
-            "list",
-            "-n", "10",
-            "--application", "Gnote"
-        ]
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEquals(
-            data("expected_list"),
-            sys.stdout.getvalue()
-        )
+class DeleteTests(FunctionalTests):
+    """Tests for the 'delete' action."""
 
     def verify_delete_notes(self, tags, names, all_notes, dry_run):
         """Test note deletion."""
@@ -584,7 +540,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def test_delete_notes(self):
-        """Acceptance: Delete a list of notes."""
+        """F Delete: Delete a list of notes."""
         self.verify_delete_notes(
             tags=["system:notebook:pim"],
             names=["TDD"],
@@ -593,7 +549,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         )
 
     def test_delete_notes_dry_run(self):
-        """Acceptance: Dry run of note deletion."""
+        """F Delete: Dry run of note deletion."""
         self.verify_delete_notes(
             tags=["system:notebook:pim"],
             names=["TDD"],
@@ -607,7 +563,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         )
 
     def test_delete_notes_no_argument(self):
-        """Acceptance: Delete without argument prints a message."""
+        """F Delete: Delete without argument prints a message."""
         self.verify_delete_notes(
             tags=[],
             names=[],
@@ -621,7 +577,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         )
 
     def test_delete_notes_all_notes(self):
-        """Acceptance: Delete all notes."""
+        """F Delete: Delete all notes."""
         self.verify_delete_notes(
             tags=[],
             names=[],
@@ -630,8 +586,63 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         )
 
     def test_help_delete_specific(self):
-        """Acceptance: Detailed help using "-h" after "version" action."""
+        """F Delete: Detailed help using "-h" after "version" action."""
         self.verify_help_text(
             ["app_name", "delete", "--help"],
             data("help_details_delete")
+        )
+
+
+class FilteringTests(FunctionalTests):
+    """Tests about note filtering."""
+
+    def test_filter_notes_with_templates(self):
+        """F Filter: Using "--with-templates" lists notes and templates."""
+        list_of_notes = self.full_list_of_notes()
+        self.mock_out_listing(list_of_notes)
+        sys.argv = ["app_name", "list", "--with-templates"]
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            ''.join([data("expected_list"),
+                     data("list_appendix"),
+                     data("normally_hidden_template")]),
+            sys.stdout.getvalue()
+        )
+
+    def test_filter_notes_by_tags(self):
+        """F Filter: Using "-t" limits the notes by tags."""
+        list_of_notes = self.full_list_of_notes()
+        self.mock_out_listing(list_of_notes)
+        sys.argv = [
+            "app_name", "list",
+            "-t", "system:notebook:pim",
+            "-t", "projects"
+        ]
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            data("tag_limited_list"),
+            sys.stdout.getvalue()
+        )
+
+    def test_filter_notes_by_books(self):
+        """F Filter: Using "-b" limits the notes by notebooks."""
+        list_of_notes = self.full_list_of_notes()
+        self.mock_out_listing(list_of_notes)
+        sys.argv = ["app_name", "list", "-b", "pim", "-b", "reminders"]
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            data("book_limited_list"),
+            sys.stdout.getvalue()
         )
