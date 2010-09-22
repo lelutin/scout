@@ -13,34 +13,35 @@ use "help" before the action name.
 Here is a list of all the available actions:
 
 """
-try:
-    import sys
-    import os
-    import pkg_resources
-    import optparse
-    import ConfigParser as configparser
+import sys
+import os
+import pkg_resources
+import optparse
+import ConfigParser as configparser
 
-    from scout import core
-    from scout.version import SCOUT_VERSION
-    from scout.core import NoteNotFound, ConnectionError, \
-            AutoDetectionError
-    from scout.plugins import ActionPlugin
+from scout import core
+from scout.version import SCOUT_VERSION
+from scout.core import NoteNotFound, ConnectionError, AutoDetectionError
+from scout.plugins import ActionPlugin
 
-    # Return codes sent on errors.
-    # Codes between 100 and 199 are fatal errors
-    # Codes between 200 and 254 are minor errors
-    ACTION_NOT_FOUND = 100
-    MALFORMED_ACTION = 101
-    DBUS_CONNECTION_ERROR = 102
-    ACTION_OPTION_TYPE_ERROR = 103
-    TOO_FEW_ARGUMENTS_ERROR = 200
-    NOTE_NOT_FOUND = 201
-    AUTODETECTION_FAILED = 202
 
-# Use a hardcoded error code, since constants may not be initialized at this
-# point.
-except KeyboardInterrupt:
-    raise SystemExit, 1
+# Return codes sent on errors.
+# Codes between 100 and 199 are fatal errors
+# Codes between 200 and 254 are minor errors
+ACTION_NOT_FOUND = 100
+MALFORMED_ACTION = 101
+DBUS_CONNECTION_ERROR = 102
+ACTION_OPTION_TYPE_ERROR = 103
+TOO_FEW_ARGUMENTS_ERROR = 200
+NOTE_NOT_FOUND = 201
+AUTODETECTION_FAILED = 202
+
+oldhook = sys.excepthook
+def newhook(exctype, value, traceback):
+    if exctype != KeyboardInterrupt:
+        return oldhook(exctype, value, traceback)
+sys.excepthook = newhook
+
 
 class CommandLine(object):
     """Main entry point for Scout."""
@@ -52,13 +53,9 @@ class CommandLine(object):
     ]
 
     def load_action(self, action_name):
-        """Load the action named <action_name>.
+        """Load the 'action_name' action.
 
-        Load an action by specifying its name. Returns an instance of the
-        action's plugin object.
-
-        Arguments:
-            action_name -- String representing the name of the action.
+        Returns an instance of the action's plugin object.
 
         """
         action_class = [
@@ -67,11 +64,11 @@ class CommandLine(object):
         ]
 
         if not action_class:
-            app_name = os.path.basename( sys.argv[0] )
+            app_name = os.path.basename(sys.argv[0])
 
-            print >> sys.stderr, \
-                """%s: %s is not a valid """ % (app_name, action_name) + \
-                """action. Use option -h for a list of available actions."""
+            print >> sys.stderr, ''.join([
+                "%s: %s is not a valid action. Use option -h for a list of ",
+                "available actions."]) % (app_name, action_name)
 
             sys.exit(ACTION_NOT_FOUND)
 
@@ -80,20 +77,15 @@ class CommandLine(object):
     def retrieve_options(self, parser, action):
         """Get a list of options from an action and prepend default options.
 
-        Get an action's list of options and groups. Flat out options from the
-        special "None" group and instantiate optparse.OptionGroup objects out of
-        scout.plugins.OptionGroup objects.
-
-        Arguments:
-            parser -- The optparse.OptionParser needed to instantiate groups
-            action -- A subclass of scout.plugins.ActionPlugin
+        Flat out options from the special "None" group and instantiate
+        optparse.OptionGroup objects out of scout.plugins.OptionGroup objects.
 
         """
         options = self.default_options()
 
         # Retrieve the special "non-group" group and remove it from the list
         no_group_list = [g for g in action.option_groups if g.name is None]
-        if len(no_group_list):
+        if no_group_list:
             no_group = no_group_list[0]
             for base_option in no_group.options:
                 options.append(base_option)
@@ -119,20 +111,16 @@ class CommandLine(object):
             optparse.Option(
                 "--application", dest="application",
                 choices=["Tomboy", "Gnote"],
-                help="""Choose the application to connect to. """
-                    """APPLICATION must be one of Tomboy or Gnote."""
+                help=''.join(["Choose the application to connect to. ",
+                              "APPLICATION must be one of Tomboy or Gnote."])
             )
         ]
 
     def parse_options(self, action, arguments):
-        """Parse the command line arguments before launching an action.
+        """Parse the command line arguments.
 
-        Retrieve options from the action. Then, parse them. Finally, return the
+        Retrieve options from the action. Then, parse them. Then, return the
         resulting optparse.Values and list of positional arguments.
-
-        Arguments:
-            action -- A sub-class of scout.plugins.ActionPlugin
-            arguments -- The list of string arguments from the command line.
 
         """
         option_parser = optparse.OptionParser(usage=action.usage)
@@ -154,10 +142,6 @@ class CommandLine(object):
         This function is responsible for importing the right module for the
         required action and triggering its entry point. Exceptions raised in the
         action are catched and displayed to the user with an error message.
-
-        Arguments:
-            action_name -- A string representing the requested action
-            arguments   -- A list of all the other arguments from the cli
 
         """
         action = self.load_action(action_name)
@@ -188,39 +172,40 @@ class CommandLine(object):
             )
             sys.exit(DBUS_CONNECTION_ERROR)
         except AutoDetectionError, exc:
-            prog = os.path.basename( sys.argv[0] )
-            msg = (os.linesep * 2).join([
-                """%s: failed to determine which application to use.""",
+            prog = os.path.basename(sys.argv[0])
+            msg = ("\n" * 2).join([
+                "%s: failed to determine which application to use.",
                 exc.__str__(),
-                """Use the command line argument "--application" to specify """
-                    """it manually or use the""" + os.linesep +
-                    """"application" configuration option.""",
+                '\n'.join(["Use the command line argument \"--application\" to "
+                                "specify it manually or use the",
+                           "\"application\" configuration option."]),
             ])
             print >> sys.stderr, msg % prog
             sys.exit(AUTODETECTION_FAILED)
 
         # Run the action
         try:
-            action.perform_action(configuration, options, positional_arguments)
+            return action.perform_action(configuration, options,
+                                         positional_arguments)
         except (SystemExit, KeyboardInterrupt):
             # Let the application exit if it wants to, and KeyboardInterrupt is
             # handled on an upper level so that interrupting execution with
             # Ctrl-C always exits cleanly.
             raise
         except NoteNotFound, exc:
-            msg = """%s: Error: Note named "%s" was not found."""
-            error_map = ( os.path.basename( sys.argv[0] ), exc )
+            msg = "%s: Error: Note named \"%s\" was not found."
+            error_map = (os.path.basename(sys.argv[0]), exc)
             print >> sys.stderr, msg % error_map
             sys.exit(NOTE_NOT_FOUND)
         except:
             import traceback
 
-            app_name = os.path.basename( sys.argv[0] )
+            app_name = os.path.basename(sys.argv[0])
 
-            print >> sys.stderr, \
-                """%s: the "%s" action is """ % (app_name, action_name) + \
-                """malformed: An uncaught exception was raised while """ \
-                """executing its "perform_action" function:""" + os.linesep
+            print >> sys.stderr, ''.join([
+                "%s: the \"%s\" action is malformed: An uncaught exception ",
+                "was raised while executing its \"perform_action\" ",
+                "function:\n"]) % (app_name, action_name)
             traceback.print_exc()
 
             # This is pretty annoying when running acceptance tests. Comment it
@@ -241,7 +226,7 @@ class CommandLine(object):
         return self.sanitized_config(config_parser)
 
     def sanitized_config(self, parser):
-        """Reject every unknown configuration in scout sectionself."""
+        """Reject every unknown configuration in scout section."""
         # If the core section is not there, add an empty one.
         if not parser.has_section(self.core_config_section):
             parser.add_section(self.core_config_section)
@@ -295,10 +280,7 @@ class CommandLine(object):
         actions = self.list_of_actions()
 
         # Get longest name's length. We'll use this value to align descriptions.
-        pad_up_to = reduce(
-            max,
-            [len(a.name) for a in actions]
-        )
+        pad_up_to = max([len(a.name) for a in actions])
 
         descriptions = []
         for action in actions:
@@ -308,77 +290,72 @@ class CommandLine(object):
                 description_text = "No description available."
 
             descriptions.append(
-                """  %s""" % action.name +
-                """%s """ % ( " " * (pad_up_to - len(action.name) ) ) +
-                """: %s""" % description_text
+                "  %s%s : %s" % (action.name,
+                    " " * (pad_up_to - len(action.name)),
+                    description_text)
             )
 
         return descriptions
 
-    def main(self):
-        """Application entry point.
 
-        Checks the first parameters for general help argument and dispatches the
-        actions.
+def main():
+    """Application entry point.
 
-        """
-        if len(sys.argv) < 2:
-            app_name_map = { "scout": os.path.basename(sys.argv[0]) }
+    Checks the first parameters for general help argument and dispatches the
+    actions.
 
-            # Use the docstring's first [significant] lines to display usage
-            usage_output =  (os.linesep * 2).join([
-                os.linesep.join( __doc__.splitlines()[:3] ) % app_name_map,
-                """For more details, use one of "-h", "--help" or "help"."""
-            ])
-            print >> sys.stderr, usage_output
-            sys.exit(TOO_FEW_ARGUMENTS_ERROR)
+    """
+    if len(sys.argv) < 2:
+        app_name_map = {"scout": os.path.basename(sys.argv[0])}
 
-        action = sys.argv[1]
-        # Convert the rest of the arguments to unicode objects so that they are
-        # handled correctly afterwards. This expects to receive arguments in
-        # UTF-8 format from the command line.
-        arguments = [arg.decode("utf-8") for arg in sys.argv[2:] ]
+        # Use the docstring's first [significant] lines to display usage
+        usage_output =  ("\n" * 2).join([
+            "\n".join(__doc__.splitlines()[:3]) % app_name_map,
+            "For more details, use one of \"-h\", \"--help\" or \"help\"."
+        ])
+        print >> sys.stderr, usage_output
+        sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
-        if action in ["-h", "--help", "help"]:
-            if sys.argv[2:]:
-                # Convert "help" into "-h" to fall into the same case.
-                second_argument = action
-                if action == "help":
-                    second_argument = "-h"
+    cli = CommandLine()
 
-                # Switch -h and action name and continue as normal.
-                arguments = [sys.argv[2], second_argument] + sys.argv[3:]
-                action = sys.argv[2]
-            else:
-                # Use the script's docstring for the basic help message. Also
-                # get a list of available actions and display it.
-                msg_map = {"scout": os.path.basename(sys.argv[0]) }
-                help_msg = __doc__[:-1] % msg_map
-                action_list = os.linesep.join( self.action_short_summaries() )
+    action = sys.argv[1]
+    # Convert the rest of the arguments to unicode objects so that they are
+    # handled correctly afterwards. This expects to receive arguments in
+    # UTF-8 format from the command line.
+    arguments = [arg.decode("utf-8") for arg in sys.argv[2:]]
 
-                print help_msg + action_list
+    if action in ["-h", "--help", "help"]:
+        if sys.argv[2:]:
+            # Convert "help" into "-h" to fall into the same case.
+            second_argument = action
+            if action == "help":
+                second_argument = "-h"
 
-                sys.exit(0)
+            # Switch -h and action name and continue as normal.
+            arguments = [sys.argv[2], second_argument] + sys.argv[3:]
+            action = sys.argv[2]
+        else:
+            # Use the script's docstring for the basic help message. Also
+            # get a list of available actions and display it.
+            msg_map = {"scout": os.path.basename(sys.argv[0])}
+            help_msg = __doc__[:-1] % msg_map
+            action_list = "\n".join(cli.action_short_summaries())
 
-        elif action in ["-v", "--version"]:
-            version_info =  os.linesep.join([
-                """Scout version %s""" % SCOUT_VERSION,
-                """Copyright © 2010 Gabriel Filion""",
-                """License: BSD""",
-                """This is free software: you are free to change and """
-                    """redistribute it.""",
-                """There is NO WARRANTY, to the extent permitted by law."""
-            ])
+            print help_msg + action_list
 
-            print version_info
             sys.exit(0)
 
-        self.dispatch(action, arguments)
+    elif action in ["-v", "--version"]:
+        version_info =  '\n'.join([
+            "Scout version %s" % SCOUT_VERSION,
+            "Copyright © 2010 Gabriel Filion",
+            "License: BSD",
+            "This is free software: you are free to change and redistribute "
+                "it.",
+            "There is NO WARRANTY, to the extent permitted by law."
+        ])
 
-def exception_wrapped_main():
-    """Wrap around main function to handle general exceptions."""
-    try:
-        CommandLine().main()
-    # If it goes this far up, it means user asked for the program to exit.
-    except KeyboardInterrupt:
-        raise SystemExit, 1
+        print version_info
+        sys.exit(0)
+
+    sys.exit(cli.dispatch(action, arguments))

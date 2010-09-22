@@ -43,7 +43,7 @@ to create, making the application easily extensible.
 """
 
 DATA_LIST = [
-    ('/usr/share/man/man1/', glob('doc/*.1.gz') )
+    ('/usr/share/man/man1/', glob('doc/*.1.gz'))
 ]
 
 setup(
@@ -63,7 +63,7 @@ setup(
     package_dir = {"": "src"},
     entry_points = {
         "console_scripts": [
-            "scout = scout.cli:exception_wrapped_main",
+            "scout = scout.cli:main",
         ],
         "scout.actions": [
             "list = scout.actions.list:ListAction",

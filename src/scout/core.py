@@ -6,7 +6,6 @@ These classes abstract all interaction with DBus.
 """
 import dbus
 import time
-import os
 from datetime import datetime
 
 
@@ -80,7 +79,7 @@ class Scout(object):
                     "org.gnome.%s" % app,
                     "/org/gnome/%s/RemoteControl" % app
                 )
-                success_list.append( (app, obj) )
+                success_list.append((app, obj))
             except dbus.DBusException:
                 pass
 
@@ -137,9 +136,9 @@ class Scout(object):
         # Oddly (but it is good), splitting the lines makes the indentation
         # bullets appear..
         if note.tags:
-            lines[0] = "%s  (%s)" % ( lines[0], ", ".join(note.tags) )
+            lines[0] = "%s  (%s)" % (lines[0], ", ".join(note.tags))
 
-        return os.linesep.join(lines)
+        return "\n".join(lines)
 
     def build_note_list(self):
         """Return a list of all notes found in the application.
@@ -179,7 +178,7 @@ class Scout(object):
         if tags or names:
             # Create the checker methods
             name_was_required = lambda x: x.title in names
-            has_required_tag = lambda x: set(x.tags).intersection( set(tags) )
+            has_required_tag = lambda x: set(x.tags).intersection(set(tags))
 
             # Verify if an unknown note was requested
             note_names = [n.title for n in notes]

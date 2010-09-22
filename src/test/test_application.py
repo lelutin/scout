@@ -22,59 +22,25 @@ from .utils import BasicMocking, CLIMocking, data
 class TestMain(BasicMocking, CLIMocking):
     """Tests for functions in the main script."""
 
-    def test_KeyboardInterrupt_is_handled(self):
-        """Main: KeyboardInterrupt doesn't come out of the application."""
-        cli_mock = self.m.CreateMock(cli.CommandLine)
-
-        self.m.StubOutWithMock(
-            cli,
-            "CommandLine",
-            use_mock_anything=True
-        )
-
-        cli.CommandLine()\
-            .AndReturn( cli_mock )
-
-        cli_mock.main().AndRaise(KeyboardInterrupt)
-
-        self.m.ReplayAll()
-
-        self.assertRaises(
-            SystemExit,
-            cli.exception_wrapped_main
-        )
-
-        self.m.VerifyAll()
-
     def test_arguments_converted_to_unicode(self):
         """Main: Arguments to action are converted to unicode objects."""
         # This is the default main() behaviour.
-        #FIXME: shouldn't this be a unit test instead?
-        command_line = self.wrap_subject(cli.CommandLine, "main")
+        self.m.StubOutWithMock(cli.CommandLine, "dispatch")
 
         arguments = ["arg1", "arg2"]
         sys.argv = ["app_name", "action"] + arguments
 
-        command_line.dispatch("action", [unicode(arg) for arg in arguments] )
+        cli.CommandLine.dispatch("action", [unicode(arg) for arg in arguments])
 
         self.m.ReplayAll()
-
-        command_line.main()
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
     def verify_exit_from_main(self, arguments, expected_text, output_stream):
-        command_line = self.wrap_subject(cli.CommandLine, "main")
-
         sys.argv = ["app_name"] + arguments
 
         self.m.ReplayAll()
-
-        self.assertRaises(
-            SystemExit,
-            command_line.main
-        )
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEqual(
@@ -92,19 +58,15 @@ class TestMain(BasicMocking, CLIMocking):
 
     def verify_main_help(self, argument):
         """Test that help exits and displays the main help."""
-        command_line = self.wrap_subject(cli.CommandLine, "main")
-
+        self.m.StubOutWithMock(cli.CommandLine, "action_short_summaries")
         m_desc = data("module_descriptions")
         sys.argv = ["app_name", argument]
 
-        command_line.action_short_summaries()\
+        cli.CommandLine.action_short_summaries()\
                 .AndReturn(m_desc.splitlines())
 
         self.m.ReplayAll()
-        self.assertRaises(
-            SystemExit,
-            command_line.main
-        )
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEqual(
@@ -122,18 +84,17 @@ class TestMain(BasicMocking, CLIMocking):
 
     def verify_help_argument_reversing(self, argument):
         """Test reversal of arguments and conversion of "help" to "-h"."""
-        command_line = self.wrap_subject(cli.CommandLine, "main")
-
+        self.m.StubOutWithMock(cli.CommandLine, "dispatch")
         sys.argv = ["app_name", argument, "action"]
         processed_arguments = [ sys.argv[0], sys.argv[2], "-h" ]
 
-        command_line.dispatch(
+        cli.CommandLine.dispatch(
             "action",
             [unicode(arg) for arg in processed_arguments[1:] ]
         )
 
         self.m.ReplayAll()
-        command_line.main()
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
     def test_help_before_action(self):
@@ -178,7 +139,7 @@ class TestMain(BasicMocking, CLIMocking):
 
         for (index, entry_point) in enumerate(entry_points):
             entry_point.load()\
-                .AndReturn( plugin_classes[index] )
+                .AndReturn(plugin_classes[index])
 
         self.m.ReplayAll()
         self.assertEqual(
@@ -202,10 +163,10 @@ class TestMain(BasicMocking, CLIMocking):
         mock_class = self.m.CreateMockAnything()
 
         command_line.list_of_actions()\
-            .AndReturn( [action1, action2] )
+            .AndReturn([action1, action2])
 
         action2()\
-            .AndReturn( mock_class )
+            .AndReturn(mock_class)
 
         self.m.ReplayAll()
 
@@ -228,7 +189,7 @@ class TestMain(BasicMocking, CLIMocking):
         sys.argv = ["app_name"]
 
         command_line.list_of_actions()\
-            .AndReturn( [] )
+            .AndReturn([])
 
         os.path.basename("app_name")\
             .AndReturn("app_name")
@@ -262,7 +223,7 @@ class TestMain(BasicMocking, CLIMocking):
         action2.short_description = None
 
         command_line.list_of_actions()\
-            .AndReturn( [action1, action2] )
+            .AndReturn([action1, action2])
 
         self.m.ReplayAll()
 
@@ -294,28 +255,28 @@ class TestMain(BasicMocking, CLIMocking):
             .AndReturn(fake_action)
 
         command_line.get_config()\
-            .AndReturn( fake_config )
+            .AndReturn(fake_config)
 
         command_line.parse_options(fake_action, arguments)\
-            .AndReturn( (options, positional_arguments) )
+            .AndReturn((options, positional_arguments))
 
         command_line.determine_connection_app(fake_config, options)\
             .AndReturn(app_name)
 
         if exception_class in [core.ConnectionError, core.AutoDetectionError]:
             core.Scout(app_name)\
-                .AndRaise( exception_class(exception_argument) )
+                .AndRaise(exception_class(exception_argument))
             return (command_line, action_name, fake_action, arguments)
         else:
             core.Scout(app_name)\
-                .AndReturn( fake_scout )
+                .AndReturn(fake_scout)
 
         if exception_class:
             fake_action.perform_action(
                 fake_config,
                 options,
                 positional_arguments
-            ).AndRaise( exception_class(exception_argument) )
+            ).AndRaise(exception_class(exception_argument))
         else:
             fake_action.perform_action(
                 fake_config,
@@ -508,7 +469,7 @@ class TestMain(BasicMocking, CLIMocking):
             .AndReturn(option_list)
 
         optparse.OptionParser(usage="%prog [options]")\
-            .AndReturn( option_parser )
+            .AndReturn(option_parser)
 
         fake_action.init_options()
 
@@ -517,7 +478,7 @@ class TestMain(BasicMocking, CLIMocking):
         option_parser.add_option_group(option_list[2])
 
         option_parser.parse_args(arguments)\
-            .AndReturn( (fake_values, positional_arguments) )
+            .AndReturn((fake_values, positional_arguments))
 
         self.m.ReplayAll()
 
@@ -714,7 +675,7 @@ class TestMain(BasicMocking, CLIMocking):
         ])
 
         command_line.sanitized_config(fake_parser)\
-            .AndReturn( fake_sanitized )
+            .AndReturn(fake_sanitized)
 
         self.m.ReplayAll()
 
@@ -839,7 +800,7 @@ class TestCore(BasicMocking):
         self.m.StubOutWithMock(dbus, "SessionBus", use_mock_anything=True)
 
         dbus.SessionBus()\
-            .AndRaise( dbus.DBusException("cosmos error") )
+            .AndRaise(dbus.DBusException("cosmos error"))
 
         self.m.ReplayAll()
 
@@ -878,7 +839,7 @@ class TestCore(BasicMocking):
         self.assertEqual(title, tn.title)
         self.assertEqual(date_int64, tn.date)
         # Order is not important
-        self.assertEqual( set(tags), set(tn.tags) )
+        self.assertEqual(set(tags), set(tn.tags))
 
     def test_Note_constructor_all_defaults(self):
         """Core: Note initializes its instance variables. case 2."""
@@ -889,7 +850,7 @@ class TestCore(BasicMocking):
         # case 2: Construct with only uri, rest is default
         self.assertEqual(tn.uri, uri2)
         self.assertEqual(tn.title, "")
-        self.assertEqual(tn.date, dbus.Int64() )
+        self.assertEqual(tn.date, dbus.Int64())
         self.assertEqual(tn.tags, [])
 
     def test_Note_constructor_datetetime(self):
@@ -904,7 +865,7 @@ class TestCore(BasicMocking):
 
         self.assertEqual(
             dbus.Int64(
-                time.mktime( datetime_date.timetuple() )
+                time.mktime(datetime_date.timetuple())
             ),
             tn.date
         )
@@ -977,7 +938,7 @@ class TestCore(BasicMocking):
 
     def test_get_notes_template_as_a_tag(self):
         """Core: Specifying templates as a tag should include them."""
-        self.verify_get_notes( tags=["system:template", "someothertag"] )
+        self.verify_get_notes(tags=["system:template", "someothertag"])
 
     def verify_filter_notes(self, tags, names, exclude=True):
         """Test note filtering."""
@@ -988,7 +949,7 @@ class TestCore(BasicMocking):
         if tags or names:
             expected_list = [
                 n for n in notes
-                if set(n.tags).intersection( set(tags) )
+                if set(n.tags).intersection(set(tags))
                    or n.title == "addressbook"
             ]
         else:
@@ -1152,15 +1113,15 @@ class TestCore(BasicMocking):
 
     def test_autodetect_app(self):
         """Core: Autodetect, only one application is running."""
-        self.verify_autodetect_app( ["Tomboy"] )
+        self.verify_autodetect_app(["Tomboy"])
 
     def test_autodetect_app_none(self):
         """Core: Autodetection fails to find any application."""
-        self.verify_autodetect_app( [] )
+        self.verify_autodetect_app([])
 
     def test_autodetect_app_too_much(self):
         """Core: Autodetection fails to find any application."""
-        self.verify_autodetect_app( ["Tomboy", "Gnote"] )
+        self.verify_autodetect_app(["Tomboy", "Gnote"])
 
 
 class TestList(BasicMocking, CLIMocking):
@@ -1283,42 +1244,6 @@ class TestList(BasicMocking, CLIMocking):
 class TestDisplay(BasicMocking, CLIMocking):
     """Tests for the display action."""
 
-    def test_get_display_for_notes(self):
-        """Display: Scout returns notes' contents, separated by a marker."""
-        dsp_ap = self.wrap_subject(
-            display.DisplayAction,
-            "format_display_for_notes"
-        )
-        dsp_ap.interface = self.m.CreateMock(core.Scout)
-
-        list_of_notes = self.full_list_of_notes()
-
-        notes = [
-            list_of_notes[10],
-            list_of_notes[8]
-        ]
-        note_names = [n.title for n in notes]
-        note1_content = data("notes/%s" % notes[0].title)
-        note2_content = data("notes/%s" % notes[1].title)
-
-        dsp_ap.interface.get_note_content(notes[0])\
-            .AndReturn(note1_content)
-        dsp_ap.interface.get_note_content(notes[1])\
-            .AndReturn(note2_content)
-
-        self.m.ReplayAll()
-
-        self.assertEqual(
-            "\n".join([
-                note1_content,
-                data("display_separator")[:-1],
-                note2_content,
-            ]),
-            dsp_ap.format_display_for_notes(notes)
-        )
-
-        self.m.VerifyAll()
-
     def test_Scout_get_note_content(self):
         """Display: Using the communicator, get one note's content."""
         tt = self.wrap_subject(core.Scout, "get_note_content")
@@ -1337,7 +1262,7 @@ class TestDisplay(BasicMocking, CLIMocking):
         expected_result = "\n".join(lines)
 
         tt.comm.GetNoteContents(note.uri)\
-            .AndReturn( raw_content )
+            .AndReturn(raw_content)
 
         self.m.ReplayAll()
         self.assertEqual(expected_result, tt.get_note_content(note))
@@ -1350,22 +1275,32 @@ class TestDisplay(BasicMocking, CLIMocking):
 
         fake_options = self.m.CreateMock(optparse.Values)
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
-        notes = [ self.m.CreateMock(core.Note) ]
 
-        dsp_ap.interface.get_notes(names=["addressbook"])\
+        list_of_notes = self.full_list_of_notes()
+
+        notes = [
+            list_of_notes[10],
+            list_of_notes[8]
+        ]
+        note_names = [n.title for n in notes]
+        note1_content = data("notes/%s" % notes[0].title)
+        note2_content = data("notes/%s" % notes[1].title)
+
+        dsp_ap.interface.get_notes(names=note_names)\
             .AndReturn(notes)
 
-        dsp_ap.format_display_for_notes(notes)\
-            .AndReturn(
-                (data("notes/addressbook")[:-1]).decode("utf-8")
-            )
+        dsp_ap.interface.get_note_content(notes[0])\
+            .AndReturn(note1_content.decode("utf-8")[:-1])
+        dsp_ap.interface.get_note_content(notes[1])\
+            .AndReturn(note2_content.decode("utf-8")[:-1])
 
         self.m.ReplayAll()
-        dsp_ap.perform_action(fake_config, fake_options, ["addressbook"])
+        dsp_ap.perform_action(fake_config, fake_options, note_names)
         self.m.VerifyAll()
 
         self.assertEqual(
-            data("notes/addressbook"),
+            '\n'.join([note1_content, data("display_separator"),
+                       note2_content]),
             sys.stdout.getvalue()
         )
 
@@ -1544,53 +1479,6 @@ class TestDelete(BasicMocking, CLIMocking):
 class TestSearch(BasicMocking, CLIMocking):
     """Tests for the search action."""
 
-    def test_search_for_text(self):
-        """Search: Scout triggers a search through requested notes."""
-        srch_ap = self.wrap_subject(search.SearchAction, "search_for_text")
-        srch_ap.interface = self.m.CreateMock(core.Scout)
-
-        note_contents = {}
-
-        search_structure = [
-            {
-                "title": "addressbook",
-                "line": 5,
-                "text": "John Doe (cell) - 555-5512",
-            },
-            {
-                "title": "business contacts",
-                "line": 7,
-                "text": "John Doe Sr. (office) - 555-5534",
-            },
-        ]
-
-        list_of_notes = self.full_list_of_notes()
-        # Forget about the last note (a template)
-        list_of_notes = list_of_notes[:-1]
-
-        for note in list_of_notes:
-            content = data("notes/%s" %note.title)
-
-            if note.tags:
-                lines = content.splitlines()
-                lines[0] =  "%s  (%s)" % (lines[0], ", ".join(note.tags) )
-                content = "\n".join(lines)
-
-            note_contents[note.title] = content
-
-        expected_result = search_structure
-
-        for note in list_of_notes:
-            srch_ap.interface.get_note_content(note)\
-                .AndReturn(note_contents[note.title])
-
-        self.m.ReplayAll()
-        self.assertEqual(
-            expected_result,
-            srch_ap.search_for_text("john doe", list_of_notes)
-        )
-        self.m.VerifyAll()
-
     def test_init_options(self):
         """Search: Search options are initialized correctly."""
         fake_filtering_group = self.m.CreateMock(plugins.FilteringGroup)
@@ -1617,19 +1505,7 @@ class TestSearch(BasicMocking, CLIMocking):
         srch_ap.interface = self.m.CreateMock(core.Scout)
 
         tags = ["something"]
-
-        search_structure = [
-            {
-                "title": "addressbook",
-                "line": 5,
-                "text": "John Doe (cell) - 555-5512",
-            },
-            {
-                "title": "business contacts",
-                "line": 7,
-                "text": "John Doe Sr. (office) - 555-5534",
-            },
-        ]
+        note_contents = {}
 
         list_of_notes = self.full_list_of_notes()
         # Forget about the last note (a template)
@@ -1641,20 +1517,31 @@ class TestSearch(BasicMocking, CLIMocking):
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
         srch_ap.interface.get_notes(
-            names=["note1", "note2"],
+            names=["addressbook", "business contacts"],
             tags=["something"],
             exclude_templates=not with_templates
         ).AndReturn(list_of_notes)
 
-        srch_ap.search_for_text("findme", list_of_notes)\
-            .AndReturn(search_structure)
+        for note in list_of_notes:
+            content = data("notes/%s" %note.title)
+
+            if note.tags:
+                lines = content.splitlines()
+                lines[0] =  "%s  (%s)" % (lines[0], ", ".join(note.tags))
+                content = "\n".join(lines)
+
+            note_contents[note.title] = content
+
+        for note in list_of_notes:
+            srch_ap.interface.get_note_content(note)\
+                .AndReturn(note_contents[note.title])
 
         self.m.ReplayAll()
 
         srch_ap.perform_action(
             fake_config,
             fake_options,
-            ["findme", "note1", "note2"]
+            ["john", "addressbook", "business contacts"]
         )
 
         self.m.VerifyAll()
@@ -1750,7 +1637,7 @@ class TestPlugins(BasicMocking):
 
         optparse.Option("-e", type="int", dest="eeee", help="eeehhh")\
             .AndReturn(fake_option)
-        fake_group.add_options( [fake_option] )
+        fake_group.add_options([fake_option])
 
         self.m.ReplayAll()
         ap.add_option("-e", type="int", dest="eeee", help="eeehhh")

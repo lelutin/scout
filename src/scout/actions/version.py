@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Display Tomboy's version.
+"""Display the note-taking application's version.
 
-This is the "version" action. Its role is very simple: to display Tomboy's
-version number. It uses dbus to get the information from Tomboy.
+In order, it displays Scout's version, the name of the note-taking application
+and its version.
 
 """
 from scout.version import SCOUT_VERSION
@@ -10,24 +10,15 @@ from scout.plugins import ActionPlugin
 
 
 class VersionAction(ActionPlugin):
-    """Action plugin that prints out Tomboy's version information."""
+    """The 'version' sub-command."""
 
     short_description = __doc__.splitlines()[0]
 
     usage = "%prog version [-h|--help]"
 
     def perform_action(self, config, options, positional):
-        """Display Tomboy's version information.
-
-        This action gets Tomboy's version via dbus and prints it out.
-
-        Arguments:
-            config -- a ConfigParser.SafeParser object representing config files
-            options -- an optparse.Values object containing the parsed options
-            positional -- a list of strings of positional arguments
-
-        """
-        msg = """Scout version %s using %s version %s"""
+        """Display Tomboy's or Gnote's version information."""
+        msg = "Scout version %s using %s version %s"
         version_map = (
             SCOUT_VERSION,
             self.interface.application,

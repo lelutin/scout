@@ -65,7 +65,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         fake_parser.add_section("scout")
 
         fake_parser.options("scout")\
-            .AndReturn( [] )
+            .AndReturn([])
 
         fake_parser.has_option("scout", "application")\
             .AndReturn(False)
@@ -145,17 +145,12 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         ])
 
         self.m.ReplayAll()
-
-        self.assertRaises(
-            SystemExit,
-            cli.exception_wrapped_main
-        )
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         # Test that usage comes from the script's docstring.
         self.assertEqual(
-            ("\n" * 2).join([
+            "\n\n".join([
                 "\n".join(cli.__doc__.splitlines()[:3]),
                 data("help_more_details")
             ]),
@@ -168,12 +163,10 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         """Acceptance: Giving an unknown action name must print an error."""
         # No dbus interaction for this test
         self.remove_mocks()
+        sys.argv = ["app_name", "unexistant_action"]
 
         self.m.ReplayAll()
-
-        sys.argv = ["app_name", "unexistant_action"]
-        self.assertRaises( SystemExit, cli.exception_wrapped_main )
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEqual(
@@ -184,14 +177,11 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_action_list(self):
         """Acceptance: Action "list -n" prints a list of the last n notes."""
         list_of_notes = self.full_list_of_notes()
-
         self.mock_out_listing(list_of_notes[:10])
+        sys.argv = ["unused_prog_name", "list", "-n", "10"]
 
         self.m.ReplayAll()
-
-        sys.argv = ["unused_prog_name", "list", "-n", "10"]
-        cli.exception_wrapped_main()
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEquals(
@@ -202,14 +192,11 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_full_list(self):
         """Acceptance: Action "list" alone produces a list of all notes."""
         list_of_notes = self.full_list_of_notes()
-
         self.mock_out_listing(list_of_notes)
+        sys.argv = ["unused_prog_name", "list"]
 
         self.m.ReplayAll()
-
-        sys.argv = ["unused_prog_name", "list"]
-        cli.exception_wrapped_main()
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEquals(
@@ -223,35 +210,33 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         todo = list_of_notes[1]
         python_work = list_of_notes[4]
-        separator = "\n==========================\n"
         note_lines = data("notes/TODO-list").splitlines()
-
-        note_lines[0] = \
+        note_lines[0] = (
             "%s  (system:notebook:reminders, system:notebook:pim)" % (
                 note_lines[0],
             )
-
-        expected_result_list = [
-            "\n".join(note_lines),
-            data("notes/python-work")[:-1]
-        ]
+        )
+        note1_content = "%s\n" % "\n".join(note_lines)
+        note2_content = data("notes/python-work")
+        sys.argv = ["unused_prog_name", "display", "TODO-list", "python-work"]
 
         self.mock_out_listing(list_of_notes)
 
         self.dbus_interface.GetNoteContents(todo.uri)\
-            .AndReturn(data("notes/TODO-list"))
+            .AndReturn(data("notes/TODO-list")[:-1])
         self.dbus_interface.GetNoteContents(python_work.uri)\
-            .AndReturn(data("notes/python-work"))
+            .AndReturn(data("notes/python-work")[:-1])
 
         self.m.ReplayAll()
-
-        sys.argv = ["unused_prog_name", "display", "TODO-list", "python-work"]
-        cli.exception_wrapped_main()
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEquals(
-            "%s\n" % separator.join(expected_result_list),
+            "\n".join([
+                note1_content,
+                data("display_separator"),
+                note2_content,
+            ]),
             sys.stdout.getvalue()
         )
 
@@ -259,30 +244,23 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         """Acceptance: Specified note non-existant: display an error."""
         list_of_notes = self.full_list_of_notes()
         self.mock_out_listing(list_of_notes)
+        sys.argv = ["app_name", "display", "unexistant"]
 
         self.m.ReplayAll()
-
-        sys.argv = ["app_name", "display", "unexistant"]
-        self.assertRaises(SystemExit, cli.exception_wrapped_main)
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
 
         self.assertEquals(
             data("unexistant_note_error"),
             sys.stderr.getvalue()
         )
 
-        self.m.VerifyAll()
-
     def test_display_zero_argument(self):
         """Acceptance: Action "display" with no argument prints an error."""
         sys.argv = ["app_name", "display"]
 
         self.m.ReplayAll()
-
-        self.assertRaises(
-            SystemExit,
-            cli.exception_wrapped_main
-        )
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEquals(
@@ -293,8 +271,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_search(self):
         """Acceptance: Action "search" searches in all notes, case-indep."""
         list_of_notes = self.full_list_of_notes()
-
         self.mock_out_listing(list_of_notes)
+        sys.argv = ["unused_prog_name", "search", "john doe"]
 
         # Forget about the last note (a template)
         for note in list_of_notes[:-1]:
@@ -302,10 +280,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
                 .AndReturn(data("notes/%s" % note.title))
 
         self.m.ReplayAll()
-
-        sys.argv = ["unused_prog_name", "search", "john doe"]
-        cli.exception_wrapped_main()
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEquals(
@@ -316,12 +291,13 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_search_specific_notes(self):
         """Acceptance: Action "search" restricts the search to given notes."""
         list_of_notes = self.full_list_of_notes()
-
         requested_notes = [
             list_of_notes[3],
             list_of_notes[4],
             list_of_notes[6],
         ]
+        sys.argv = (["unused_prog_name", "search", "python"] +
+                [n.title for n in requested_notes])
 
         self.mock_out_listing(list_of_notes)
 
@@ -330,11 +306,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
                 .AndReturn(data("notes/%s" % note.title))
 
         self.m.ReplayAll()
-
-        sys.argv = ["unused_prog_name", "search", "python"] + \
-                [n.title for n in requested_notes]
-        cli.exception_wrapped_main()
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEquals(
@@ -347,12 +319,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         sys.argv = ["unused_prog_name", "search"]
 
         self.m.ReplayAll()
-
-        self.assertRaises(
-            SystemExit,
-            cli.exception_wrapped_main
-        )
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEquals(
@@ -362,8 +329,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
     def verify_main_help(self, argument):
         """Test that we actually get the main help."""
-        # Remove stubs and reset mocks for dbus that the setUp method
-        # constructed as there will be no dbus interaction.
+        # Remove stubs and reset mocks for DBus that the setUp method
+        # constructed as there will be no DBus interaction.
         self.remove_mocks()
 
         self.m.StubOutWithMock(pkg_resources, "iter_entry_points")
@@ -392,24 +359,20 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         fake_classes[0].short_description = "this action does something"
         fake_classes[1].short_description = "this one too"
         for fake_class in fake_classes:
-            fake_class.__bases__ = ( plugins.ActionPlugin, )
+            fake_class.__bases__ = (plugins.ActionPlugin, )
 
         pkg_resources.iter_entry_points(group="scout.actions")\
-            .AndReturn( (x for x in fake_plugin_list) )
+            .AndReturn((x for x in fake_plugin_list))
 
         for index, entry_point in enumerate(fake_plugin_list):
             fake_class = fake_classes[index]
             entry_point.load()\
                 .AndReturn(fake_class)
 
-        self.m.ReplayAll()
-
         sys.argv = ["app_name", argument]
-        self.assertRaises(
-            SystemExit,
-            cli.exception_wrapped_main
-        )
 
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         # The help should be displayed using scout's docstring.
@@ -431,17 +394,14 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_filter_notes_with_templates(self):
         """Acceptance: Using "--with-templates" lists notes and templates."""
         list_of_notes = self.full_list_of_notes()
-
         self.mock_out_listing(list_of_notes)
-
-        self.m.ReplayAll()
-
         sys.argv = [
             "app_name", "list",
             "--with-templates"
         ]
-        cli.exception_wrapped_main()
 
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEqual(
@@ -454,18 +414,15 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_filter_notes_by_tags(self):
         """Acceptance: Using "-t" limits the notes by tags."""
         list_of_notes = self.full_list_of_notes()
-
         self.mock_out_listing(list_of_notes)
-
-        self.m.ReplayAll()
-
         sys.argv = [
             "app_name", "list",
             "-t", "system:notebook:pim",
             "-t", "projects"
         ]
-        cli.exception_wrapped_main()
 
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEqual(
@@ -476,14 +433,11 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_filter_notes_by_books(self):
         """Acceptance: Using "-b" limits the notes by notebooks."""
         list_of_notes = self.full_list_of_notes()
-
         self.mock_out_listing(list_of_notes)
+        sys.argv = ["app_name", "list", "-b", "pim", "-b", "reminders"]
 
         self.m.ReplayAll()
-
-        sys.argv = ["app_name", "list", "-b", "pim", "-b", "reminders"]
-        cli.exception_wrapped_main()
-
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEqual(
@@ -498,72 +452,47 @@ class AcceptanceTests(BasicMocking, CLIMocking):
 
         sys.argv = args
 
-        # Mock out sys.exit : optparse calls this when help is displayed
-        self.m.StubOutWithMock(sys, "exit")
-        sys.exit(0).AndRaise(SystemExit)
-
         self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
 
-        self.assertRaises(SystemExit, cli.exception_wrapped_main)
         self.assertEquals(
             text,
             sys.stdout.getvalue()
         )
 
-        self.m.VerifyAll()
-
     def test_help_before_action_name(self):
         """Acceptance: Using "-h" before an action displays detailed help."""
         self.verify_help_text(
-            [
-                "app_name",
-                "-h",
-                "list"
-            ],
+            ["app_name", "-h", "list"],
             data("help_details_list") % {"action": "List"}
         )
 
     def test_help_pseudo_action_before_action_name(self):
         """Acceptance: Using "-h" before an action displays detailed help."""
         self.verify_help_text(
-            [
-                "app_name",
-                "help",
-                "version"
-            ],
+            ["app_name", "help", "version"],
             data("help_details_version")
         )
 
     def test_help_display_specific(self):
         """Acceptance: Detailed help using "-h" after "display" action."""
         self.verify_help_text(
-            [
-                "app_name",
-                "display",
-                "--help"
-            ],
+            ["app_name", "display", "--help"],
             data("help_details_display")
         )
 
     def test_help_list_specific(self):
         """Acceptance: Detailed help using "-h" after "list" action."""
         self.verify_help_text(
-            [
-                "app_name",
-                "list",
-                "--help"
-            ],
+            ["app_name", "list", "--help"],
             data("help_details_list") % {"action": "List"}
         )
 
     def test_help_search_specific(self):
         """Acceptance: Detailed help using "-h" after "search" action."""
         self.verify_help_text(
-            [
-                "app_name",
-                "search",
-                "--help"
-            ],
+            ["app_name", "search", "--help"],
             data("help_details_search") % {"action": "Search"}
         )
 
@@ -575,7 +504,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         sys.argv = ["app_name", "version"]
 
         self.m.ReplayAll()
-        cli.exception_wrapped_main()
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEqual(
@@ -586,11 +515,7 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_help_version_specific(self):
         """Acceptance: Detailed help using "-h" after "version" action."""
         self.verify_help_text(
-            [
-                "app_name",
-                "version",
-                "--help"
-            ],
+            ["app_name", "version", "--help"],
             data("help_details_version")
         )
 
@@ -600,12 +525,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         self.remove_mocks()
 
         self.mock_out_dbus("Gnote")
-
         list_of_notes = self.full_list_of_notes()
-
         self.mock_out_listing(list_of_notes[:10])
-
-        self.m.ReplayAll()
 
         sys.argv = [
             "unused_prog_name",
@@ -613,8 +534,9 @@ class AcceptanceTests(BasicMocking, CLIMocking):
             "-n", "10",
             "--application", "Gnote"
         ]
-        cli.exception_wrapped_main()
 
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
         self.assertEquals(
@@ -625,12 +547,14 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def verify_delete_notes(self, tags, names, all_notes, dry_run):
         """Test note deletion."""
         list_of_notes = self.full_list_of_notes()
+        sys.argv = ["unused_prog_name", "delete"]
 
         if all_notes or tags or names:
             self.mock_out_listing(list_of_notes)
 
         if all_notes:
             expected_notes = list_of_notes
+            sys.argv.append("--all-notes")
         elif tags or names:
             expected_notes = [
                 n for n in list_of_notes
@@ -643,17 +567,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         if not dry_run:
             for note in expected_notes:
                 self.dbus_interface.DeleteNote(note.uri)
-
-        self.m.ReplayAll()
-
-        sys.argv = [
-            "unused_prog_name",
-            "delete",
-        ]
-        if dry_run:
+        else:
             sys.argv.append("--dry-run")
-        if all_notes:
-            sys.argv.append("--all-notes")
 
         for tag in tags:
             sys.argv.extend([
@@ -664,14 +579,8 @@ class AcceptanceTests(BasicMocking, CLIMocking):
         for name in names:
             sys.argv.append(name)
 
-        if not all_notes and not tags and not names:
-            self.assertRaises(
-                SystemExit,
-                cli.exception_wrapped_main
-            )
-        else:
-            cli.exception_wrapped_main()
-
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
     def test_delete_notes(self):
@@ -723,10 +632,6 @@ class AcceptanceTests(BasicMocking, CLIMocking):
     def test_help_delete_specific(self):
         """Acceptance: Detailed help using "-h" after "version" action."""
         self.verify_help_text(
-            [
-                "app_name",
-                "delete",
-                "--help"
-            ],
+            ["app_name", "delete", "--help"],
             data("help_details_delete")
         )

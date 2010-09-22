@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Search for text in all notes or a specific list of notes.
+"""Search for text in all or a specific list of notes.
 
-This is the "search" action. Its role is to search for some text in either
-all notes or a specialized set of notes. It returns nothing on stdout if it
-finds nothing. If it finds results from the search, it will report every
-occurence by citing the note's name, the line number of the occurrence and
-the content of the line on which the text is appearing.
+If nothing is found, nothing is shown on the terminal, but the action returns
+with an exit code of 1.
+
+If it finds results from the search, it will report every occurence by citing
+the note's name, the line number of the occurrence and the content of the line
+on which the text is appearing. The return code when a search has at least one
+result is 0.
 
 """
 import sys
-import os
 import re
 
 from scout import plugins
@@ -17,29 +18,20 @@ from scout.cli import TOO_FEW_ARGUMENTS_ERROR
 
 
 class SearchAction(plugins.ActionPlugin):
-    """Plugin object for searching text in notes"""
+    """The 'search' sub-command."""
 
     short_description = __doc__.splitlines()[0]
 
-    usage = ("""%prog search (-h|--help)\n""" +
-        """       %prog search [filter ...] <search_pattern> [note_name ...]""")
+    usage = '\n'.join(["%prog search (-h|--help)",
+                       "       %prog search [filter ...] <search_pattern> "
+                       "[note_name ...]"])
 
     def init_options(self):
         """Set action's options."""
-        self.add_option_library( plugins.FilteringGroup("Search") )
+        self.add_option_library(plugins.FilteringGroup("Search"))
 
     def perform_action(self, config, options, positional):
-        """Use the scout object to search for some text within notes.
-
-        This action performs a textual search within notes and reports the
-        results to the screen.
-
-        Arguments:
-            config -- a ConfigParser.SafeParser object representing config files
-            options -- an optparse.Values object containing the parsed options
-            positional -- a list of strings of positional arguments
-
-        """
+        """Search for some text within notes."""
         if len(positional) < 1:
             print >> sys.stderr, \
                 "Error: You must specify a pattern to perform a search"
@@ -54,36 +46,15 @@ class SearchAction(plugins.ActionPlugin):
             exclude_templates=not options.templates
         )
 
-        results = self.search_for_text(search_pattern, notes)
-
-        for result in results:
-            result_map = ( result["title"], result["line"], result["text"] )
-
-            print ("%s : %s : %s" % result_map).encode('utf-8')
-
-    def search_for_text(self, search_pattern, notes):
-        """Get specified notes and search for a pattern in them.
-
-        This function performs a case-independant text search on the contents
-        of a list of notes.
-
-        Arguments:
-            search_pattern -- String, pattern to seach for
-            notes -- List of notes to search on
-
-        """
-        search_results = []
-
-        for note in notes:
-            content = self.interface.get_note_content(note)
+        ret = 1
+        for n in notes:
+            content = self.interface.get_note_content(n)
             lines = content.splitlines()[1:]
-            for index, line in enumerate(lines):
-                # Perform case-independant search of each word on each line
+            for ln_num, line in enumerate(lines):
+                # regex-based search is probably not the fastest way.
                 if re.search("(?i)%s" % (search_pattern, ), line):
-                    search_results.append({
-                        "title": note.title,
-                        "line": index,
-                        "text": line,
-                    })
+                    ret = 0
+                    result_map = (n.title, ln_num, line)
+                    print ("%s : %s : %s" % result_map).encode('utf-8')
 
-        return search_results
+        return ret
