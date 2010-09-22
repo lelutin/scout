@@ -166,9 +166,13 @@ class Scout(object):
 
         """
         if tags or names:
-            # Create the checker methods
-            name_was_required = lambda x: x.title in names
-            has_required_tag = lambda x: set(x.tags).intersection(set(tags))
+            tag_names = [t for t in tags if t is not None]
+            filters = [
+                lambda x: x.title in names,
+                lambda x: set(x.tags).intersection(set(tag_names)),
+            ]
+            if None in tags:
+                filters.append(lambda x: not x.tags)
 
             # Verify if an unknown note was requested
             note_names = [n.title for n in notes]
@@ -178,8 +182,7 @@ class Scout(object):
 
             list_of_notes = [
                 n for n in notes
-                if name_was_required(n)
-                   or has_required_tag(n)
+                if filter(lambda x: x(n), filters)
             ]
         else:
             # Nothing to filter, keep list intact

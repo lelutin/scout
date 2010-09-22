@@ -9,6 +9,7 @@
     -t TAG              %(action)s notes with specified tags. Use this option once
                         for each desired tag. This option selects raw tags and
                         could be useful for user-assigned tags.
+    -T                  %(action)s notes with no tags.
     --with-templates    Include template notes. This option is different from
                         using "-t system:template" in that the latter used
                         alone will only include the templates, while using

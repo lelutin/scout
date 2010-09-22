@@ -915,11 +915,17 @@ class CoreTests(BasicMocking):
         notes = self.full_list_of_notes()
 
         if tags or names:
-            expected_list = [
-                n for n in notes
-                if set(n.tags).intersection(set(tags))
-                   or n.title == "addressbook"
-            ]
+            if None in tags:
+                expected_list = [
+                    n for n in notes
+                    if not n.tags
+                ]
+            else:
+                expected_list = [
+                    n for n in notes
+                    if set(n.tags).intersection(set(tags))
+                       or n.title in names
+                ]
         else:
             expected_list = notes
 
@@ -962,11 +968,11 @@ class CoreTests(BasicMocking):
 
     def test_filter_notes_no_filtering(self):
         """U Core: No filtering gives the full list of notes."""
-        self.verify_filter_notes(
-            tags=[],
-            names=[],
-            exclude=False
-        )
+        self.verify_filter_notes(tags=[], names=[], exclude=False)
+
+    def test_filter_notes_untagged(self):
+        """U Core: Keep only notes with no tags."""
+        self.verify_filter_notes(tags=[None], names=[])
 
     def test_filter_notes_unknown_note(self):
         """U Core: Filtering encounters an unknown note name."""
@@ -1216,7 +1222,7 @@ class PluginsTests(BasicMocking):
         self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
         self.m.StubOutWithMock(plugins.OptionGroup, "__init__")
 
-        option_list = self.n_mocks(3, optparse.Option)
+        option_list = self.n_mocks(4, optparse.Option)
 
         plugins.OptionGroup.__init__(
             "Filtering",
@@ -1243,6 +1249,12 @@ class PluginsTests(BasicMocking):
         ).AndReturn(option_list[1])
 
         optparse.Option(
+            "-T",
+            dest="tags", action="append_const", const=None,
+            help="Murder notes with no tags."
+        ).AndReturn(option_list[2])
+
+        optparse.Option(
             "--with-templates",
             dest="templates", action="store_true", default=False,
             help=''.join(["Include template notes. This option is different ",
@@ -1251,7 +1263,7 @@ class PluginsTests(BasicMocking):
                           "templates, while using \"--with-templates\" ",
                           "without specifying tags for selection will include ",
                           "all notes and templates."])
-        ).AndReturn(option_list[2])
+        ).AndReturn(option_list[3])
 
         filter_group.add_options(option_list)
 

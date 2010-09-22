@@ -178,6 +178,11 @@ class FilteringGroup(OptionGroup):
                               "user-assigned tags."]) % action_map
             ),
             optparse.Option(
+                "-T",
+                dest="tags", action="append_const", const=None,
+                help=''.join(["%(action)s notes with no tags."]) % action_map
+            ),
+            optparse.Option(
                 "--with-templates",
                 dest="templates", action="store_true", default=False,
                 help=''.join(["Include template notes. This option is ",

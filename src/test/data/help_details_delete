@@ -19,6 +19,7 @@ Options:
     -t TAG              Delete notes with specified tags. Use this option once
                         for each desired tag. This option selects raw tags and
                         could be useful for user-assigned tags.
+    -T                  Delete notes with no tags.
     --spare-templates   Do not delete template notes that get caught with a
                         tag or book name.
     --all-notes         Delete all notes. Once this is done, there is no
