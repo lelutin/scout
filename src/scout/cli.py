@@ -52,6 +52,15 @@ class CommandLine(object):
         "application",
     ]
 
+    default_options = [
+        optparse.Option(
+            "--application", dest="application",
+            choices=["Tomboy", "Gnote"],
+            help=''.join(["Choose the application to connect to. ",
+                          "APPLICATION must be one of Tomboy or Gnote."])
+        )
+    ]
+
     def load_action(self, action_name):
         """Load the 'action_name' action.
 
@@ -81,7 +90,7 @@ class CommandLine(object):
         optparse.OptionGroup objects out of scout.plugins.OptionGroup objects.
 
         """
-        options = self.default_options()
+        options = list(self.default_options)
 
         # Retrieve the special "non-group" group and remove it from the list
         no_group_list = [g for g in action.option_groups if g.name is None]
@@ -104,17 +113,6 @@ class CommandLine(object):
             options.append(group_object)
 
         return options
-
-    def default_options(self):
-        """Return a list of options common to all actions."""
-        return [
-            optparse.Option(
-                "--application", dest="application",
-                choices=["Tomboy", "Gnote"],
-                help=''.join(["Choose the application to connect to. ",
-                              "APPLICATION must be one of Tomboy or Gnote."])
-            )
-        ]
 
     def parse_options(self, action, arguments):
         """Parse the command line arguments.
@@ -223,20 +221,16 @@ class CommandLine(object):
             os.path.expanduser("~/.config/scout/config"),
         ])
 
-        return self.sanitized_config(config_parser)
-
-    def sanitized_config(self, parser):
-        """Reject every unknown configuration in scout section."""
         # If the core section is not there, add an empty one.
-        if not parser.has_section(self.core_config_section):
-            parser.add_section(self.core_config_section)
+        if not config_parser.has_section(self.core_config_section):
+            config_parser.add_section(self.core_config_section)
 
         # Keep only the options that we know of, thrash the rest
-        for option in parser.options(self.core_config_section):
+        for option in config_parser.options(self.core_config_section):
             if option not in self.core_options:
-                parser.remove_option(self.core_config_section, option)
+                config_parser.remove_option(self.core_config_section, option)
 
-        return parser
+        return config_parser
 
     def determine_connection_app(self, config, options):
         """Determine if we need to force the use of one of Tomboy or Gnote."""

@@ -412,7 +412,6 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-
     def test_dispatch_handles_option_type_exceptions(self):
         """Main: dispatch prints an error if an option is of the wrong type."""
         command_line = self.wrap_subject(cli.CommandLine, "dispatch")
@@ -497,6 +496,7 @@ class TestMain(BasicMocking, CLIMocking):
             cli.CommandLine,
             "retrieve_options"
         )
+        command_line.default_options = []
 
         fake_group = self.m.CreateMock(optparse.OptionGroup)
 
@@ -520,9 +520,6 @@ class TestMain(BasicMocking, CLIMocking):
 
         fake_action.option_groups = [group1, group2]
 
-        command_line.default_options()\
-            .AndReturn([])
-
         optparse.OptionGroup(
             fake_option_parser,
             "Group2",
@@ -544,35 +541,6 @@ class TestMain(BasicMocking, CLIMocking):
             list_of_options,
             result
         )
-
-    def test_default_options(self):
-        """Main: List of default options."""
-        command_line = self.wrap_subject(
-            cli.CommandLine,
-            "default_options"
-        )
-        self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
-
-        gnote_option = self.m.CreateMock(optparse.Option)
-
-        options = [
-            gnote_option,
-        ]
-
-        optparse.Option(
-            "--application", dest="application", choices=["Tomboy", "Gnote"],
-            help=''.join(["Choose the application to connect to. ",
-                          "APPLICATION must be one of Tomboy or Gnote."])
-        ).AndReturn(gnote_option)
-
-        self.m.ReplayAll()
-
-        self.assertEqual(
-            options,
-            command_line.default_options()
-        )
-
-        self.m.VerifyAll()
 
     def test_determine_connection_app_cli_argument(self):
         """Main: Application specified on command line."""
@@ -645,9 +613,11 @@ class TestMain(BasicMocking, CLIMocking):
 
         self.m.VerifyAll()
 
-    def test_get_config(self):
-        """Main: Retrieve configuration values from a file."""
+    def verify_get_config(self, section_present):
+        """Test config retrieval and sanitization."""
         command_line = self.wrap_subject(cli.CommandLine, "get_config")
+        command_line.core_config_section = 'scout'
+        command_line.core_options = ["option1", "bobby-tables"]
 
         fake_parser = self.m.CreateMock(configparser.SafeConfigParser)
         self.m.StubOutWithMock(
@@ -657,8 +627,6 @@ class TestMain(BasicMocking, CLIMocking):
         )
 
         self.m.StubOutWithMock(os.path, "expanduser")
-
-        fake_sanitized = self.m.CreateMockAnything()
 
         configparser.SafeConfigParser()\
             .AndReturn(fake_parser)
@@ -674,51 +642,31 @@ class TestMain(BasicMocking, CLIMocking):
             "/home/borg/.config/scout/config",
         ])
 
-        command_line.sanitized_config(fake_parser)\
-            .AndReturn(fake_sanitized)
+        fake_parser.has_section('scout')\
+            .AndReturn(section_present)
+        if not section_present:
+            fake_parser.add_section('scout')
+        fake_parser.options('scout')\
+            .AndReturn(["option1", "unwanted", "bobby-tables"])
+
+        fake_parser.remove_option('scout', "unwanted")
 
         self.m.ReplayAll()
 
         self.assertEqual(
-            fake_sanitized,
+            fake_parser,
             command_line.get_config()
         )
 
         self.m.VerifyAll()
 
-    def verify_sanitized_config(self, section_is_present):
-        """Test the configuration sanitization process."""
-        command_line = self.wrap_subject(cli.CommandLine, "sanitized_config")
+    def test_get_config(self):
+        """Main: Retrieve configuration values from a file."""
+        self.verify_get_config(True)
 
-        command_line.core_config_section = "this"
-        command_line.core_options = ["option1", "bobby-tables"]
-
-        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
-
-        fake_config.has_section("this")\
-            .AndReturn(section_is_present)
-
-        if not section_is_present:
-            fake_config.add_section("this")
-
-        fake_config.options("this")\
-            .AndReturn(["option1", "unwanted", "bobby-tables"])
-
-        fake_config.remove_option("this", "unwanted")
-
-        self.m.ReplayAll()
-
-        command_line.sanitized_config(fake_config)
-
-        self.m.VerifyAll()
-
-    def test_sanitized_config(self):
-        """Main: Core configuration retains only values that are known."""
-        self.verify_sanitized_config(True)
-
-    def test_sanitized_config_missing_section(self):
-        """Main: Core configuration section is not present."""
-        self.verify_sanitized_config(False)
+    def test_get_config_core_section_empty(self):
+        """Main: Retrieve config, core section is emtpy."""
+        self.verify_get_config(False)
 
 
 class TestCore(BasicMocking):
