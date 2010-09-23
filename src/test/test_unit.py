@@ -22,6 +22,16 @@ from .utils import BasicMocking, CLIMocking, data
 class MainTests(BasicMocking, CLIMocking):
     """Tests for functions in the main script."""
 
+    def setUp(self):
+        super(MainTests, self).setUp()
+
+        self.old_env = dict(os.environ)
+
+    def tearDown(self):
+        super(MainTests, self).tearDown()
+
+        os.environ = self.old_env
+
     def test_arguments_converted_to_unicode(self):
         """U Main: Arguments to action are converted to unicode objects."""
         # This is the default main() behaviour.
@@ -235,7 +245,7 @@ class MainTests(BasicMocking, CLIMocking):
         self.m.VerifyAll()
 
     def mock_out_dispatch(self, exception_class, exception_argument,
-                          app_name="Tomboy"):
+                          app_name="Tomboy", display=0):
         """Mock out calls in dispatch that we go through in all cases."""
         command_line = self.wrap_subject(cli.CommandLine, "dispatch")
 
@@ -250,6 +260,10 @@ class MainTests(BasicMocking, CLIMocking):
         positional_arguments = self.m.CreateMock(list)
         options = self.m.CreateMock(optparse.Values)
         options.gnote = False
+        if display == 1:
+            options.display = ":0"
+        else:
+            options.display = None
 
         command_line.load_action(action_name)\
             .AndReturn(fake_action)
@@ -262,6 +276,16 @@ class MainTests(BasicMocking, CLIMocking):
 
         command_line.determine_connection_app(fake_config, options)\
             .AndReturn(app_name)
+
+        if display == 2:
+            os.environ['DISPLAY'] = None
+            fake_config.has_option('scout', 'display')\
+                .AndReturn(True)
+            fake_config.get('scout', 'display')\
+                .AndReturn(":0")
+        elif display != 1:
+            fake_config.has_option('scout', 'display')\
+                .AndReturn(False)
 
         if exception_class in [core.ConnectionError, core.AutoDetectionError]:
             core.Scout(app_name)\
@@ -292,9 +316,7 @@ class MainTests(BasicMocking, CLIMocking):
             self.mock_out_dispatch(None, None)
 
         self.m.ReplayAll()
-
         command_line.dispatch(action_name, arguments)
-
         self.m.VerifyAll()
 
     def test_dispatch_with_gnote(self):
@@ -303,9 +325,25 @@ class MainTests(BasicMocking, CLIMocking):
             self.mock_out_dispatch(None, None, "Gnote")
 
         self.m.ReplayAll()
-
         command_line.dispatch(action_name, arguments)
+        self.m.VerifyAll()
 
+    def test_dispatch_set_display_from_args(self):
+        """U Main: Action calls are dispatched, and --display is used."""
+        command_line, action_name, fake_action, arguments = \
+            self.mock_out_dispatch(None, None, display=1)
+
+        self.m.ReplayAll()
+        command_line.dispatch(action_name, arguments)
+        self.m.VerifyAll()
+
+    def test_dispatch_set_display_from_config(self):
+        """U Main: Action calls are dispatched, and config sets display."""
+        command_line, action_name, fake_action, arguments = \
+            self.mock_out_dispatch(None, None, display=2)
+
+        self.m.ReplayAll()
+        command_line.dispatch(action_name, arguments)
         self.m.VerifyAll()
 
     def verify_dispatch_exception(self, exception_class, exception_out=None,

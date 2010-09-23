@@ -68,6 +68,9 @@ class FunctionalTests(BasicMocking, CLIMocking):
         fake_parser.has_option("scout", "application")\
             .AndReturn(False)
 
+        fake_parser.has_option("scout", "display")\
+            .AndReturn(False)
+
     def mock_out_dbus(self, application=None):
         """Mock out DBus interaction with the specified application."""
         self.m.StubOutWithMock(dbus, "SessionBus", use_mock_anything=True)

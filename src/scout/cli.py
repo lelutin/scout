@@ -50,6 +50,7 @@ class CommandLine(object):
     core_config_section = "scout"
     core_options = [
         "application",
+        "display",
     ]
 
     default_options = [
@@ -58,7 +59,12 @@ class CommandLine(object):
             choices=["Tomboy", "Gnote"],
             help=''.join(["Choose the application to connect to. ",
                           "APPLICATION must be one of Tomboy or Gnote."])
-        )
+        ),
+        optparse.Option(
+            "--display", dest="display",
+            help=''.join(["Specify the X display on which the note ",
+                          "application is running."])
+        ),
     ]
 
     def load_action(self, action_name):
@@ -159,6 +165,13 @@ class CommandLine(object):
 
         # Find out which application to use
         application = self.determine_connection_app(configuration, options)
+
+        if options.display:
+            os.environ['DISPLAY'] = options.display
+        elif configuration.has_option(self.core_config_section, "display") and (
+                not os.environ.get('DISPLAY')):
+            os.environ['DISPLAY'] = configuration.get(self.core_config_section,
+                                                      "display")
 
         # Create a Scout object and put a reference to it in the action
         try:

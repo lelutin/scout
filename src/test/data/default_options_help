@@ -2,3 +2,5 @@
   --application=APPLICATION
                         Choose the application to connect to. APPLICATION must
                         be one of Tomboy or Gnote.
+  --display=DISPLAY     Specify the X display on which the note application is
+                        running.
