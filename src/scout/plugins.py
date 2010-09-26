@@ -2,6 +2,8 @@
 """Plugin library for Scout."""
 import optparse
 
+import core
+
 
 class ActionPlugin(object):
     """Base class for action plugins
@@ -170,6 +172,12 @@ class FilteringGroup(OptionGroup):
                               "once for each desired book."]) % action_map
             ),
             optparse.Option(
+                "-B", action="callback", dest="books",
+                callback=self.book_callback, nargs=0,
+                help=''.join(["%(action)s notes that are not part of any ",
+                              "books."]) % action_map
+            ),
+            optparse.Option(
                 "-t",
                 dest="tags", metavar="TAG", action="append", default=[],
                 help=''.join(["%(action)s notes with specified tags. Use this ",
@@ -180,7 +188,7 @@ class FilteringGroup(OptionGroup):
             optparse.Option(
                 "-T",
                 dest="tags", action="append_const", const=None,
-                help=''.join(["%(action)s notes with no tags."]) % action_map
+                help="%(action)s notes with no tags." % action_map
             ),
             optparse.Option(
                 "--with-templates",
@@ -201,4 +209,8 @@ class FilteringGroup(OptionGroup):
         """Add a book to the requested tags to filter by."""
         tags = parser.values.tags
 
-        tags.append("system:notebook:" + value)
+        if not value:
+            # Enforce string type
+            value = ""
+
+        tags.append(core.NoteBook(value))

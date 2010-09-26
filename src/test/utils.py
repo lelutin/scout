@@ -36,7 +36,6 @@ def data(file_name):
     return dat
 
 
-_full_list_of_mocks = None
 _full_list_of_notes = None
 
 class BasicMocking(unittest.TestCase):
@@ -115,14 +114,11 @@ class BasicMocking(unittest.TestCase):
         parsed twice.
 
         """
-        global _full_list_of_mocks
         global _full_list_of_notes
 
         # return a copy of the list so that the original isn't modified
         if real and _full_list_of_notes:
             return list(_full_list_of_notes)
-        elif not real and _full_list_of_mocks:
-            return list(_full_list_of_mocks)
 
         notes = []
         raw = data("full_list_of_notes").splitlines()
@@ -165,8 +161,6 @@ class BasicMocking(unittest.TestCase):
 
         if real:
             _full_list_of_notes = notes
-        else:
-            _full_list_of_mocks = notes
         return list(notes)  # Same comment as first 'return'
 
 

@@ -599,53 +599,56 @@ class DeleteTests(FunctionalTests):
 class FilteringTests(FunctionalTests):
     """Tests about note filtering."""
 
-    def test_filter_notes_with_templates(self):
-        """F Filter: Using "--with-templates" lists notes and templates."""
+    def verify_list_filtering(self, args, output):
+        """Test that listing notes with 'args' give 'output'.
+
+        Call Scout's main function and give it arguments as if they were given
+        on the command line. Verify output on stdout against a given value.
+
+        """
         list_of_notes = self.full_list_of_notes()
         self.mock_out_listing(list_of_notes)
-        sys.argv = ["app_name", "list", "--with-templates"]
+        sys.argv = args
 
         self.m.ReplayAll()
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEqual(
+        self.assertEqual(output, sys.stdout.getvalue())
+
+    def test_filter_notes_with_templates(self):
+        """F Filter: Using "--with-templates" lists notes and templates."""
+        self.verify_list_filtering(
+            ["app_name", "list", "--with-templates"],
             ''.join([data("expected_list"),
                      data("list_appendix"),
-                     data("normally_hidden_template")]),
-            sys.stdout.getvalue()
+                     data("normally_hidden_template")])
         )
 
     def test_filter_notes_by_tags(self):
         """F Filter: Using "-t" limits the notes by tags."""
-        list_of_notes = self.full_list_of_notes()
-        self.mock_out_listing(list_of_notes)
-        sys.argv = [
-            "app_name", "list",
-            "-t", "system:notebook:pim",
-            "-t", "projects"
-        ]
-
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
-
-        self.assertEqual(
-            data("tag_limited_list"),
-            sys.stdout.getvalue()
+        self.verify_list_filtering(
+            ["app_name", "list", "-t", "system:notebook:pim", "-t", "projects"],
+            data("tag_limited_list")
         )
 
     def test_filter_notes_by_books(self):
         """F Filter: Using "-b" limits the notes by notebooks."""
-        list_of_notes = self.full_list_of_notes()
-        self.mock_out_listing(list_of_notes)
-        sys.argv = ["app_name", "list", "-b", "pim", "-b", "reminders"]
+        self.verify_list_filtering(
+            ["app_name", "list", "-b", "pim", "-b", "reminders"],
+            data("book_limited_list")
+        )
 
-        self.m.ReplayAll()
-        self.assertRaises(SystemExit, cli.main)
-        self.m.VerifyAll()
+    def test_filter_untagged_notes(self):
+        """F Filter: Using "-T" selects untagged notes."""
+        self.verify_list_filtering(
+            ["app_name", "list", "-T"],
+            data("untagged_notes")
+        )
 
-        self.assertEqual(
-            data("book_limited_list"),
-            sys.stdout.getvalue()
+    def test_filter_unbooked_notes(self):
+        """F Filter: Using "-B" selects notes that are not in a book."""
+        self.verify_list_filtering(
+            ["app_name", "list", "-B"],
+            data("unbooked_notes")
         )

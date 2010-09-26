@@ -6,6 +6,7 @@
                         easily. For example, use "-b HGTTG" instead of "-t
                         system:notebook:HGTTG". Use this option once for each
                         desired book.
+    -B                  %(action)s notes that are not part of any books.
     -t TAG              %(action)s notes with specified tags. Use this option once
                         for each desired tag. This option selects raw tags and
                         could be useful for user-assigned tags.

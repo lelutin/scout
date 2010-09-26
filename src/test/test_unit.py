@@ -958,6 +958,18 @@ class CoreTests(BasicMocking):
                     n for n in notes
                     if not n.tags
                 ]
+            elif tags and isinstance(tags[0], core.NoteBook):
+                for n in notes:
+                    n.books()\
+                        .AndReturn([t for t in n.tags
+                                    if t.startswith("system:notebook:")])
+                expected_list = [
+                    n for n in notes
+                    if not filter(
+                        lambda x: x.startswith("system:notebook:"),
+                        n.tags
+                    )
+                ]
             else:
                 expected_list = [
                     n for n in notes
@@ -974,14 +986,12 @@ class CoreTests(BasicMocking):
             ]
 
         self.m.ReplayAll()
-
         result = tt.filter_notes(
             notes,
             tags=tags,
             names=names,
             exclude_templates=exclude
         )
-
         self.m.VerifyAll()
 
         self.assertEqual(
@@ -1011,6 +1021,12 @@ class CoreTests(BasicMocking):
     def test_filter_notes_untagged(self):
         """U Core: Keep only notes with no tags."""
         self.verify_filter_notes(tags=[None], names=[])
+
+    def test_filter_notes_unbooked(self):
+        """U Core: Keep only notes that are not in any book."""
+        fake_book = self.m.CreateMock(core.NoteBook)
+        fake_book.name = ""
+        self.verify_filter_notes(tags=[fake_book], names=[])
 
     def test_filter_notes_unknown_note(self):
         """U Core: Filtering encounters an unknown note name."""
@@ -1072,6 +1088,48 @@ class CoreTests(BasicMocking):
     def test_autodetect_app_too_much(self):
         """U Core: Autodetection fails to find any application."""
         self.verify_autodetect_app(["Tomboy", "Gnote"])
+
+    def test_Note_books(self):
+        """U Core: Note.books() returns a list of book tags."""
+        n = self.wrap_subject(core.Note, "books")
+        n.tags = ['hello', 'system:notebook:youthere',
+                  'system:notebook:bookoflife', 'world']
+        expected_list = [n.tags[1], n.tags[2]]
+
+        self.m.ReplayAll()
+        result = n.books()
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            expected_list,
+            result
+        )
+
+    def test_NoteBook_constructor(self):
+        """U Core: NoteBook's constructor sets attributes."""
+        nb = self.wrap_subject(core.NoteBook, "__init__")
+
+        self.m.ReplayAll()
+        nb.__init__("book name")
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            "book name",
+            nb.name
+        )
+
+    def test_NoteBook_str(self):
+        """U Core: NoteBook's string representation is prefix:name."""
+        nb = core.NoteBook("something")
+
+        self.m.ReplayAll()
+        result = str(nb)
+        self.m.VerifyAll()
+
+        self.assertEqual(
+            "system:notebook:something",
+            result
+        )
 
 
 class PluginsTests(BasicMocking):
@@ -1260,7 +1318,7 @@ class PluginsTests(BasicMocking):
         self.m.StubOutWithMock(optparse, "Option", use_mock_anything=True)
         self.m.StubOutWithMock(plugins.OptionGroup, "__init__")
 
-        option_list = self.n_mocks(4, optparse.Option)
+        option_list = self.n_mocks(5, optparse.Option)
 
         plugins.OptionGroup.__init__(
             "Filtering",
@@ -1279,18 +1337,25 @@ class PluginsTests(BasicMocking):
         ).AndReturn(option_list[0])
 
         optparse.Option(
+            "-B", action="callback", dest="books",
+            callback=book_callback, nargs=0,
+            help=''.join(["Murder notes that are not part of any ",
+                          "books."])
+        ).AndReturn(option_list[1])
+
+        optparse.Option(
             "-t",
             dest="tags", action="append", default=[], metavar="TAG",
             help=''.join(["Murder notes with specified tags. Use this option ",
                           "once for each desired tag. This option selects raw ",
                           "tags and could be useful for user-assigned tags."])
-        ).AndReturn(option_list[1])
+        ).AndReturn(option_list[2])
 
         optparse.Option(
             "-T",
             dest="tags", action="append_const", const=None,
             help="Murder notes with no tags."
-        ).AndReturn(option_list[2])
+        ).AndReturn(option_list[3])
 
         optparse.Option(
             "--with-templates",
@@ -1301,7 +1366,7 @@ class PluginsTests(BasicMocking):
                           "templates, while using \"--with-templates\" ",
                           "without specifying tags for selection will include ",
                           "all notes and templates."])
-        ).AndReturn(option_list[3])
+        ).AndReturn(option_list[4])
 
         filter_group.add_options(option_list)
 
@@ -1309,8 +1374,8 @@ class PluginsTests(BasicMocking):
         filter_group.__init__("Murder")
         self.m.VerifyAll()
 
-    def test_book_callback(self):
-        """U Plugins: callback for book option adds an entry in tags."""
+    def verify_book_callback(self, value):
+        """Test behaviour of the book options callback."""
         filter_group = self.wrap_subject(
             plugins.FilteringGroup,
             "book_callback"
@@ -1321,14 +1386,30 @@ class PluginsTests(BasicMocking):
         fake_parser.values = self.m.CreateMock(optparse.Values)
         fake_parser.values.tags = ["already_here"]
 
+        fake_notebook = self.m.CreateMock(core.NoteBook)
+        self.m.StubOutWithMock(core, "NoteBook", use_mock_anything=True)
+
+        norm_val = value or ""
+
+        core.NoteBook(norm_val)\
+            .AndReturn(fake_notebook)
+
         self.m.ReplayAll()
-        filter_group.book_callback(fake_option, "-b", "book1", fake_parser)
+        filter_group.book_callback(fake_option, "-b", value, fake_parser)
         self.m.VerifyAll()
 
         self.assertEqual(
-            ["already_here", "system:notebook:book1"],
+            ["already_here", fake_notebook],
             fake_parser.values.tags
         )
+
+    def test_book_callback(self):
+        """U Plugins: callback for book option adds an entry in tags."""
+        self.verify_book_callback(value="book1")
+
+    def test_book_callback_no_value(self):
+        """U Plugins: callback for book option adds an unnamed book."""
+        self.verify_book_callback(value=None)
 
     def verify_remove_option(self, option_found):
         """Test option removal from a group."""

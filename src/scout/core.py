@@ -166,13 +166,17 @@ class Scout(object):
 
         """
         if tags or names:
-            tag_names = [t for t in tags if t is not None]
+            tag_names = [str(t) for t in tags if t is not None or
+                               (isinstance(t, NoteBook) and t.name)]
             filters = [
                 lambda x: x.title in names,
                 lambda x: set(x.tags).intersection(set(tag_names)),
             ]
             if None in tags:
                 filters.append(lambda x: not x.tags)
+
+            if [t for t in tags if isinstance(t, NoteBook) and not t.name]:
+                filters.append(lambda x: not x.books())
 
             # Verify if an unknown note was requested
             note_names = [n.title for n in notes]
@@ -235,3 +239,23 @@ class Note(object):
         date = datetime.fromtimestamp(self.date).isoformat()[:10]
 
         return "%s | %s%s" % (date, title, tags)
+
+    def books(self):
+        """Return a list of tags from this note that correspond to notebooks.
+
+        This list can be used in a boolean expression to test if the note is
+        inside a book or not.
+
+        """
+        return [t for t in self.tags if t.startswith("system:notebook:")]
+
+class NoteBook(object):
+    """A group of notes represented by a special tag."""
+
+    prefix = "system:notebook:"
+
+    def __init__(self, name=""):
+        self.name = name
+
+    def __str__(self):
+        return ''.join([self.prefix, self.name])

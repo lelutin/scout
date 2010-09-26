@@ -16,6 +16,7 @@ Options:
                         system:notebook:HGTTG". Use this option once for each
                         desired book. By default, template notes are included
                         so that the entire book is deleted.
+    -B                  Delete notes that are not part of any books.
     -t TAG              Delete notes with specified tags. Use this option once
                         for each desired tag. This option selects raw tags and
                         could be useful for user-assigned tags.
