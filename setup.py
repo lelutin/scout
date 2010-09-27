@@ -12,17 +12,17 @@ from subprocess import Popen
 from setuptools import setup, find_packages
 from glob import glob
 
+# This needs to be generated before we include it
+out = open("src/scout/version.py", "w")
+genr = Popen(["./format-subst.pl", "src/scout/version.py.pre"], stdout=out)
+genr.wait()
+out.close()
 from src.scout.version import SCOUT_VERSION
 
 
 command = None
 if len(sys.argv) > 1:
     command = sys.argv[1]
-
-# Generate the version.py module
-out = open("src/scout/version.py", "w")
-Popen(["./format-subst.pl", "src/scout/version.py.pre"], stdout=out)
-out.close()
 
 if command:
     # Compile documentation
