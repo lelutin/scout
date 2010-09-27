@@ -2,7 +2,7 @@
 """Plugin library for Scout."""
 import optparse
 
-import core
+from scout import core
 
 
 class ActionPlugin(object):
