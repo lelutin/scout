@@ -3,6 +3,12 @@
 
 These classes abstract all interaction with DBus.
 
+For more details about the DBus interface, see the following URLs:
+
+    http://git.gnome.org/browse/tomboy/tree/Tomboy/RemoteControl.cs
+    http://git.gnome.org/browse/gnote/tree/src/dbus/remotecontrol.hpp
+    http://arstechnica.com/open-source/news/2007/09/using-the-tomboy-d-bus-interface.ars
+
 """
 import dbus
 import time
