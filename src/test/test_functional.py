@@ -596,6 +596,32 @@ class DeleteTests(FunctionalTests):
         )
 
 
+class EditTests(FunctionalTests):
+    """Tests for the 'edit' action."""
+
+    def test_add_tag(self):
+        """F Edit: Add a tag to a single note."""
+        list_of_notes = self.full_list_of_notes()
+
+        todo = list_of_notes[1]
+        sys.argv = ["unused_prog_name", "edit", "--add-tag", "new_tag", "TODO-list"]
+
+        self.mock_out_listing(list_of_notes)
+
+        self.dbus_interface.AddTagToNote(todo.uri, "new_tag")
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
+    def test_help_edit_specific(self):
+        """F Edit: Detailed help using "-h" after "edit" action."""
+        self.verify_help_text(
+            ["app_name", "edit", "--help"],
+            data("help_details_edit") % {"action": "Edit"}
+        )
+
+
 class FilteringTests(FunctionalTests):
     """Tests about note filtering."""
 

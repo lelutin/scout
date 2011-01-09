@@ -68,6 +68,7 @@ setup(
         "scout.actions": [
             "list = scout.actions.list:ListAction",
             "display = scout.actions.display:DisplayAction",
+            "edit = scout.actions.edit:EditAction",
             "search = scout.actions.search:SearchAction",
             "delete = scout.actions.delete:DeleteAction",
             "version = scout.actions.version:VersionAction",

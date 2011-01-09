@@ -133,7 +133,8 @@ class BasicMocking(unittest.TestCase):
 
             n.title = info["title"]
             n.date = info["date"]
-            n.tags = info["tags"]
+            n._orig_tags = info["tags"]
+            n.tags = list(info["tags"])
 
             return n
 

@@ -14,7 +14,7 @@ from scout import core, cli, plugins
 from scout.version import SCOUT_VERSION
 # Import the list action under a different name to avoid overwriting the list()
 # builtin function.
-from scout.actions import display, list as list_, delete, search, version
+from scout.actions import display, list as list_, delete, edit, search, version
 
 from .utils import BasicMocking, CLIMocking, data
 
@@ -826,6 +826,7 @@ class CoreTests(BasicMocking):
         self.assertEqual(date_int64, tn.date)
         # Order is not important
         self.assertEqual(set(tags), set(tn.tags))
+        self.assertEqual(set(tags), set(tn._orig_tags))
 
     def test_Note_constructor_all_defaults(self):
         """U Core: Note initializes its instance variables. case 2."""
@@ -838,6 +839,7 @@ class CoreTests(BasicMocking):
         self.assertEqual(tn.title, "")
         self.assertEqual(tn.date, dbus.Int64())
         self.assertEqual(tn.tags, [])
+        self.assertEqual(tn._orig_tags, [])
 
     def test_Note_constructor_datetetime(self):
         """U Core: Note initializes its instance variables. case 3."""
@@ -1088,6 +1090,36 @@ class CoreTests(BasicMocking):
     def test_autodetect_app_too_much(self):
         """U Core: Autodetection fails to find any application."""
         self.verify_autodetect_app(["Tomboy", "Gnote"])
+
+    def test_Scout_commit_notes(self):
+        """U Core: Scout.commit_notes() with no mofications does nothing."""
+        n = self.wrap_subject(core.Scout, "commit_notes")
+
+        list_of_notes = self.full_list_of_notes()
+
+        self.m.ReplayAll()
+        n.commit_notes(list_of_notes)
+        self.m.VerifyAll()
+
+    def test_Scout_commit_notes_new_tags(self):
+        """U Core: Scout.commit_notes() adds tags."""
+        tt = self.wrap_subject(core.Scout, "commit_notes")
+        tt.comm = self.m.CreateMockAnything()
+
+        list_of_notes = self.full_list_of_notes()
+        todo = list_of_notes[1]
+        python = list_of_notes[4]
+
+        todo.tags = todo.tags + ["new", "hawtness"]
+        python.tags = python.tags + ["tag42"]
+
+        tt.comm.AddTagToNote(todo.uri, "new")
+        tt.comm.AddTagToNote(todo.uri, "hawtness")
+        tt.comm.AddTagToNote(python.uri, "tag42")
+
+        self.m.ReplayAll()
+        tt.commit_notes(list_of_notes)
+        self.m.VerifyAll()
 
     def test_Note_books(self):
         """U Core: Note.books() returns a list of book tags."""
@@ -1606,7 +1638,6 @@ class DisplayTests(BasicMocking, CLIMocking):
     def test_Scout_get_note_content(self):
         """U Display: Using the communicator, get one note's content."""
         tt = self.wrap_subject(core.Scout, "get_note_content")
-
         tt.comm = self.m.CreateMockAnything()
 
         list_of_notes = self.full_list_of_notes()
@@ -1835,19 +1866,77 @@ class DeleteTests(BasicMocking, CLIMocking):
         )
 
 
+class EditTests(BasicMocking, CLIMocking):
+    """Tests for the edit action."""
+
+    def test_init_options(self):
+        """U Edit: Edit options are initialized correctly."""
+        edit_ap = self.wrap_subject(edit.EditAction, "init_options")
+        self.m.StubOutWithMock(
+            plugins,
+            "FilteringGroup",
+            use_mock_anything=True
+        )
+        fake_filtering_group = self.m.CreateMock(plugins.FilteringGroup)
+
+        edit_ap.add_option(
+            "--add-tag", dest="added_tags", action="append", metavar="TAG",
+            help=''.join(["Add a tag to the requested notes. ",
+                          "Can be specified more than once."]))
+
+        plugins.FilteringGroup("Edit")\
+            .AndReturn(fake_filtering_group)
+
+        edit_ap.add_option_library(fake_filtering_group)
+
+        self.m.ReplayAll()
+        edit_ap.init_options()
+        self.m.VerifyAll()
+
+    def test_perform_action_add_tag(self):
+        """U Edit: perform_action adds a tag."""
+        edit_ap = self.wrap_subject(edit.EditAction, "perform_action")
+        edit_ap.interface = self.m.CreateMock(core.Scout)
+
+        fake_options = self.m.CreateMock(optparse.Values)
+        fake_options.tags = []
+        fake_options.added_tags = ["new"]
+        fake_options.templates = False
+        fake_config = self.m.CreateMock(configparser.SafeConfigParser)
+
+        all_notes = self.full_list_of_notes()
+        list_of_notes = [all_notes[0], all_notes[3]]
+        for note in list_of_notes:
+            note.tags = ["tag1"]
+
+        edit_ap.interface.get_notes(
+            names=["note1", "note4"],
+            tags=[],
+            exclude_templates=True
+        ).AndReturn(list_of_notes)
+
+        edit_ap.interface.commit_notes(list_of_notes)
+
+        self.m.ReplayAll()
+        edit_ap.perform_action(fake_config, fake_options, ["note1", "note4"])
+        self.m.VerifyAll()
+
+        for note in list_of_notes:
+            self.assertEqual(note.tags, ["tag1", "new"])
+
+
 class SearchTests(BasicMocking, CLIMocking):
     """Tests for the search action."""
 
     def test_init_options(self):
         """U Search: Search options are initialized correctly."""
-        fake_filtering_group = self.m.CreateMock(plugins.FilteringGroup)
-
         srch_ap = self.wrap_subject(search.SearchAction, "init_options")
         self.m.StubOutWithMock(
             plugins,
             "FilteringGroup",
             use_mock_anything=True
         )
+        fake_filtering_group = self.m.CreateMock(plugins.FilteringGroup)
 
         plugins.FilteringGroup("Search")\
             .AndReturn(fake_filtering_group)

@@ -208,6 +208,13 @@ class Scout(object):
 
         return list_of_notes
 
+    def commit_notes(self, notes):
+        """Send modifications to a list of notes to the Application."""
+        for n in notes:
+            new_tags = set(n.tags).difference(set(n._orig_tags))
+            for tag in new_tags:
+                self.comm.AddTagToNote(n.uri, tag)
+
 
 class Note(object):
     """A Tomboy or Gnote note.
@@ -224,7 +231,8 @@ class Note(object):
 
         self.uri = uri
         self.title = title
-        self.tags = tags
+        self._orig_tags = tags
+        self.tags = list(tags)
 
         if isinstance(date, datetime):
             self.date = dbus.Int64(time.mktime(date.timetuple()))
