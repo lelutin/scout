@@ -1,4 +1,4 @@
-Usage: app_name delete -h
+Usage: app_name delete (-h|--help)
        app_name delete [filter ...] [note_name ...]
 
 Options:

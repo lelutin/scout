@@ -1740,7 +1740,7 @@ class DeleteTests(BasicMocking, CLIMocking):
         if not names and not tags and not all_notes:
             self.assertEqual(
                 data("delete_no_argument_msg"),
-                sys.stdout.getvalue()
+                sys.stderr.getvalue()
             )
 
     def test_perform_action(self):

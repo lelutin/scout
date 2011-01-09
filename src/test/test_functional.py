@@ -576,7 +576,7 @@ class DeleteTests(FunctionalTests):
 
         self.assertEqual(
             data("delete_no_argument_msg"),
-            sys.stdout.getvalue()
+            sys.stderr.getvalue()
         )
 
     def test_delete_notes_all_notes(self):

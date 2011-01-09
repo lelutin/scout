@@ -30,7 +30,7 @@ class DeleteAction(plugins.ActionPlugin):
     short_description = __doc__.splitlines()[0]
 
     usage = '\n'.join([
-        "%prog delete -h",
+        "%prog delete (-h|--help)",
         "       %prog delete [filter ...] [note_name ...]",
     ])
 
@@ -79,12 +79,12 @@ class DeleteAction(plugins.ActionPlugin):
         # Nothing was requested, so do nothing.
         if not (positional or options.tags or options.erase_all):
             msg = '\n\n'.join([
-                "error: No filters or note names given.",
+                "Error: No filters or note names given.",
                 "To delete notes, you must specify a filtering option, "
                     "note names, or both.",
                 "Use option -h or --help to learn more about filters."
             ])
-            print msg
+            print >> sys.stderr, msg
 
             sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
