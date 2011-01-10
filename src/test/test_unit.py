@@ -1622,6 +1622,7 @@ class ListTests(BasicMocking, CLIMocking):
             list_of_notes = list_of_notes[:-1]
 
         lst_ap.interface.get_notes(
+            names=[],
             count_limit=5,
             tags=tags,
             exclude_templates=not with_templates

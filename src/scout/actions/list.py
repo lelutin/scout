@@ -30,6 +30,7 @@ class ListAction(plugins.ActionPlugin):
     def perform_action(self, config, options, positional):
         """Print a list of notes to stdout."""
         notes = self.interface.get_notes(
+            names=positional,
             count_limit=options.max_notes,
             tags=options.tags,
             exclude_templates=not options.templates
