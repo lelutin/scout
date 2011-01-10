@@ -5,5 +5,7 @@ Options:
 {% include default_options_help %}
   --add-tag=TAG         Add a tag to the requested notes. Can be specified
                         more than once.
+  --remove-tag=TAG      Remove a tag from the requested notes. Can be
+                        specified more than once.
 
 {% include filtering_options_help %}

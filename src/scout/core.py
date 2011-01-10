@@ -215,6 +215,10 @@ class Scout(object):
             for tag in new_tags:
                 self.comm.AddTagToNote(n.uri, tag)
 
+            obsolete_tags = set(n._orig_tags).difference(set(n.tags))
+            for tag in obsolete_tags:
+                self.comm.RemoveTagFromNote(n.uri, tag)
+
 
 class Note(object):
     """A Tomboy or Gnote note.
@@ -262,6 +266,7 @@ class Note(object):
 
         """
         return [t for t in self.tags if t.startswith("system:notebook:")]
+
 
 class NoteBook(object):
     """A group of notes represented by a special tag."""

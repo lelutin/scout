@@ -614,6 +614,21 @@ class EditTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
+    def test_remove_tag(self):
+        """F Edit: Remove a tag from a single note."""
+        list_of_notes = self.full_list_of_notes()
+
+        dell750 = list_of_notes[3]
+        sys.argv = ["unused_prog_name", "edit", "--remove-tag", "projects", "dell 750"]
+
+        self.mock_out_listing(list_of_notes)
+
+        self.dbus_interface.RemoveTagFromNote(dell750.uri, "projects")
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
     def test_help_edit_specific(self):
         """F Edit: Detailed help using "-h" after "edit" action."""
         self.verify_help_text(
