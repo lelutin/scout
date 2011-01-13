@@ -596,15 +596,15 @@ class DeleteTests(FunctionalTests):
         )
 
 
-class EditTests(FunctionalTests):
-    """Tests for the 'edit' action."""
+class TagTests(FunctionalTests):
+    """Tests for the 'tag' action."""
 
     def test_add_tag(self):
-        """F Edit: Add a tag to a single note."""
+        """F Edit: Add a tag to a note."""
         list_of_notes = self.full_list_of_notes()
 
         todo = list_of_notes[1]
-        sys.argv = ["unused_prog_name", "edit", "--add-tag", "new_tag", "TODO-list"]
+        sys.argv = ["unused_prog_name", "tag", "new_tag", "TODO-list"]
 
         self.mock_out_listing(list_of_notes)
 
@@ -615,11 +615,12 @@ class EditTests(FunctionalTests):
         self.m.VerifyAll()
 
     def test_remove_tag(self):
-        """F Edit: Remove a tag from a single note."""
+        """F Edit: Remove a tag from a note."""
         list_of_notes = self.full_list_of_notes()
 
         dell750 = list_of_notes[3]
-        sys.argv = ["unused_prog_name", "edit", "--remove-tag", "projects", "dell 750"]
+        sys.argv = ["unused_prog_name", "tag",
+                    "--remove", "projects", "dell 750"]
 
         self.mock_out_listing(list_of_notes)
 
@@ -630,10 +631,10 @@ class EditTests(FunctionalTests):
         self.m.VerifyAll()
 
     def test_help_edit_specific(self):
-        """F Edit: Detailed help using "-h" after "edit" action."""
+        """F Edit: Detailed help using "-h" after "tag" action."""
         self.verify_help_text(
-            ["app_name", "edit", "--help"],
-            data("help_details_edit") % {"action": "Edit"}
+            ["app_name", "tag", "--help"],
+            data("help_details_tag") % {"action": "Modify"}
         )
 
 

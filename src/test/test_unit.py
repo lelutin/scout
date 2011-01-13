@@ -14,7 +14,7 @@ from scout import core, cli, plugins
 from scout.version import SCOUT_VERSION
 # Import the list action under a different name to avoid overwriting the list()
 # builtin function.
-from scout.actions import display, list as list_, delete, edit, search, version
+from scout.actions import display, list as list_, delete, tag, search, version
 
 from .utils import BasicMocking, CLIMocking, data
 
@@ -1886,12 +1886,12 @@ class DeleteTests(BasicMocking, CLIMocking):
         )
 
 
-class EditTests(BasicMocking, CLIMocking):
-    """Tests for the edit action."""
+class TagTests(BasicMocking, CLIMocking):
+    """Tests for the tag action."""
 
     def test_init_options(self):
-        """U Edit: Edit options are initialized correctly."""
-        edit_ap = self.wrap_subject(edit.EditAction, "init_options")
+        """U Tag: Tag options are initialized correctly."""
+        tag_ap = self.wrap_subject(tag.TagAction, "init_options")
         self.m.StubOutWithMock(
             plugins,
             "FilteringGroup",
@@ -1899,37 +1899,28 @@ class EditTests(BasicMocking, CLIMocking):
         )
         fake_filtering_group = self.m.CreateMock(plugins.FilteringGroup)
 
-        edit_ap.add_option(
-            "--add-tag", metavar="TAG",
-            dest="added_tags", action="append", default=[],
-            help=''.join(["Add a tag to the requested notes. ",
-                          "Can be specified more than once."]))
+        tag_ap.add_option(
+            "--remove", action="store_true", default=False,
+            help="Remove a tag from the requested notes.")
 
-        edit_ap.add_option(
-            "--remove-tag", metavar="TAG",
-            dest="removed_tags", action="append", default=[],
-            help=''.join(["Remove a tag from the requested notes. ",
-                          "Can be specified more than once."]))
-
-        plugins.FilteringGroup("Edit")\
+        plugins.FilteringGroup("Modify")\
             .AndReturn(fake_filtering_group)
 
-        edit_ap.add_option_library(fake_filtering_group)
+        tag_ap.add_option_library(fake_filtering_group)
 
         self.m.ReplayAll()
-        edit_ap.init_options()
+        tag_ap.init_options()
         self.m.VerifyAll()
 
-    def verify_perform_action(self, added_tags=[], removed_tags=[],
-                              unexists_hack=False):
-        """Verifies the actions that are taken in edit's perform_action."""
-        edit_ap = self.wrap_subject(edit.EditAction, "perform_action")
-        edit_ap.interface = self.m.CreateMock(core.Scout)
+    def verify_perform_action(self, tag_name, remove=False,
+                              nonnexistant=False):
+        """Verifies the actions that are taken in tag's perform_action."""
+        tag_ap = self.wrap_subject(tag.TagAction, "perform_action")
+        tag_ap.interface = self.m.CreateMock(core.Scout)
 
         fake_options = self.m.CreateMock(optparse.Values)
         fake_options.tags = []
-        fake_options.added_tags = added_tags
-        fake_options.removed_tags = removed_tags
+        fake_options.remove = remove
         fake_options.templates = False
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
@@ -1938,31 +1929,30 @@ class EditTests(BasicMocking, CLIMocking):
         for note in list_of_notes:
             note.tags = ["tag1", "tag2"]
 
-        conflicts = set(added_tags).intersection(set(removed_tags))
-        if not conflicts:
-            edit_ap.interface.get_notes(
-                names=["note1", "note4"],
-                tags=[],
-                exclude_templates=True
-            ).AndReturn(list_of_notes)
+        tag_ap.interface.get_notes(
+            names=["note1", "note4"],
+            tags=[],
+            exclude_templates=True
+        ).AndReturn(list_of_notes)
 
-            if not unexists_hack:
-                edit_ap.interface.commit_notes(list_of_notes)
+        if not nonnexistant:
+            tag_ap.interface.commit_notes(list_of_notes)
 
         self.m.ReplayAll()
-        if not unexists_hack and not conflicts:
-            edit_ap.perform_action(fake_config, fake_options,
-                                   ["note1", "note4"])
+        if not nonnexistant:
+            tag_ap.perform_action(fake_config, fake_options,
+                                   [tag_name, "note1", "note4"])
         else:
-            self.assertRaises(SystemExit, edit_ap.perform_action,
-                              fake_config, fake_options, ["note1", "note4"])
+            self.assertRaises(SystemExit, tag_ap.perform_action,
+                              fake_config, fake_options,
+                              [tag_name, "note1", "note4"])
         self.m.VerifyAll()
 
         return list_of_notes
 
     def test_perform_action_on_nothing(self):
-        """U Edit: Not having selected anything spits out an error."""
-        edit_ap = self.wrap_subject(edit.EditAction, "perform_action")
+        """U Tag: Not having selected anything spits out an error."""
+        tag_ap = self.wrap_subject(tag.TagAction, "perform_action")
 
         fake_options = self.m.CreateMock(optparse.Values)
         fake_options.tags = []
@@ -1971,59 +1961,39 @@ class EditTests(BasicMocking, CLIMocking):
         self.m.ReplayAll()
         self.assertRaises(
             SystemExit,
-            edit_ap.perform_action, fake_config, fake_options, []
+            tag_ap.perform_action, fake_config, fake_options, []
         )
         self.m.VerifyAll()
 
         self.assertEqual(
             sys.stderr.getvalue(),
-            data("edit_too_few_arguments")
+            data("too_few_arguments")
         )
 
     def test_perform_action_add_tag(self):
-        """U Edit: perform_action adds a tag."""
-        list_of_notes = self.verify_perform_action(added_tags=["new"])
+        """U Tag: perform_action adds a tag."""
+        list_of_notes = self.verify_perform_action(tag_name="new")
 
         for note in list_of_notes:
             self.assertEqual(note.tags, ["tag1", "tag2", "new"])
 
     def test_perform_action_remove_tag(self):
-        """U Edit: perform_action removes a tag."""
-        list_of_notes = self.verify_perform_action(removed_tags=["tag1"])
+        """U Tag: perform_action removes a tag."""
+        list_of_notes = self.verify_perform_action(tag_name="tag1", remove=True)
 
         for note in list_of_notes:
             self.assertEqual(note.tags, ["tag2"])
 
     def test_perform_action_remove_non_existant_tag(self):
-        """U Edit: perform_action tries to remove a non-existant tag."""
+        """U Tag: perform_action tries to remove a non-existant tag."""
         list_of_notes = self.verify_perform_action(
-            removed_tags=["alien_tag"],
-            unexists_hack=True
+            tag_name="alien_tag", remove=True,
+            nonnexistant=True
         )
 
         self.assertEqual(
             sys.stderr.getvalue(),
             data("edit_remove_unexistant_tag")
-        )
-
-    def test_perform_action_add_and_remove_tag_valid(self):
-        """U Edit: perform_action adds tags and removes another one."""
-        list_of_notes = self.verify_perform_action(
-            added_tags=["everything", "else"], removed_tags=["tag2"])
-
-        for note in list_of_notes:
-            self.assertEqual(note.tags, ["tag1", "everything", "else"])
-
-    def test_perform_action_add_and_remove_same_tag(self):
-        """U Edit: perform_action trying to add and remove the same tag."""
-        self.verify_perform_action(
-            added_tags=["one", "two", "three"], removed_tags=["one", "three"])
-
-        # Can't really test the full string here since the set intersection is
-        # not garanteed to always come out in the same order.
-        self.assertTrue(
-            sys.stderr.getvalue().startswith(
-                data("edit_add_remove_tag_conflict")[:-1])
         )
 
 

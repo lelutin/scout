@@ -1,0 +1,8 @@
+Usage: app_name tag (-h|--help)
+       app_name tag [options] <tag_name> [filtering options|<note_name>...]
+
+Options:
+{% include default_options_help %}
+  --remove              Remove a tag from the requested notes.
+
+{% include filtering_options_help %}
