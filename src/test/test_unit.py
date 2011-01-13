@@ -1903,6 +1903,10 @@ class TagTests(BasicMocking, CLIMocking):
             "--remove", action="store_true", default=False,
             help="Remove a tag from the requested notes.")
 
+        tag_ap.add_option(
+            "--remove-all", action="store_true", default=False,
+            help="Remove all tags from the requested notes.")
+
         plugins.FilteringGroup("Modify")\
             .AndReturn(fake_filtering_group)
 
@@ -1912,7 +1916,7 @@ class TagTests(BasicMocking, CLIMocking):
         tag_ap.init_options()
         self.m.VerifyAll()
 
-    def verify_perform_action(self, tag_name, remove=False,
+    def verify_perform_action(self, tag_name, remove=False, remove_all=False,
                               nonnexistant=False):
         """Verifies the actions that are taken in tag's perform_action."""
         tag_ap = self.wrap_subject(tag.TagAction, "perform_action")
@@ -1921,6 +1925,7 @@ class TagTests(BasicMocking, CLIMocking):
         fake_options = self.m.CreateMock(optparse.Values)
         fake_options.tags = []
         fake_options.remove = remove
+        fake_options.remove_all = remove_all
         fake_options.templates = False
         fake_config = self.m.CreateMock(configparser.SafeConfigParser)
 
@@ -1939,13 +1944,16 @@ class TagTests(BasicMocking, CLIMocking):
             tag_ap.interface.commit_notes(list_of_notes)
 
         self.m.ReplayAll()
+        if remove_all:
+            positional = ["note1", "note4"]
+        else:
+            positional = [tag_name, "note1", "note4"]
+
         if not nonnexistant:
-            tag_ap.perform_action(fake_config, fake_options,
-                                   [tag_name, "note1", "note4"])
+            tag_ap.perform_action(fake_config, fake_options, positional)
         else:
             self.assertRaises(SystemExit, tag_ap.perform_action,
-                              fake_config, fake_options,
-                              [tag_name, "note1", "note4"])
+                              fake_config, fake_options, positional)
         self.m.VerifyAll()
 
         return list_of_notes
@@ -1983,6 +1991,14 @@ class TagTests(BasicMocking, CLIMocking):
 
         for note in list_of_notes:
             self.assertEqual(note.tags, ["tag2"])
+
+    def test_perform_action_remove_all_tags(self):
+        """U Tag: perform_action removes all tags."""
+        list_of_notes = self.verify_perform_action(
+            tag_name=None, remove=True, remove_all=True)
+
+        for note in list_of_notes:
+            self.assertEqual(note.tags, [])
 
     def test_perform_action_remove_non_existant_tag(self):
         """U Tag: perform_action tries to remove a non-existant tag."""

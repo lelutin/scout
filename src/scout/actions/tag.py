@@ -21,6 +21,7 @@ class TagAction(plugins.ActionPlugin):
     usage = '\n'.join([
         "%prog tag (-h|--help)",
         "       %prog tag [options] <tag_name> [filtering options|<note_name>...]",
+        "       %prog tag [options] --remove-all [filtering options|<note_name>...]",
     ])
 
     def init_options(self):
@@ -28,6 +29,10 @@ class TagAction(plugins.ActionPlugin):
         self.add_option(
             "--remove", action="store_true", default=False,
             help="Remove a tag from the requested notes.")
+
+        self.add_option(
+            "--remove-all", action="store_true", default=False,
+            help="Remove all tags from the requested notes.")
 
         self.add_option_library(plugins.FilteringGroup("Modify"))
 
@@ -45,8 +50,13 @@ class TagAction(plugins.ActionPlugin):
 
             sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
-        tag_name = positional[0]
-        note_names = positional[1:]
+        if options.remove_all:
+            options.remove = True
+            tag_name = None
+            note_names = positional
+        else:
+            tag_name = positional[0]
+            note_names = positional[1:]
 
         notes = self.interface.get_notes(
             names=note_names,
@@ -56,6 +66,10 @@ class TagAction(plugins.ActionPlugin):
 
         if options.remove:
             for note in notes:
+                if options.remove_all:
+                    note.tags = []
+                    continue
+
                 if tag_name not in note.tags:
                     msg = "Error: Tag '%s' not found on note '%s'."
                     print >> sys.stderr, msg % (tag_name, note.title)

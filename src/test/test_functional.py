@@ -630,6 +630,24 @@ class TagTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
+    def test_remove_all_tags(self):
+        """F Edit: Remove all tags from a note."""
+        list_of_notes = self.full_list_of_notes()
+
+        new_note = list_of_notes[13]
+        sys.argv = ["unused_prog_name", "tag",
+                    "--remove-all", "New note template"]
+
+        self.mock_out_listing(list_of_notes)
+
+        self.dbus_interface.RemoveTagFromNote(new_note.uri, "system:template")
+        self.dbus_interface.RemoveTagFromNote(
+            new_note.uri, "system:notebook:pim")
+
+        self.m.ReplayAll()
+        self.assertRaises(SystemExit, cli.main)
+        self.m.VerifyAll()
+
     def test_help_edit_specific(self):
         """F Edit: Detailed help using "-h" after "tag" action."""
         self.verify_help_text(
