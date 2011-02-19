@@ -120,12 +120,15 @@ like following:
     scout$ python setup.py test
 
 The second method, being the fastest and most flexible one, is by calling
-nose's nosetests script. A configuration file is included in the base directory
-to make running the unit tests easier. From the base directory:
+nose's nosetests script. Three configuration files are included in the base
+directory to make running the tests easier. From the base directory:
 
     scout$ nostests -c nose.cfg
 
-See the configuration file for some usefull lines that can be uncommented.
+The three files are named "nose.cfg", "nose.unit.cfg", "nose.functional.cfg"
+and they serve in running all tests, only unit tests, and only functional
+tests, respectively. Only the file "nose.unit.cfg" shows test coverage since
+this measure is only relevant with those tests alone.
 
 One useful trick with git to make running tests easier is to set an alias in
 the following manner (make sure to use single quotes, the !  and $ characters
