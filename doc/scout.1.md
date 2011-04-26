@@ -31,6 +31,8 @@ by the subcommand name.
 :   Show the contents of one or more notes.
 `search`
 :   Perform a textual search on your notes' contents.
+`tag`
+:   Add or remove tags from notes.
 `delete`
 :   Delete one or more notes, or an entire book.
 `version`
@@ -44,6 +46,8 @@ Display the contents of note "thing X"
 :   scout display "thing X"
 Search for "needle" in notes of the "haystack" book
 :   scout search -b haystack needle
+Add a tag named "work" on the note "TODO"
+:   scout tag work TODO
 Delete notes with the tag "old_and_busted"
 :   scout delete -t old_and_busted
 
