@@ -24,7 +24,8 @@ To see a short summary of what has changed between versions, consult the
 
 ## Requirements
 
-To run scout, you need to have dbus-python installed. On Debian or Ubuntu, use
+To run scout, you need to have setuptools so that actions can plugin to the
+right script entry point, and dbus-python installed. On Debian or Ubuntu, use
 the following command:
 
     # apt-get install python-dbus

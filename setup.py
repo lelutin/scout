@@ -81,6 +81,7 @@ setup(
     # Dependencies
     install_requires = [
         "setuptools",
+        "dbus-python",
     ],
     tests_require = [
         "nose",
