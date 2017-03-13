@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Display the note-taking application's version.
-
-In order, it displays Scout's version, the name of the note-taking application
-and its version.
-
-"""
 from scout.version import SCOUT_VERSION
 from scout.plugins import ActionPlugin
 
 
 class VersionAction(ActionPlugin):
-    """The 'version' sub-command."""
+    """Display the note-taking application's version.
+
+    In order, it displays Scout's version, the name of the note-taking
+    application and its version.
+
+    """
 
     short_description = __doc__.splitlines()[0]
 

@@ -1,12 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Display the content of one or more notes at a time.
-
-A list of note names can be specified to display them one after the other.
-Mulitiple notes that are displayed by separating them with a special separator
-line. If one of the specified notes does not exist, it will give an error
-message on the standard error stream.
-
-"""
 import sys
 
 from scout.plugins import ActionPlugin
@@ -14,7 +6,14 @@ from scout.cli import TOO_FEW_ARGUMENTS_ERROR
 
 
 class DisplayAction(ActionPlugin):
-    """The 'display' sub-command."""
+    """Display the content of one or more notes at a time.
+
+    A list of note names can be specified to display them one after the other.
+    Mulitiple notes that are displayed by separating them with a special
+    separator line. If one of the specified notes does not exist, it will give
+    an error message on the standard error stream.
+
+    """
 
     short_description = __doc__.splitlines()[0]
 

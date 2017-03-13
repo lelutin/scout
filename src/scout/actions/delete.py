@@ -1,22 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Delete notes by name or by other criteria.
-
-The "delete" action removes notes from the note-taking application. Notes are
-deleted permanently and, once it is done, their content is lost.
-
-Notes that are deleted can be specified by name as positional arguments to the
-action, by a filter with arguments or both.
-
-If a tag filter is selected for removal, templates that have this tag are also
-deleted. To keep templates in place when requesting a tag for deletion, the
---spare-templates command-line argument should be used.
-
-Books are a special kind of tag, so requesting to delete notes of a particular
-book deletes templates of that particular book. To keep templates, the same
-argument as above should be used.
-
-"""
-#XXX put the above info inside a man page instead
 import sys
 import optparse
 
@@ -25,7 +7,23 @@ from scout.cli import TOO_FEW_ARGUMENTS_ERROR
 
 
 class DeleteAction(plugins.ActionPlugin):
-    """The 'delete' sub-command."""
+    """Delete notes by name or by other criteria.
+
+    The "delete" action removes notes from the note-taking application. Notes
+    are deleted permanently and, once it is done, their content is lost.
+
+    Notes that are deleted can be specified by name as positional arguments to
+    the action, by a filter with arguments or both.
+
+    If a tag filter is selected for removal, templates that have this tag are
+    also deleted. To keep templates in place when requesting a tag for
+    deletion, the --spare-templates command-line argument should be used.
+
+    Books are a special kind of tag, so requesting to delete notes of a
+    particular book deletes templates of that particular book. To keep
+    templates, the same argument as above should be used.
+
+    """
 
     short_description = __doc__.splitlines()[0]
 

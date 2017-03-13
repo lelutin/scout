@@ -1,15 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Search for text in all or a specific list of notes.
-
-If nothing is found, nothing is shown on the terminal, but the action returns
-with an exit code of 1.
-
-If it finds results from the search, it will report every occurence by citing
-the note's name, the line number of the occurrence and the content of the line
-on which the text is appearing. The return code when a search has at least one
-result is 0.
-
-"""
 import sys
 import re
 
@@ -18,7 +7,17 @@ from scout.cli import TOO_FEW_ARGUMENTS_ERROR
 
 
 class SearchAction(plugins.ActionPlugin):
-    """The 'search' sub-command."""
+    """Search for text in all or a specific list of notes.
+
+    If nothing is found, nothing is shown on the terminal, but the action
+    returns with an exit code of 1.
+
+    If it finds results from the search, it will report every occurence by
+    citing the note's name, the line number of the occurrence and the content
+    of the line on which the text is appearing. The return code when a search
+    has at least one result is 0.
+
+    """
 
     short_description = __doc__.splitlines()[0]
 

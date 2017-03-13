@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
-"""List information about notes.
-
-Display quick information about notes on the standard output stream. By
-default (if no argument is given), it will list all the notes. With the "-n"
-argument, the list of notes can be limited in number.
-
-"""
 from scout import plugins
 
 
 class ListAction(plugins.ActionPlugin):
-    """The 'list' sub-command."""
+    """List information about notes.
+
+    Display quick information about notes on the standard output stream. By
+    default (if no argument is given), it will list all the notes. With the "-n"
+    argument, the list of notes can be limited in number.
+
+    """
 
     short_description = __doc__.splitlines()[0]
 

@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Modify notes' contents or their attributes.
-
-The "edit" action gives you the possibility to modify a note's contents. It can
-also let you change only the set of its affected tags and rename the note.
-
-"""
 import sys
 
 from scout import plugins
@@ -14,7 +8,16 @@ from scout.cli import (
 
 
 class TagAction(plugins.ActionPlugin):
-    """The 'tag' sub-command."""
+    """Add or delete tags to notes.
+
+    Tags of a note are a feature that is not well exposed in Tomboy/Gnote UI
+    and is under-utilized. All notes can have an arbitrary number of tags. Some
+    tags have special meanings, like system:notebook:* that is used by the note
+    applications to put a note inside a notebook.
+
+    Scout can add to or remove tags from notes.
+
+    """
 
     short_description = __doc__.splitlines()[0]
 
