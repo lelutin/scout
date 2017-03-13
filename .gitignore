@@ -1,6 +1,7 @@
 *.pyc
 .*.swp
 .coverage
+.eggs
 scout.egg-info
 /doc/*.tmp
 /doc/*.1
