@@ -11,28 +11,55 @@ to create, making the application easily extensible.
 Current actions make it possible to list note names, display note contents,
 search for text inside notes and to delete notes.
 
+# Requirements
+
+To run scout, you need to have two python packages:
+
+ * setuptools: so that actions can plugin to the right script entry point
+ * dbus-python: this is how scout talks to Tomboy/Gnote
+
+You will also need to have libdbus installed before those python libraries in
+order for the dbus-python library to be useful. In theory, though if you have
+already installed Tomboy or Gnote beforehand you should already have this
+library on your system.
+
+Finally, you also need your note application to be running, otherwise you might
+be getting errors about the dbus interface being inexistant.
+
+## Using pip
+
+The `requirements.txt` file can be used to install libraries with versions that
+were tested during development:
+
+    $ pip install -r requirements.txt
+
+## Using distro packages
+
+An alternative to the method above is to install the requirements with
+distribution packages. In Debian you could use the following command:
+
+    # apt-get install python-setuptools python-dbus
+
+On Fedora or Centos, use the following:
+
+    # yum install python-setuptools dbus-python
+
 # Installing
 
 ## From source
 
-To install scout from the source archive, use the setuptools installer:
+To install scout from the source archive, you can use pip inside the source
+archive:
 
-    scout$ sudo python setup.py install
+    scout$ sudo pip install .
+
+You can also build a binary distribution and then install from this file:
+
+    scout$ python setup.py bdist_wheel
+    scout$ sudo pip install build/scout*.whl
 
 To see a short summary of what has changed between versions, consult the
 [changelog wiki page][ChangeLog].
-
-## Requirements
-
-To run scout, you need to have setuptools so that actions can plugin to the
-right script entry point, and dbus-python installed. On Debian or Ubuntu, use
-the following command:
-
-    # apt-get install python-dbus
-
-On Fedora or Centos, use the following:
-
-    # yum install dbus-python
 
 # Use
 
@@ -106,6 +133,15 @@ address, in the same fashion as contributions to git or the Linux kernel. This
 line attests that you are willing to license your code under the same license
 as the one used by the project (e.g. BSD). To add such a line with git, use the
 "-s" argument to git-commit.
+
+## Development environment
+
+The recommended way to have a development environement is to create a
+python virtualenv and then install requirements with pip as shown above.
+
+You will also need to install the test requirements:
+
+    $ pip install -r test-requirements.txt
 
 ## Tests
 
