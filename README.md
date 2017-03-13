@@ -28,6 +28,12 @@ be getting errors about the dbus interface being inexistant.
 
 ## Using pip
 
+Note that for pip to install be able to install dbus-python, you need to have
+the libdbus-1 and libdbus-glib1 headers installed beforehand. In debian you can
+install them with:
+
+    # apt install libdbus-1-dev libdbus-glib-1-dev
+
 The `requirements.txt` file can be used to install libraries with versions that
 were tested during development:
 
