@@ -157,6 +157,14 @@ class Scout(object):
 
         return "\n".join(lines)
 
+    def set_note_content(self, note, content):
+        """Set the content of 'note'.
+
+        The note must be a Note instance.
+
+        """
+        self.comm.SetNoteContents(note.uri, content)
+
     def filter_notes(self, notes, tags, names,
                      exclude_templates=True):
         """Filter a list of notes accordingly.

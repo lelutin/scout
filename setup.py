@@ -69,6 +69,7 @@ setup(
             "list = scout.actions.list:ListAction",
             "delete = scout.actions.delete:DeleteAction",
             "display = scout.actions.display:DisplayAction",
+            "edit = scout.actions.edit:EditAction",
             "search = scout.actions.search:SearchAction",
             "tag = scout.actions.tag:TagAction",
             "version = scout.actions.version:VersionAction",
