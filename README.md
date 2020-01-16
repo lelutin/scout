@@ -28,7 +28,7 @@ be getting errors about the dbus interface being inexistant.
 
 ## Using pip
 
-Note that for pip to install be able to install dbus-python, you need to have
+Note that for pip to be able to install dbus-python, you need to have
 the libdbus-1 and libdbus-glib1 headers installed beforehand. In debian you can
 install them with:
 
@@ -143,30 +143,36 @@ as the one used by the project (e.g. BSD). To add such a line with git, use the
 ## Development environment
 
 The recommended way to have a development environement is to create a
-python virtualenv and then install requirements with pip as shown above.
+python virtualenv and then install requirements with pip as shown above:
+
+
+    $ python3 -m venv ve
+    $ source ve/bin/activate
+    (ve) $ pip install -r requirements.txt
 
 You will also need to install the test requirements:
 
-    $ pip install -r test-requirements.txt
+    (ve) $ pip install -r test-requirements.txt
+
+Finally, install scout in the venv in "develop" mode so that you can execute
+it to test it, and that changes to the source code show up instantly when
+executing scout anew:
+
+    (ve) $ pip install -e .
 
 ## Tests
 
-To be able to run the unit or acceptance tests, you will need to have pymox
-and nose installed. On Debian or Ubuntu, use the following command to install
-them:
+Once inside a developement environment (see previous section), the tests can
+be run using one of two methods. The first one is through setup.py like
+following:
 
-    # apt-get install python-mox python-nose
-
-The tests can be run using one of two methods. The first one is through setup.py
-like following:
-
-    scout$ python setup.py test
+    (ve) $ python setup.py test
 
 The second method, being the fastest and most flexible one, is by calling
 nose's nosetests script. Three configuration files are included in the base
 directory to make running the tests easier. From the base directory:
 
-    scout$ nostests -c nose.cfg
+    (ve) $ nostests -c nose.cfg
 
 The three files are named "nose.cfg", "nose.unit.cfg", "nose.functional.cfg"
 and they serve in running all tests, only unit tests, and only functional
@@ -199,5 +205,4 @@ A copy of the BSD license should be available with the source code. Also, a
 short license notice can be found in all files.
 
 [Github]: http://github.com/lelutin/scout
-[mailing list]: http://groups.google.com/group/scout-list
-[ChangeLog]:http://wiki.github.com/lelutin/scout/changelog
+[ChangeLog]:https://github.com/lelutin/scout/wiki/ChangeLog
