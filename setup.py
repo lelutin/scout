@@ -89,6 +89,13 @@ setup(
         "mox3 >= 0.28.0",
     ],
 
+    classifiers = [
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Topic :: Utilities"
+    ],
+
     # To run tests via this file
     test_suite = "nose.collector",
 )
