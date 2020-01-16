@@ -51,7 +51,7 @@ setup(
     name = "scout",
     version = SCOUT_VERSION,
     author = "Gabriel Filion",
-    author_email = "lelutin@gmail.com",
+    author_email = "gabster@lelutin.ca",
     description = "CLI interface to Tomboy or Gnote via DBus",
     long_description = DESCRIPTION,
     license = "BSD",
@@ -86,7 +86,7 @@ setup(
     ],
     tests_require = [
         "nose",
-        "mox >= 0.5.1",
+        "mox3 >= 0.28.0",
     ],
 
     # To run tests via this file

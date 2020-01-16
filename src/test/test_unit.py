@@ -961,6 +961,10 @@ class CoreTests(BasicMocking):
                     if not n.tags
                 ]
             elif tags and isinstance(tags[0], core.NoteBook):
+                for t in tags:
+                    t.__str__()\
+                        .AndReturn("system:notebook:dummy")
+
                 for n in notes:
                     n.books()\
                         .AndReturn([t for t in n.tags
@@ -1110,6 +1114,10 @@ class CoreTests(BasicMocking):
         todo.tags = todo.tags + ["new", "hawtness"]
         python.tags = python.tags + ["tag42"]
 
+        # Seems like the order of calls in python3 is non-deterministic for
+        # some reason. This means that this test fails sometimes but not
+        # others. We'll have to fix up either the test or the code being
+        # tested somehow, but I don't know how yet.
         tt.comm.AddTagToNote(todo.uri, "new")
         tt.comm.AddTagToNote(todo.uri, "hawtness")
         tt.comm.AddTagToNote(python.uri, "tag42")
@@ -1582,7 +1590,7 @@ class ListTests(BasicMocking, CLIMocking):
 
         lst_ap.add_option(
             "-n", type="int",
-            dest="max_notes", default=None,
+            dest="max_notes", default=0,
             help="Limit the number of notes listed."
         )
 
@@ -1697,9 +1705,9 @@ class DisplayTests(BasicMocking, CLIMocking):
             .AndReturn(notes)
 
         dsp_ap.interface.get_note_content(notes[0])\
-            .AndReturn(note1_content.decode("utf-8")[:-1])
+            .AndReturn(note1_content[:-1])
         dsp_ap.interface.get_note_content(notes[1])\
-            .AndReturn(note2_content.decode("utf-8")[:-1])
+            .AndReturn(note2_content[:-1])
 
         self.m.ReplayAll()
         dsp_ap.perform_action(fake_config, fake_options, note_names)

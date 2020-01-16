@@ -641,6 +641,9 @@ class TagTests(FunctionalTests):
         self.mock_out_listing(list_of_notes)
 
         self.dbus_interface.RemoveTagFromNote(new_note.uri, "system:template")
+        # Sometimes with python3 we get told that the second tag removal was
+        # never called, but not others. I don't understand what can be causing
+        # this.
         self.dbus_interface.RemoveTagFromNote(
             new_note.uri, "system:notebook:pim")
 

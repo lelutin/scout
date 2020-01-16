@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """General test utility classes and functions."""
 import unittest
-import mox
+from mox3 import mox
 import sys
 import os
 import re
@@ -18,10 +18,11 @@ def data(file_name):
     dat = _data_cache.get(file_name)
     if not dat:
         base_path = os.path.dirname(__file__)
-        f =  open(os.path.join(base_path, "data", file_name), "r")
-        # Cache temporarily to ensure we don't fall in infinite include loops.
-        _data_cache[file_name] = dat = f.read()
-        f.close()
+        with open(os.path.join(base_path, "data", file_name), "r") as f:
+            # Cache temporarily to ensure we don't fall in infinite include
+            # loops.
+            _data_cache[file_name] = f.read()
+            dat = _data_cache[file_name]
 
         def _fetch_include(matchobj):
             d = data(matchobj.group(1))
@@ -57,6 +58,7 @@ class BasicMocking(unittest.TestCase):
         super(BasicMocking, self).setUp()
 
         self.m = mox.Mox()
+        self.maxDiff = None
 
     def tearDown(self):
         """Remove stubs so that they don't interfere with other tests."""
