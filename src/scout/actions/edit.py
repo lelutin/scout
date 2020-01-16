@@ -38,8 +38,8 @@ class EditAction(ActionPlugin):
 
         (fd, temp_filename) = tempfile.mkstemp()
 
-        os.write(fd, old_content)
-        os.close(fd)
+        with open(fd, 'w') as f:
+            f.write(old_content)
 
         editor = os.environ.get("EDITOR")
         # Backup/default editor
@@ -47,9 +47,9 @@ class EditAction(ActionPlugin):
             editor = "vi"
 
         os.system(editor + " " + temp_filename)
-        file = open(temp_filename, 'r')
 
-        contents = file.read()
+        with open(temp_filename, 'r') as f:
+            contents = f.read()
 
         self.interface.set_note_content(notes[0], contents)
 
