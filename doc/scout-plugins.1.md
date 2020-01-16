@@ -1,5 +1,5 @@
 % scout-plugins(1) Scout %SCOUT_VERSION%
-% Gabriel Filion <lelutin@gmail.com>
+% Gabriel Filion <gabster@lelutin.ca>
 % %SCOUT_DATE%
 
 # NAME
@@ -49,7 +49,7 @@ application exits cleanly.
 
 # SEE ALSO
 
-http://wiki.github.com/lelutin/scout/plugins
+https://github.com/lelutin/scout/wiki/Plugins
 
 # SCOUT
 

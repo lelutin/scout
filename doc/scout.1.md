@@ -1,5 +1,5 @@
 % scout(1) Scout %SCOUT_VERSION%
-% Gabriel Filion <lelutin@gmail.com>
+% Gabriel Filion <gabster@lelutin.ca>
 % %SCOUT_DATE%
 
 # NAME
@@ -33,6 +33,8 @@ by the subcommand name.
 :   Perform a textual search on your notes' contents.
 `tag`
 :   Add or remove tags from notes.
+`edit`
+:   Modify a note's contents with your favorite editor.
 `delete`
 :   Delete one or more notes, or an entire book.
 `version`
