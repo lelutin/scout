@@ -5,7 +5,7 @@ import mox
 import sys
 import os
 import re
-from cStringIO import StringIO
+from io import StringIO
 import dbus
 
 from scout.core import Note
@@ -150,7 +150,7 @@ class BasicMocking(unittest.TestCase):
             value = pair[1].strip()
 
             if token == "tags":
-                t = map(lambda x: x.strip(), value.split(','))
+                t = [x.strip() for x in value.split(',')]
                 info[token].extend(t)
             elif token == "date":
                 info[token] = dbus.Int64(int(value))

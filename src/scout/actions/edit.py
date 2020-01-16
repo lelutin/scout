@@ -26,8 +26,7 @@ class EditAction(ActionPlugin):
     def perform_action(self, config, options, positional):
         """Edit the content of one note in $EDITOR."""
         if len(positional) != 1:
-            print >> sys.stderr, \
-                "Error: You need to specify a single note name to edit it"
+            print("Error: You need to specify a single note name to edit it", file=sys.stderr)
             sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
         # TODO: if the note doesn't exist, it should be added

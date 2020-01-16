@@ -12,7 +12,7 @@ import sys
 import os
 import dbus
 import pkg_resources
-import ConfigParser as configparser
+import configparser as configparser
 
 from .utils import BasicMocking, CLIMocking, data
 
@@ -128,7 +128,7 @@ class FunctionalTests(BasicMocking, CLIMocking):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEquals(
+        self.assertEqual(
             text,
             sys.stdout.getvalue()
         )
@@ -203,7 +203,7 @@ class MainTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEquals(
+        self.assertEqual(
             data("expected_list"),
             sys.stdout.getvalue()
         )
@@ -257,7 +257,7 @@ class MainTests(FunctionalTests):
         self.m.VerifyAll()
 
         # The help should be displayed using scout's docstring.
-        self.assertEquals(
+        self.assertEqual(
             "%s%s\n" % (cli.__doc__[:-1], "\n".join(fake_list)),
             sys.stdout.getvalue()
         )
@@ -300,7 +300,7 @@ class ListTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEquals(
+        self.assertEqual(
             data("expected_list"),
             sys.stdout.getvalue()
         )
@@ -315,7 +315,7 @@ class ListTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEquals(
+        self.assertEqual(
             ''.join([data("expected_list"), data("list_appendix")]),
             sys.stdout.getvalue()
         )
@@ -358,7 +358,7 @@ class DisplayTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEquals(
+        self.assertEqual(
             "\n".join([
                 note1_content,
                 data("display_separator"),
@@ -377,7 +377,7 @@ class DisplayTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEquals(
+        self.assertEqual(
             data("unexistant_note_error"),
             sys.stderr.getvalue()
         )
@@ -390,7 +390,7 @@ class DisplayTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEquals(
+        self.assertEqual(
             data("display_no_note_name_error"),
             sys.stderr.getvalue()
         )
@@ -421,7 +421,7 @@ class SearchTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEquals(
+        self.assertEqual(
             data("search_results"),
             sys.stdout.getvalue()
         )
@@ -447,7 +447,7 @@ class SearchTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEquals(
+        self.assertEqual(
             data("specific_search_results"),
             sys.stdout.getvalue()
         )
@@ -460,7 +460,7 @@ class SearchTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
-        self.assertEquals(
+        self.assertEqual(
             data("search_no_argument_error"),
             sys.stderr.getvalue()
         )
@@ -479,7 +479,7 @@ class VersionTests(FunctionalTests):
     def test_tomboy_version(self):
         """F Version: Get Tomboy's version."""
         self.dbus_interface.Version()\
-            .AndReturn(u'1.0.1')
+            .AndReturn('1.0.1')
 
         sys.argv = ["app_name", "version"]
 

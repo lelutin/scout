@@ -8,7 +8,7 @@ import dbus
 import pkg_resources
 import traceback
 import optparse
-import ConfigParser as configparser
+import configparser as configparser
 
 from scout import core, cli, plugins
 from scout.version import SCOUT_VERSION
@@ -40,7 +40,7 @@ class MainTests(BasicMocking, CLIMocking):
         arguments = ["arg1", "arg2"]
         sys.argv = ["app_name", "action"] + arguments
 
-        cli.CommandLine.dispatch("action", [unicode(arg) for arg in arguments])
+        cli.CommandLine.dispatch("action", [str(arg) for arg in arguments])
 
         self.m.ReplayAll()
         self.assertRaises(SystemExit, cli.main)
@@ -100,7 +100,7 @@ class MainTests(BasicMocking, CLIMocking):
 
         cli.CommandLine.dispatch(
             "action",
-            [unicode(arg) for arg in processed_arguments[1:] ]
+            [str(arg) for arg in processed_arguments[1:] ]
         )
 
         self.m.ReplayAll()
@@ -424,7 +424,7 @@ class MainTests(BasicMocking, CLIMocking):
 
     def print_traceback(self):
         """Fake an output of an arbitrary traceback on sys.stderr"""
-        print >> sys.stderr, data("fake_traceback")
+        print(data("fake_traceback"), file=sys.stderr)
 
     def test_dispatch_handles_action_exceptions(self):
         """U Main: All unknown exceptions from actions are handled."""
@@ -967,10 +967,7 @@ class CoreTests(BasicMocking):
                                     if t.startswith("system:notebook:")])
                 expected_list = [
                     n for n in notes
-                    if not filter(
-                        lambda x: x.startswith("system:notebook:"),
-                        n.tags
-                    )
+                    if not [x for x in n.tags if x.startswith("system:notebook:")]
                 ]
             else:
                 expected_list = [
@@ -1541,7 +1538,7 @@ class ListTests(BasicMocking, CLIMocking):
         """Test Note's string representation."""
         note = self.wrap_subject(core.Note, "__repr__")
 
-        date_64 = dbus.Int64(1254553804L)
+        date_64 = dbus.Int64(1254553804)
 
         note.title = title
         note.date = date_64

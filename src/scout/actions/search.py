@@ -32,8 +32,7 @@ class SearchAction(plugins.ActionPlugin):
     def perform_action(self, config, options, positional):
         """Search for some text within notes."""
         if len(positional) < 1:
-            print >> sys.stderr, \
-                "Error: You must specify a pattern to perform a search"
+            print("Error: You must specify a pattern to perform a search", file=sys.stderr)
             sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
         search_pattern = positional[0]
@@ -54,6 +53,6 @@ class SearchAction(plugins.ActionPlugin):
                 if re.search("(?i)%s" % (search_pattern, ), line):
                     ret = 0
                     result_map = (n.title, ln_num, line)
-                    print ("%s : %s : %s" % result_map).encode('utf-8')
+                    print(("%s : %s : %s" % result_map).encode('utf-8'))
 
         return ret

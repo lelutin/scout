@@ -40,7 +40,7 @@ class Scout(object):
 
         try:
             tb_bus = dbus.SessionBus()
-        except dbus.DBusException, exc:
+        except dbus.DBusException as exc:
             msg = '\n'.join([
                 "Could not establish connection with %s\n",
                 "%s",
@@ -58,7 +58,7 @@ class Scout(object):
                     "org.gnome.%s" % application,
                     "/org/gnome/%s/RemoteControl" % application
                 )
-            except dbus.DBusException, exc:
+            except dbus.DBusException as exc:
                 msg = ''.join(["Application %s is not publishing any dbus ",
                                "object. It is possibly not installed."])
                 raise ConnectionError(msg % application)
@@ -200,7 +200,7 @@ class Scout(object):
 
             list_of_notes = [
                 n for n in notes
-                if filter(lambda x: x(n), filters)
+                if [x for x in filters if x(n)]
             ]
         else:
             # Nothing to filter, keep list intact

@@ -27,8 +27,7 @@ class DisplayAction(ActionPlugin):
     def perform_action(self, config, options, positional):
         """Print the content of one or more notes to stdout."""
         if len(positional) <= 0:
-            print >> sys.stderr, \
-                "Error: You need to specify a note name to display it"
+            print("Error: You need to specify a note name to display it", file=sys.stderr)
             sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
         notes = self.interface.get_notes(names=positional)
@@ -36,8 +35,8 @@ class DisplayAction(ActionPlugin):
         display_sep = False
         for n in notes:
             if display_sep:
-                print self.note_separator
+                print(self.note_separator)
             else:
                 display_sep = True
             content = self.interface.get_note_content(n)
-            print content.encode('utf-8')
+            print(content.encode('utf-8'))

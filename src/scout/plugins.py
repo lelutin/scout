@@ -42,7 +42,7 @@ class ActionPlugin(object):
         group_name = kwargs.pop("group", None)
 
         if group_name not in [g.name for g in self.option_groups]:
-            raise KeyError, "Option group '%s' does not exist yet."
+            raise KeyError("Option group '%s' does not exist yet.")
 
         group = [g for g in self.option_groups if g.name == group_name][0]
 
@@ -75,7 +75,7 @@ class ActionPlugin(object):
         """
         if not isinstance(library, OptionGroup):
             msg = "Librairies must be of type scout.plugins.OptionGroup"
-            raise TypeError, msg
+            raise TypeError(msg)
 
         if library.name not in [g.name for g in self.option_groups]:
             self.option_groups.append(library)
@@ -126,7 +126,7 @@ class OptionGroup(object):
             if not isinstance(option, optparse.Option):
                 msg = ''.join(["Options added to the group must be ",
                                "optparse.Option objects."])
-                raise TypeError, msg
+                raise TypeError(msg)
 
             self.options.append(option)
 

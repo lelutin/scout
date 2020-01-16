@@ -49,7 +49,7 @@ class TagAction(plugins.ActionPlugin):
                          "a filtering option, note names, or both."]),
                 "Use option -h or --help to learn more about filters."
             ])
-            print >> sys.stderr, msg
+            print(msg, file=sys.stderr)
 
             sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
@@ -75,7 +75,7 @@ class TagAction(plugins.ActionPlugin):
 
                 if tag_name not in note.tags:
                     msg = "Error: Tag '%s' not found on note '%s'."
-                    print >> sys.stderr, msg % (tag_name, note.title)
+                    print(msg % (tag_name, note.title), file=sys.stderr)
                     sys.exit(NOTE_MODIFICATION_ERROR)
                 note.tags.remove(tag_name)
         else:

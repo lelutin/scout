@@ -20,7 +20,7 @@ class ListAction(plugins.ActionPlugin):
         """Set the action's options."""
         self.add_option(
             "-n", type="int",
-            dest="max_notes", default=None,
+            dest="max_notes", default=0,
             help="Limit the number of notes listed."
         )
 
@@ -36,4 +36,4 @@ class ListAction(plugins.ActionPlugin):
         )
 
         for n in notes:
-            print ("%s" % n).encode('utf-8')
+            print(("%s" % n).encode('utf-8'))

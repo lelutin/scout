@@ -17,7 +17,7 @@ import sys
 import os
 import pkg_resources
 import optparse
-import ConfigParser as configparser
+import configparser as configparser
 
 from scout import core
 from scout.version import SCOUT_VERSION
@@ -82,9 +82,9 @@ class CommandLine(object):
         if not action_class:
             app_name = os.path.basename(sys.argv[0])
 
-            print >> sys.stderr, ''.join([
+            print(''.join([
                 "%s: %s is not a valid action. Use option -h for a list of ",
-                "available actions."]) % (app_name, action_name)
+                "available actions."]) % (app_name, action_name), file=sys.stderr)
 
             sys.exit(ACTION_NOT_FOUND)
 
@@ -160,8 +160,8 @@ class CommandLine(object):
                 action,
                 arguments
             )
-        except TypeError, exc:
-            print >> sys.stderr, exc
+        except TypeError as exc:
+            print(exc, file=sys.stderr)
             exit(ACTION_OPTION_TYPE_ERROR)
 
         # Find out which application to use
@@ -177,13 +177,13 @@ class CommandLine(object):
         # Create a Scout object and put a reference to it in the action
         try:
             action.interface = core.Scout(application)
-        except ConnectionError, exc:
-            print >> sys.stderr, "%s: Error: %s" % (
+        except ConnectionError as exc:
+            print("%s: Error: %s" % (
                 os.path.basename(sys.argv[0]),
                 exc
-            )
+            ), file=sys.stderr)
             sys.exit(DBUS_CONNECTION_ERROR)
-        except AutoDetectionError, exc:
+        except AutoDetectionError as exc:
             prog = os.path.basename(sys.argv[0])
             msg = ("\n" * 2).join([
                 "%s: failed to determine which application to use.",
@@ -192,7 +192,7 @@ class CommandLine(object):
                                 "specify it manually or use the",
                            "\"application\" configuration option."]),
             ])
-            print >> sys.stderr, msg % prog
+            print(msg % prog, file=sys.stderr)
             sys.exit(AUTODETECTION_FAILED)
 
         # Run the action
@@ -204,20 +204,20 @@ class CommandLine(object):
             # handled on an upper level so that interrupting execution with
             # Ctrl-C always exits cleanly.
             raise
-        except NoteNotFound, exc:
+        except NoteNotFound as exc:
             msg = "%s: Error: Note named \"%s\" was not found."
             error_map = (os.path.basename(sys.argv[0]), exc)
-            print >> sys.stderr, msg % error_map
+            print(msg % error_map, file=sys.stderr)
             sys.exit(NOTE_NOT_FOUND)
         except:
             import traceback
 
             app_name = os.path.basename(sys.argv[0])
 
-            print >> sys.stderr, ''.join([
+            print(''.join([
                 "%s: the \"%s\" action is malformed: An uncaught exception ",
                 "was raised while executing its \"perform_action\" ",
-                "function:\n"]) % (app_name, action_name)
+                "function:\n"]) % (app_name, action_name), file=sys.stderr)
             traceback.print_exc()
 
             # This is pretty annoying when running acceptance tests. Comment it
@@ -321,7 +321,7 @@ def main():
             "\n".join(__doc__.splitlines()[:3]) % app_name_map,
             "For more details, use one of \"-h\", \"--help\" or \"help\"."
         ])
-        print >> sys.stderr, usage_output
+        print(usage_output, file=sys.stderr)
         sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
     cli = CommandLine()
@@ -330,7 +330,7 @@ def main():
     # Convert the rest of the arguments to unicode objects so that they are
     # handled correctly afterwards. This expects to receive arguments in
     # UTF-8 format from the command line.
-    arguments = [arg.decode("utf-8") for arg in sys.argv[2:]]
+    arguments = [arg for arg in sys.argv[2:]]
 
     if action in ["-h", "--help", "help"]:
         if sys.argv[2:]:
@@ -349,7 +349,7 @@ def main():
             help_msg = __doc__[:-1] % msg_map
             action_list = "\n".join(cli.action_short_summaries())
 
-            print help_msg + action_list
+            print(help_msg + action_list)
 
             sys.exit(0)
 
@@ -363,7 +363,7 @@ def main():
             "There is NO WARRANTY, to the extent permitted by law."
         ])
 
-        print version_info
+        print(version_info)
         sys.exit(0)
 
     sys.exit(cli.dispatch(action, arguments))

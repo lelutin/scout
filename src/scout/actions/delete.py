@@ -82,7 +82,7 @@ class DeleteAction(plugins.ActionPlugin):
                     "note names, or both.",
                 "Use option -h or --help to learn more about filters."
             ])
-            print >> sys.stderr, msg
+            print(msg, file=sys.stderr)
 
             sys.exit(TOO_FEW_ARGUMENTS_ERROR)
 
@@ -99,10 +99,10 @@ class DeleteAction(plugins.ActionPlugin):
 
         if options.dry_run:
             msg = "The following notes are selected for deletion:"
-            print msg.encode('utf-8')
+            print(msg.encode('utf-8'))
 
         for note in notes:
             if options.dry_run:
-                print ("  %s" % note.title).encode('utf-8')
+                print(("  %s" % note.title).encode('utf-8'))
             else:
                 self.interface.comm.DeleteNote(note.uri)
