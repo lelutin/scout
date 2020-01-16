@@ -24,4 +24,4 @@ class VersionAction(ActionPlugin):
             self.interface.comm.Version()
         )
 
-        print((msg % version_map).encode('utf-8'))
+        print(msg % version_map)

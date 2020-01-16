@@ -99,10 +99,10 @@ class DeleteAction(plugins.ActionPlugin):
 
         if options.dry_run:
             msg = "The following notes are selected for deletion:"
-            print(msg.encode('utf-8'))
+            print(msg)
 
         for note in notes:
             if options.dry_run:
-                print(("  %s" % note.title).encode('utf-8'))
+                print("  %s" % note.title)
             else:
                 self.interface.comm.DeleteNote(note.uri)

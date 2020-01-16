@@ -53,6 +53,6 @@ class SearchAction(plugins.ActionPlugin):
                 if re.search("(?i)%s" % (search_pattern, ), line):
                     ret = 0
                     result_map = (n.title, ln_num, line)
-                    print(("%s : %s : %s" % result_map).encode('utf-8'))
+                    print("%s : %s : %s" % result_map)
 
         return ret

@@ -39,4 +39,4 @@ class DisplayAction(ActionPlugin):
             else:
                 display_sep = True
             content = self.interface.get_note_content(n)
-            print(content.encode('utf-8'))
+            print(content)

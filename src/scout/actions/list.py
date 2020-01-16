@@ -36,4 +36,4 @@ class ListAction(plugins.ActionPlugin):
         )
 
         for n in notes:
-            print(("%s" % n).encode('utf-8'))
+            print("%s" % n)
