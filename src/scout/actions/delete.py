@@ -79,7 +79,7 @@ class DeleteAction(plugins.ActionPlugin):
             msg = '\n\n'.join([
                 "Error: No filters or note names given.",
                 "To delete notes, you must specify a filtering option, "
-                    "note names, or both.",
+                "note names, or both.",
                 "Use option -h or --help to learn more about filters."
             ])
             print(msg, file=sys.stderr)
