@@ -115,6 +115,8 @@ class Scout(object):
 
         Notes are automatically filtered when necessary. (see filter_notes())
 
+        A maximum of 'count_limit' notes is returned, or all if 0.
+
         """
         notes = []
         for uri in self.comm.ListAllNotes():
@@ -179,8 +181,6 @@ class Scout(object):
 
         The list of notes can be narrowed down to only those whose names are
         found in  'names'.
-
-        A maximum of 'count_limit' notes is returned, or all if 0.
 
         When non-empty, notes that do not have one of the tags in 'tags' are
         filtered out. Also, templates (notes with the special tag
@@ -273,6 +273,7 @@ class Note(object):
         date = datetime.fromtimestamp(self.date).isoformat()[:10]
 
         return "%s | %s%s" % (date, title, tags)
+
 
     def books(self):
         """Return a list of tags from this note that correspond to notebooks.
