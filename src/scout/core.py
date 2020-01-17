@@ -101,6 +101,14 @@ class Scout(object):
 
         return success_list[0]
 
+
+    def create_named_note(self, name):
+        """Create a new note in Tomboy/Gnote and return its Note object."""
+        uri = self.comm.CreateNamedNote(name)
+
+        return Note(uri, name)
+
+
     def get_notes(self, names=None, count_limit=0, tags=None,
                   exclude_templates=True):
         """Get a list of notes from the application.
