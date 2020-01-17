@@ -96,6 +96,8 @@ setup(
         "Topic :: Utilities"
     ],
 
+    python_requires='>=3.4',
+
     # To run tests via this file
     test_suite = "nose.collector",
 )
