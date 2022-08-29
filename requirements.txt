@@ -1,1 +1,1 @@
-dbus-python==1.2.16
+dbus-python==1.2.18
