@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from scout.version import SCOUT_VERSION
+from scout.version import __version__ as SCOUT_VERSION
 from scout.plugins import ActionPlugin
 
 

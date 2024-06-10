@@ -1,4 +1,4 @@
-# Description
+# Scout
 
 Scout : A CLI interface to Tomboy notes and Gnote
 
@@ -11,74 +11,18 @@ to create, making the application easily extensible.
 Current actions make it possible to list note names, display note contents,
 search for text inside notes and to delete notes.
 
-# Requirements
-
-To run scout, you need to have two python packages:
-
- * setuptools: so that actions can plugin to the right script entry point
- * dbus-python: this is how scout talks to Tomboy/Gnote
-
-You will also need to have libdbus installed before those python libraries in
-order for the dbus-python library to be useful. In theory, though if you have
-already installed Tomboy or Gnote beforehand you should already have this
-library on your system.
-
-Finally, you also need your note application to be running, otherwise you might
-be getting errors about the dbus interface being inexistant.
-
-## Using pip
-
-Note that for pip to be able to install dbus-python, you need to have
-the libdbus-1 and libdbus-glib1 headers installed beforehand. In debian you can
-install them with:
-
-    # apt install libdbus-1-dev libdbus-glib-1-dev
-
-The `requirements.txt` file can be used to install libraries with versions that
-were tested during development:
-
-    $ pip install -r requirements.txt
-
-## Using distro packages
-
-An alternative to the method above is to install the requirements with
-distribution packages. In Debian you could use the following command:
-
-    # apt-get install python-setuptools python-dbus
-
-On Fedora or Centos, use the following:
-
-    # yum install python-setuptools dbus-python
-
-# Installing
-
-## From source
-
-To install scout from the source archive, you can use pip inside the source
-archive:
-
-    scout$ sudo pip install .
-
-You can also build a binary distribution and then install from this file:
-
-    scout$ python setup.py bdist_wheel
-    scout$ sudo pip install build/scout*.whl
-
-To see a short summary of what has changed between versions, consult the
-[changelog wiki page][ChangeLog].
-
-# Use
+## Use
 
 To use scout the first argument must be an action name. For example, say you
 want to get a list of all non-template notes. You can call the following:
 
-    $ scout list
+    scout list
 
 Arguments can be given to actions. The arguments available differ from one
 action to the other. For example,
 the "search" action requires an element to search for:
 
-    $ scout search "text to search for"
+    scout search "text to search for"
 
 You can obtain help on how to execute scout by giving it a "-h" or "--help"
 argument. This will list the currently available actions you can use with
@@ -86,10 +30,11 @@ scout. To obtain more detail on what arguments can be used with an action, use
 the option "-h" or "--help" and specify an action name at the same time. Both
 of the two following commands call the detailed help for the action "display":
 
-    $ scout --help display
-    $ scout display -h
+    scout --help display
+    # or:
+    scout display -h
 
-## Choosing the application
+### Choosing the note application
 
 Scout can be used with either Tomboy or Gnote. Scout detects which one of
 them is currently installed. If only one of them is present, it will
@@ -99,9 +44,9 @@ However, in a context where both Tomboy and Gnote are installed, Scout cannot
 determine which one to use unless it is specified as an argument to the command
 line or in a configuration file.
 
-A system-wide configuration file can be placed in ''/etc/scout.cfg''. Each
+A system-wide configuration file can be placed in `/etc/scout.cfg`. Each
 user can also create a configuration file in their home directory (e.g. either
-''~/.scout/config'' or ''~/.config/scout/config''). Values in the user
+`~/.scout/config` or `~/.config/scout/config`). Values in the user
 configuration file will override those set in the system-wide configuration.
 The configuration file should follow the Windows INI file format. To select the
 application, the "application" option in the "scout" section should be set to
@@ -115,18 +60,29 @@ configuration file. Here's how to list notes from Gnote:
 
     scout list --application=Gnote
 
-# Mailing list
+## Requirements
 
-If you have any questions about how to use Scout, if you want to report or
-discuss a problem you currently have, or if you want to contribute patches (see
-below), you should subscribe to the [mailing list].
+You need to have `libdbus` installed in order for the `dbus-python` library to
+be useful. In theory, though if you have already installed Tomboy or Gnote
+beforehand you should already have this library on your system.
 
-The list is public, so anyone can view the archives on the list's web page
-without having to log in, but in order to send messages to the list, you must
-be subscribed to it. If you want to subscribe but don't have a google account
-(and don't want one), just send a message to scout-list@googlegroups.com.
+You also need your note application to be running, otherwise you might be
+getting errors about the dbus interface not existing.
 
-# Contributing
+Also, for pip to be able to install `dbus-python`, you need dev libraries to be
+present on your system. In debian you can install them with:
+
+    sudo apt install libdbus-1-dev libdbus-glib-1-dev
+
+## Installing from source
+
+This project is setup to be used with `pip` so you can install it and/or build
+a wheel as you would normally do with that tool.
+
+To see a short summary of what has changed between versions, consult the
+[changelog wiki page][ChangeLog].
+
+## Contributing
 
 All contributions to the code are welcome. Contributed code should come with
 new unit tests for added functions and new or modified acceptance tests for
@@ -142,67 +98,36 @@ as the one used by the project (e.g. BSD). To add such a line with git, use the
 
 ## Development environment
 
-The recommended way to have a development environement is to create a
-python virtualenv and then install requirements with pip as shown above:
+The recommended way to have a development environement is to create a python
+virtualenv as shown below:
 
+    python3 -m venv ve
+    source ve/bin/activate
 
-    $ python3 -m venv ve
-    $ source ve/bin/activate
-    (ve) $ pip install -r requirements.txt
+Then in the venv install scout in "develop" mode and its dependencies with pip
+so that you can test it while developing:
 
-You will also need to install the test requirements:
-
-    (ve) $ pip install -r test-requirements.txt
-
-Finally, install scout in the venv in "develop" mode so that you can execute
-it to test it, and that changes to the source code show up instantly when
-executing scout anew:
-
-    (ve) $ pip install -e .
+    pip install -e .[test]
 
 ## Tests
 
-Once inside a developement environment (see previous section), the tests can
-be run using one of two methods. The first one is through setup.py like
-following:
+To run tests, call the `nosetests` script (which comes with nose). From the
+base directory, with the venv activated:
 
-    (ve) $ python setup.py test
+    nostests -c nose.cfg
 
-The second method, being the fastest and most flexible one, is by calling
-nose's nosetests script. Three configuration files are included in the base
-directory to make running the tests easier. From the base directory:
-
-    (ve) $ nostests -c nose.cfg
-
-The three files are named "nose.cfg", "nose.unit.cfg", "nose.functional.cfg"
-and they serve in running all tests, only unit tests, and only functional
-tests, respectively. Only the file "nose.unit.cfg" shows test coverage since
-this measure is only relevant with those tests alone.
-
-One useful trick with git to make running tests easier is to set an alias in
-the following manner (make sure to use single quotes, the !  and $ characters
-are interpreted by bash if it is inside double quotes):
-
-    $ git config --global alias.test '!nosetests -c $(git rev-parse --show-toplevel)/nose.cfg'
-
-You can then run tests in the following manner:
-
-    $ git test
-
-And finally, to rerun only the tests that failed during the last run, you can
-use the following:
-
-    $ git test --failed
+You can specify any of `nose.cfg`, `nose.unit.cfg` and `nose.functional.cfg` to
+chose which tests will run, respectively all tests, only unit tests, and only
+functional tests. Only the file `nose.unit.cfg` shows test coverage since this
+measure is only relevant with those tests alone.
 
 # License
 
-Scout can be used, distributed and modified. All files are under a BSD license
-with the exception of the "format-subst.pl" script which is under a GPLv2
-license.  "format-subst.pl" was written by Avery Pennarun for the "bup"
-project.
+Scout can be used, distributed and modified. All files are under a BSD-4-clause
+license.
 
 A copy of the BSD license should be available with the source code. Also, a
 short license notice can be found in all files.
 
-[Github]: http://github.com/lelutin/scout
+[Github]: https://github.com/lelutin/scout
 [ChangeLog]:https://github.com/lelutin/scout/wiki/ChangeLog

@@ -3,9 +3,9 @@
 .coverage
 .eggs
 scout.egg-info
+/src/scout/version.py
 /doc/*.tmp
 /doc/*.1
 /doc/*.1.gz
-/src/scout/version.py
 /build
 /dist

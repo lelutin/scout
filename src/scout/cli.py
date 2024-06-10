@@ -20,7 +20,7 @@ import optparse
 import configparser as configparser
 
 from scout import core
-from scout.version import SCOUT_VERSION
+from scout.version import __version__ as SCOUT_VERSION
 from scout.core import NoteNotFound, ConnectionError, AutoDetectionError
 from scout.plugins import ActionPlugin
 

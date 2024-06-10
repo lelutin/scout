@@ -11,7 +11,7 @@ import optparse
 import configparser as configparser
 
 from scout import core, cli, plugins
-from scout.version import SCOUT_VERSION
+from scout.version import __version__ as SCOUT_VERSION
 # Import the list action under a different name to avoid overwriting the list()
 # builtin function.
 from scout.actions import display, list as list_, delete, tag, search, version

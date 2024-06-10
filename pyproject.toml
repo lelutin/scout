@@ -1,0 +1,63 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "setuptools_scm>=8"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scout"
+authors = [
+    { name = "Gabriel Filion", email = "gabster@lelutin.ca" },
+]
+description = "CLI interface to Tomboy or Gnote via DBus"
+readme = "README.md"
+keywords = [
+    "cli",
+    "tomboy",
+    "gnote",
+    "note",
+    "dbus"
+]
+license = { text = "BSD-4-Clause" }
+requires-python = ">=3.4"
+classifiers = [
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Utilities",
+    "Environment :: Console"
+]
+dependencies = [
+    "setuptools",
+    "dbus-python"
+]
+urls.Homepage = "https://github.com/lelutin/scout"
+urls.Source = "https://github.com/lelutin/scout"
+urls.Tracker = "https://github.com/lelutin/scout/issues"
+dynamic = ["version"]
+
+[project.scripts]
+scout = "scout.cli:main"
+
+[project.entry-points."scout.actions"]
+list = "scout.actions.list:ListAction"
+delete = "scout.actions.delete:DeleteAction"
+display = "scout.actions.display:DisplayAction"
+edit = "scout.actions.edit:EditAction"
+search = "scout.actions.search:SearchAction"
+tag = "scout.actions.tag:TagAction"
+version = "scout.actions.version:VersionAction"
+
+[project.optional-dependencies]
+test = [
+    "nose",
+    "mox3 >= 0.28.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["test*", "test.*"]
+
+[tool.setuptools_scm]
+version_file = "src/scout/version.py"

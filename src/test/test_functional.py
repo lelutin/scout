@@ -18,7 +18,7 @@ from .utils import BasicMocking, CLIMocking, data
 
 from scout import cli
 from scout import plugins
-from scout.version import SCOUT_VERSION
+from scout.version import __version__ as SCOUT_VERSION
 
 
 class FunctionalTests(BasicMocking, CLIMocking):

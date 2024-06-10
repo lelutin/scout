@@ -1,6 +1,5 @@
-% scout-plugins(1) Scout %SCOUT_VERSION%
+% scout-plugins(1) Scout
 % Gabriel Filion <gabster@lelutin.ca>
-% %SCOUT_DATE%
 
 # NAME
 
