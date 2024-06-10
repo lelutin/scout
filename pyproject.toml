@@ -51,7 +51,8 @@ version = "scout.actions.version:VersionAction"
 
 [project.optional-dependencies]
 test = [
-    "nose",
+    "pytest",
+    "pytest-mock",
     "mox3 >= 0.28.0"
 ]
 
@@ -61,3 +62,8 @@ exclude = ["test*", "test.*"]
 
 [tool.setuptools_scm]
 version_file = "src/scout/version.py"
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: Tests for entire use cases but with external interactions disabled (deselect with '-m \"not integration\"')",
+]

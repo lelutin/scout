@@ -14,6 +14,8 @@ import dbus
 import pkg_resources
 import configparser as configparser
 
+import pytest
+
 from .utils import BasicMocking, CLIMocking, data
 
 from scout import cli
@@ -137,6 +139,7 @@ class FunctionalTests(BasicMocking, CLIMocking):
 class MainTests(FunctionalTests):
     """Tests that verify the main program's behaviour."""
 
+    @pytest.mark.integration
     def test_no_argument(self):
         """F Main: scout called without arguments must print usage."""
         # No dbus interaction for this test
@@ -168,6 +171,7 @@ class MainTests(FunctionalTests):
 
         cli.__doc__ = old_docstring
 
+    @pytest.mark.integration
     def test_unknown_action(self):
         """F Main: Giving an unknown action name must print an error."""
         # No dbus interaction for this test
@@ -183,6 +187,7 @@ class MainTests(FunctionalTests):
             sys.stderr.getvalue()
         )
 
+    @pytest.mark.integration
     def test_using_gnote(self):
         """F Main: Specifying --application forces connection."""
         # Reset stubs and mocks. We need to mock out dbus differently.
@@ -264,14 +269,17 @@ class MainTests(FunctionalTests):
 
         cli.__doc__ = old_docstring
 
+    @pytest.mark.integration
     def test_help_on_base_level(self):
         """F main: Using "-h" or "--help" alone prints basic help."""
         self.verify_main_help("-h")
 
+    @pytest.mark.integration
     def test_help_action(self):
         """F Main: "help" as an action name."""
         self.verify_main_help("help")
 
+    @pytest.mark.integration
     def test_help_before_action_name(self):
         """F Main: Using "-h" before an action displays detailed help."""
         self.verify_help_text(
@@ -279,6 +287,7 @@ class MainTests(FunctionalTests):
             data("help_details_list") % {"action": "List"}
         )
 
+    @pytest.mark.integration
     def test_help_pseudo_action_before_action_name(self):
         """F Main: Using "-h" before an action displays detailed help."""
         self.verify_help_text(
@@ -290,6 +299,7 @@ class MainTests(FunctionalTests):
 class ListTests(FunctionalTests):
     """Tests for the 'list' action."""
 
+    @pytest.mark.integration
     def test_action_list(self):
         """F List: Action "list -n" prints a list of the last n notes."""
         list_of_notes = self.full_list_of_notes()
@@ -305,6 +315,7 @@ class ListTests(FunctionalTests):
             sys.stdout.getvalue()
         )
 
+    @pytest.mark.integration
     def test_full_list(self):
         """F List: Action "list" alone produces a list of all notes."""
         list_of_notes = self.full_list_of_notes()
@@ -320,6 +331,7 @@ class ListTests(FunctionalTests):
             sys.stdout.getvalue()
         )
 
+    @pytest.mark.integration
     def test_help_list_specific(self):
         """F List: Detailed help using "-h" after "list" action."""
         self.verify_help_text(
@@ -331,6 +343,7 @@ class ListTests(FunctionalTests):
 class DisplayTests(FunctionalTests):
     """Tests for the 'display' action."""
 
+    @pytest.mark.integration
     def test_notes_displaying(self):
         """F Display: Action "display" prints the content given note names."""
         list_of_notes = self.full_list_of_notes()
@@ -367,6 +380,7 @@ class DisplayTests(FunctionalTests):
             sys.stdout.getvalue()
         )
 
+    @pytest.mark.integration
     def test_note_does_not_exist(self):
         """F Display: Specified note non-existant: display an error."""
         list_of_notes = self.full_list_of_notes()
@@ -382,6 +396,7 @@ class DisplayTests(FunctionalTests):
             sys.stderr.getvalue()
         )
 
+    @pytest.mark.integration
     def test_display_zero_argument(self):
         """F Display: Action "display" with no argument prints an error."""
         sys.argv = ["app_name", "display"]
@@ -395,6 +410,7 @@ class DisplayTests(FunctionalTests):
             sys.stderr.getvalue()
         )
 
+    @pytest.mark.integration
     def test_help_display_specific(self):
         """F Display: Detailed help using "-h" after "display" action."""
         self.verify_help_text(
@@ -406,6 +422,7 @@ class DisplayTests(FunctionalTests):
 class SearchTests(FunctionalTests):
     """Tests for the 'search' action."""
 
+    @pytest.mark.integration
     def test_search(self):
         """F Search: Action "search" searches in all notes, case-indep."""
         list_of_notes = self.full_list_of_notes()
@@ -426,6 +443,7 @@ class SearchTests(FunctionalTests):
             sys.stdout.getvalue()
         )
 
+    @pytest.mark.integration
     def test_search_specific_notes(self):
         """F Search: Action "search" restricts the search to given notes."""
         list_of_notes = self.full_list_of_notes()
@@ -452,6 +470,7 @@ class SearchTests(FunctionalTests):
             sys.stdout.getvalue()
         )
 
+    @pytest.mark.integration
     def test_search_zero_arguments(self):
         """F Search: Action "search" with no argument prints an error."""
         sys.argv = ["unused_prog_name", "search"]
@@ -465,6 +484,7 @@ class SearchTests(FunctionalTests):
             sys.stderr.getvalue()
         )
 
+    @pytest.mark.integration
     def test_help_search_specific(self):
         """F Search: Detailed help using "-h" after "search" action."""
         self.verify_help_text(
@@ -476,6 +496,7 @@ class SearchTests(FunctionalTests):
 class VersionTests(FunctionalTests):
     """Tests for the 'version' action."""
 
+    @pytest.mark.integration
     def test_tomboy_version(self):
         """F Version: Get Tomboy's version."""
         self.dbus_interface.Version()\
@@ -492,6 +513,7 @@ class VersionTests(FunctionalTests):
             sys.stdout.getvalue()
         )
 
+    @pytest.mark.integration
     def test_help_version_specific(self):
         """F Version: Detailed help using "-h" after "version" action."""
         self.verify_help_text(
@@ -542,6 +564,7 @@ class DeleteTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
+    @pytest.mark.integration
     def test_delete_notes(self):
         """F Delete: Delete a list of notes."""
         self.verify_delete_notes(
@@ -551,6 +574,7 @@ class DeleteTests(FunctionalTests):
             dry_run=False
         )
 
+    @pytest.mark.integration
     def test_delete_notes_dry_run(self):
         """F Delete: Dry run of note deletion."""
         self.verify_delete_notes(
@@ -565,6 +589,7 @@ class DeleteTests(FunctionalTests):
             sys.stdout.getvalue()
         )
 
+    @pytest.mark.integration
     def test_delete_notes_no_argument(self):
         """F Delete: Delete without argument prints a message."""
         self.verify_delete_notes(
@@ -579,6 +604,7 @@ class DeleteTests(FunctionalTests):
             sys.stderr.getvalue()
         )
 
+    @pytest.mark.integration
     def test_delete_notes_all_notes(self):
         """F Delete: Delete all notes."""
         self.verify_delete_notes(
@@ -588,6 +614,7 @@ class DeleteTests(FunctionalTests):
             dry_run=False
         )
 
+    @pytest.mark.integration
     def test_help_delete_specific(self):
         """F Delete: Detailed help using "-h" after "version" action."""
         self.verify_help_text(
@@ -599,6 +626,7 @@ class DeleteTests(FunctionalTests):
 class TagTests(FunctionalTests):
     """Tests for the 'tag' action."""
 
+    @pytest.mark.integration
     def test_add_tag(self):
         """F Edit: Add a tag to a note."""
         list_of_notes = self.full_list_of_notes()
@@ -614,6 +642,7 @@ class TagTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
+    @pytest.mark.integration
     def test_remove_tag(self):
         """F Edit: Remove a tag from a note."""
         list_of_notes = self.full_list_of_notes()
@@ -630,6 +659,7 @@ class TagTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
+    @pytest.mark.integration
     def test_remove_all_tags(self):
         """F Edit: Remove all tags from a note."""
         list_of_notes = self.full_list_of_notes()
@@ -651,6 +681,7 @@ class TagTests(FunctionalTests):
         self.assertRaises(SystemExit, cli.main)
         self.m.VerifyAll()
 
+    @pytest.mark.integration
     def test_help_edit_specific(self):
         """F Edit: Detailed help using "-h" after "tag" action."""
         self.verify_help_text(
@@ -679,6 +710,7 @@ class FilteringTests(FunctionalTests):
 
         self.assertEqual(output, sys.stdout.getvalue())
 
+    @pytest.mark.integration
     def test_filter_notes_with_templates(self):
         """F Filter: Using "--with-templates" lists notes and templates."""
         self.verify_list_filtering(
@@ -688,6 +720,7 @@ class FilteringTests(FunctionalTests):
                      data("normally_hidden_template")])
         )
 
+    @pytest.mark.integration
     def test_filter_notes_by_tags(self):
         """F Filter: Using "-t" limits the notes by tags."""
         self.verify_list_filtering(
@@ -695,6 +728,7 @@ class FilteringTests(FunctionalTests):
             data("tag_limited_list")
         )
 
+    @pytest.mark.integration
     def test_filter_notes_by_books(self):
         """F Filter: Using "-b" limits the notes by notebooks."""
         self.verify_list_filtering(
@@ -702,6 +736,7 @@ class FilteringTests(FunctionalTests):
             data("book_limited_list")
         )
 
+    @pytest.mark.integration
     def test_filter_untagged_notes(self):
         """F Filter: Using "-T" selects untagged notes."""
         self.verify_list_filtering(
@@ -709,6 +744,7 @@ class FilteringTests(FunctionalTests):
             data("untagged_notes")
         )
 
+    @pytest.mark.integration
     def test_filter_unbooked_notes(self):
         """F Filter: Using "-B" selects notes that are not in a book."""
         self.verify_list_filtering(

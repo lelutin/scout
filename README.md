@@ -111,17 +111,16 @@ so that you can test it while developing:
 
 ## Tests
 
-To run tests, call the `nosetests` script (which comes with nose). From the
-base directory, with the venv activated:
+tests are run using pytest. From the base directory, with the venv activated:
 
-    nostests -c nose.cfg
+    pytest
 
-You can specify any of `nose.cfg`, `nose.unit.cfg` and `nose.functional.cfg` to
-chose which tests will run, respectively all tests, only unit tests, and only
-functional tests. Only the file `nose.unit.cfg` shows test coverage since this
-measure is only relevant with those tests alone.
+You can disable running the functional (or integration) tests by filtering out
+the marker (or by dropping the "not", run only those tests):
 
-# License
+    pytest -m "not integration"
+
+## License
 
 Scout can be used, distributed and modified. All files are under a BSD-4-clause
 license.
